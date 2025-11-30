@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/docker/">
+    <File Path="docker/.env" />
+    <File Path="docker/docker-compose.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Vivaply.API/Vivaply.API.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
