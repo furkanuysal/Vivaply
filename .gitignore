@@ -1,5 +1,5 @@
 ## ---------------------------------------
-## Visual Studio & .NET Build Files (Junk Files)
+## Visual Studio & .NET Build Files
 ## ---------------------------------------
 .vs/
 [Bb]in/
@@ -10,18 +10,40 @@
 *.sln.docstates
 
 ## ---------------------------------------
-## Sensitive Files & Passwords (Security)
+## Node / React (client/) Build Files
 ## ---------------------------------------
-# Docker Environment Variables
+client/node_modules/
+client/dist/
+client/.vite/
+client/.next/
+client/build/
+client/.cache/
+
+# Logs
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/pnpm-debug.log*
+
+# Local environment files
+client/.env
+client/.env.local
+client/.env.development
+client/.env.production
+client/.env.test
+
+## ---------------------------------------
+## Global Environment Files (Security)
+## ---------------------------------------
 .env
-docker/.env
 **/.env
+docker/.env
 
 # User Secrets
 secrets.json
 **/secrets.json
 
-# Development settings
+# ASP.NET development settings
 appsettings.Development.json
 
 ## ---------------------------------------
@@ -31,12 +53,27 @@ appsettings.Development.json
 Thumbs.db
 
 ## ---------------------------------------
-## Logs and Temporary Files
+## Logs and Temporary files
 ## ---------------------------------------
 *.log
 *.tmp
 
 ## ---------------------------------------
-## Docker Files
+## Docker / Database Data
 ## ---------------------------------------
 postgres_data/
+docker/postgres_data/
+
+## ---------------------------------------
+## Misc
+## ---------------------------------------
+# VS Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+
+# Backup files
+*.bak
+*.swp
+*.temp
