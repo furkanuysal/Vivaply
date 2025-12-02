@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Swagger port
-export const BASE_URL = 'https://localhost:44340/api'; 
+export const BASE_URL = 'https://localhost:7161/api'; 
 
 const api = axios.create({
   baseURL: BASE_URL,

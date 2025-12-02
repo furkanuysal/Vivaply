@@ -5,6 +5,8 @@ import ProfilePage from './pages/ProfilePage';
 import DashboardLayout from './components/DashboardLayout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import EntertainmentPage from './pages/EntertainmentPage';
+import EntertainmentDetailPage from './pages/EntertainmentDetailPage';
 
 function App() {
   return (
@@ -19,7 +21,9 @@ function App() {
         {/* Protected Routes (Sidebarlı Layout) */}
         <Route element={<DashboardLayout />}>
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/entertainment" element={<EntertainmentPage />} />
           {/* İleride buraya /movies, /books gelecek */}
+          <Route path="/entertainment/:type/:id" element={<EntertainmentDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
