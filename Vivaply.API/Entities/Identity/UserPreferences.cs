@@ -11,7 +11,7 @@ namespace Vivaply.API.Entities.Identity
 
         // Theme and Language Preferences
         public string Theme { get; set; } = "Light";
-        public string Language { get; set; } = "tr-TR";
+        public string Language { get; set; } = "en-US";
 
         // Time Format (IANA Format: "Europe/Istanbul")
         // Default is UTC

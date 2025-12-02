@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Vivaply.API.Entities.Entertainment;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
@@ -12,11 +13,16 @@ namespace Vivaply.API.Data
         {
         }
 
-        // Tables (Entities)
+        // General Tables (Entities)
         public DbSet<User> Users { get; set; }
         public DbSet<UserPreferences> UserPreferences { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Wallet> Wallets { get; set; }
+
+        // Entertainment Tables
+        public DbSet<UserShow> UserShows { get; set; }
+        public DbSet<UserMovie> UserMovies { get; set; }
+        public DbSet<WatchedEpisode> WatchedEpisodes { get; set; }
 
         // Relationship Configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +48,22 @@ namespace Vivaply.API.Data
                 .HasOne(u => u.Wallet)
                 .WithOne(w => w.User)
                 .HasForeignKey<Wallet>(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Entertainment Relationships
+
+            // Show - Episodes Relationships (1-to-Many)
+            modelBuilder.Entity<UserShow>()
+                .HasMany(s => s.WatchedEpisodes) // One show has many watched episodes
+                .WithOne(e => e.UserShow)        // One watched episode belongs to one show
+                .HasForeignKey(e => e.UserShowId)
+                .OnDelete(DeleteBehavior.Cascade); // Delete episodes if show is deleted
+
+            // Movie - User Relationships (1-to-Many)
+            modelBuilder.Entity<UserMovie>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
         }

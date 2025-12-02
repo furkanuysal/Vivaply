@@ -16,6 +16,13 @@ builder.Services.AddDbContext<VivaplyDbContext>(options =>
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+// HTTP Client Configuration for TMDB Service
+builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 // Services Configuration
 builder.Services.AddControllers();
 
