@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vivaply.API.Data;
@@ -11,9 +12,11 @@ using Vivaply.API.Data;
 namespace Vivaply.API.Migrations
 {
     [DbContext(typeof(VivaplyDbContext))]
-    partial class VivaplyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203182240_AddEpisodeCache")]
+    partial class AddEpisodeCache
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,9 +60,6 @@ namespace Vivaply.API.Migrations
                     b.Property<double?>("UserRating")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("VoteAverage")
-                        .HasColumnType("double precision");
-
                     b.Property<DateTime?>("WatchedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -92,10 +92,6 @@ namespace Vivaply.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("ProductionStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("Review")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -118,9 +114,6 @@ namespace Vivaply.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<double?>("UserRating")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("VoteAverage")
                         .HasColumnType("double precision");
 
                     b.HasKey("Id");

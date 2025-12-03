@@ -25,13 +25,26 @@ namespace Vivaply.API.Entities.Entertainment
         public WatchStatus Status { get; set; } = WatchStatus.Watching;
 
         [Range(1, 10)]
-        public int? UserRating { get; set; }
+        public double? UserRating { get; set; }
+        public double VoteAverage { get; set; }
+
+        [MaxLength(50)]
+        public string? ProductionStatus { get; set; }
 
         // User Review
         [MaxLength(1000)]
         public string? Review { get; set; }
 
+        [MaxLength(20)]
+        public string? FirstAirDate { get; set; }
+
         public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+
+        [MaxLength(50)]
+        public string? LatestEpisodeInfo { get; set; } // Example: "S5 E14"
+
+        [MaxLength(20)]
+        public string? NextAirDate { get; set; }
 
         // Watched Episodes
         public List<WatchedEpisode> WatchedEpisodes { get; set; } = new();

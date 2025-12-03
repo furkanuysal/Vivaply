@@ -59,6 +59,26 @@ namespace Vivaply.API.Services
             return JsonSerializer.Deserialize<TmdbContentDto>(content);
         }
 
+        // --- TV SEASON DETAILS ---
+        public async Task<TmdbSeasonDetailDto?> GetTvSeasonDetailsAsync(int tmdbId, int seasonNumber, string language = "en-US")
+        {
+            // TMDB Endpoint: /tv/{id}/season/{season_number}
+            var response = await _httpClient.GetAsync($"tv/{tmdbId}/season/{seasonNumber}?api_key={_apiKey}&language={language}");
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            // Snake Case ayarı burası için de geçerli
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+
+            return JsonSerializer.Deserialize<TmdbSeasonDetailDto>(content, options);
+        }
+
         // Helper
         private async Task<List<T>> ParseResponseAsync<T>(HttpResponseMessage response)
         {

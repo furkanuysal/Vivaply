@@ -17,7 +17,7 @@ namespace Vivaply.API.Entities.Entertainment
         public DateTime WatchedAt { get; set; } = DateTime.UtcNow;
 
         [Range(1, 10)]
-        public int? UserRating { get; set; }
+        public double? UserRating { get; set; }
 
         [MaxLength(500)]
         public string? Review { get; set; }

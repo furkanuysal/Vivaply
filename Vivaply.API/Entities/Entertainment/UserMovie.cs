@@ -20,15 +20,19 @@ namespace Vivaply.API.Entities.Entertainment
 
         [MaxLength(200)]
         public string? PosterPath { get; set; }
+        public double VoteAverage { get; set; }
 
         // Watch Status
         public WatchStatus Status { get; set; } = WatchStatus.PlanToWatch;
 
         public DateTime? WatchedAt { get; set; } // When watched
 
+        [MaxLength(20)]
+        public string? ReleaseDate { get; set; }
+
         // Rating given by user
         [Range(1, 10)]
-        public int? UserRating { get; set; }
+        public double? UserRating { get; set; }
 
         // Review given by user
         [MaxLength(1000)]
