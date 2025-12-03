@@ -1,25 +1,34 @@
-import { useState, useEffect } from 'react';
-import { entertainmentService } from '../features/entertainment/services/entertainmentService';
-import MediaCard from '../features/entertainment/components/MediaCard';
-import type { TmdbContentDto } from '../features/entertainment/types';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from "react";
+import { entertainmentService } from "../features/entertainment/services/entertainmentService";
+import MediaCard from "../features/entertainment/components/MediaCard";
+import type { TmdbContentDto } from "../features/entertainment/types";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 export default function EntertainmentPage() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<TmdbContentDto[]>([]);
-  const [activeTab, setActiveTab] = useState<'tv' | 'movie'>('tv'); // Dizi mi Film mi?
+  const [activeTab, setActiveTab] = useState<"tv" | "movie">("tv"); // Dizi mi Film mi?
   const [loading, setLoading] = useState(false);
 
   // Sayfa açılınca trendleri getir (Boş kalmasın)
   useEffect(() => {
-    loadTrending();
-  }, []);
+    // Eğer arama kutusu doluysa trendleri getirme, aramayı tekrarla (İsteğe bağlı)
+    if (query.trim()) {
+      handleSearch(new Event("submit") as any); // Basit bir hack, arama fonksiyonunu tetikler
+    } else {
+      loadTrending();
+    }
+  }, [activeTab]);
 
   const loadTrending = async () => {
     setLoading(true);
     try {
-      // Şimdilik sadece dizi trendlerini çekiyoruz, ileride ayırabiliriz
-      const data = await entertainmentService.getTrendingTv();
+      let data;
+      if (activeTab === "tv") {
+        data = await entertainmentService.getTrendingTv();
+      } else {
+        data = await entertainmentService.getTrendingMovie();
+      }
       setResults(data);
     } finally {
       setLoading(false);
@@ -28,7 +37,10 @@ export default function EntertainmentPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      loadTrending();
+      return;
+    }
 
     setLoading(true);
     try {
@@ -46,22 +58,29 @@ export default function EntertainmentPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      
       {/* 🟢 Arama ve Filtre Alanı */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <h1 className="text-3xl font-bold text-white">Keşfet</h1>
-        
+
         {/* Tab Switcher */}
         <div className="bg-gray-800 p-1 rounded-lg flex gap-1 border border-gray-700">
-          <button 
-            onClick={() => setActiveTab('tv')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'tv' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+          <button
+            onClick={() => setActiveTab("tv")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeTab === "tv"
+                ? "bg-blue-600 text-white"
+                : "text-gray-400 hover:text-white"
+            }`}
           >
             Diziler
           </button>
-          <button 
-            onClick={() => setActiveTab('movie')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'movie' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+          <button
+            onClick={() => setActiveTab("movie")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeTab === "movie"
+                ? "bg-blue-600 text-white"
+                : "text-gray-400 hover:text-white"
+            }`}
           >
             Filmler
           </button>
@@ -70,15 +89,20 @@ export default function EntertainmentPage() {
 
       {/* Arama Kutusu */}
       <form onSubmit={handleSearch} className="relative">
-        <input 
-          type="text" 
-          placeholder={`${activeTab === 'tv' ? 'Dizi' : 'Film'} ara... (Örn: Breaking Bad)`}
+        <input
+          type="text"
+          placeholder={`${
+            activeTab === "tv" ? "Dizi" : "Film"
+          } ara... (Örn: Breaking Bad)`}
           className="w-full bg-gray-800 border border-gray-700 text-white px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <MagnifyingGlassIcon className="w-6 h-6 text-gray-400 absolute left-4 top-4" />
-        <button type="submit" className="absolute right-3 top-2.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium transition">
+        <button
+          type="submit"
+          className="absolute right-3 top-2.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium transition"
+        >
           Ara
         </button>
       </form>

@@ -20,8 +20,13 @@ export default function DashboardLayout() {
     // ✅ DÜZELTME: App.tsx'teki rota ile aynı yaptık (/entertainment)
     // İsmini de "Keşfet" yaptık çünkü hem Dizi hem Film var.
     {
-      name: "Keşfet",
+      name: "Eğlence Keşfet",
       path: "/entertainment",
+      icon: <FilmIcon className="w-6 h-6" />,
+    },
+    {
+      name: "Eğlence Kütüphanem",
+      path: "/entertainment/library",
       icon: <FilmIcon className="w-6 h-6" />,
     },
 

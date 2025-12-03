@@ -7,6 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import EntertainmentPage from './pages/EntertainmentPage';
 import EntertainmentDetailPage from './pages/EntertainmentDetailPage';
+import EntertainmentLibraryPage from './pages/EntertainmentLibraryPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/entertainment" element={<EntertainmentPage />} />
           {/* İleride buraya /movies, /books gelecek */}
           <Route path="/entertainment/:type/:id" element={<EntertainmentDetailPage />} />
+          <Route path="/entertainment/library" element={<EntertainmentLibraryPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
