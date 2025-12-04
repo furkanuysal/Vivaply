@@ -208,7 +208,8 @@ namespace Vivaply.API.Controllers
                     UserStatus = x.Status,
                     VoteAverage = x.VoteAverage,
                     UserRating = x.UserRating ?? 0,
-                    ReleaseDate = x.ReleaseDate
+                    ReleaseDate = x.ReleaseDate,
+                    Status = x.ProductionStatus
                 }).ToListAsync();
 
             return Ok(new { tv = showDtos, movie = movies });
@@ -269,7 +270,8 @@ namespace Vivaply.API.Controllers
                     PosterPath = request.PosterPath,
                     ReleaseDate = request.Date,
                     Status = request.Status,
-                    VoteAverage = details?.VoteAverage ?? 0
+                    VoteAverage = details?.VoteAverage ?? 0,
+                    ProductionStatus = details?.Status
                 };
                 // Add the movie to the library
                 _dbContext.UserMovies.Add(movie);
@@ -647,7 +649,8 @@ namespace Vivaply.API.Controllers
                         PosterPath = details?.PosterPath,
                         ReleaseDate = details?.ReleaseDate,
                         Status = WatchStatus.Completed,
-                        VoteAverage = details?.VoteAverage ?? 0
+                        VoteAverage = details?.VoteAverage ?? 0,
+                        ProductionStatus = details?.Status
                     };
                     _dbContext.UserMovies.Add(movie);
                 }
@@ -716,7 +719,7 @@ namespace Vivaply.API.Controllers
 
             // Fix movies
             var brokenMovies = await _dbContext.UserMovies
-                .Where(m => m.Title.Contains("Unknown") || m.VoteAverage == 0)
+                .Where(m => m.Title.Contains("Unknown") || m.VoteAverage == 0 || m.ProductionStatus == null)
                 .ToListAsync();
 
             foreach (var movie in brokenMovies)
@@ -728,6 +731,7 @@ namespace Vivaply.API.Controllers
                     movie.PosterPath = details.PosterPath;
                     movie.ReleaseDate = details.ReleaseDate;
                     movie.VoteAverage = details.VoteAverage;
+                    movie.ProductionStatus = details.Status;
                     fixedCount++;
                 }
             }
@@ -765,6 +769,19 @@ namespace Vivaply.API.Controllers
                     if (Math.Abs(show.VoteAverage - details.VoteAverage) > 0.1) { show.VoteAverage = details.VoteAverage; hasChanges = true; }
                     if (show.ProductionStatus != details.Status) { show.ProductionStatus = details.Status; hasChanges = true; }
 
+                    if (hasChanges) updatedCount++;
+                }
+            }
+
+            var userMovies = await _dbContext.UserMovies.Where(x => x.UserId == userId).ToListAsync();
+            foreach (var movie in userMovies)
+            {
+                var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbMovieId, "en-US");
+                if (details != null)
+                {
+                    bool hasChanges = false;
+                    if (Math.Abs(movie.VoteAverage - details.VoteAverage) > 0.1) { movie.VoteAverage = details.VoteAverage; hasChanges = true; }
+                    if (movie.ProductionStatus != details.Status) { movie.ProductionStatus = details.Status; hasChanges = true; }
                     if (hasChanges) updatedCount++;
                 }
             }

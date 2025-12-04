@@ -25,6 +25,10 @@ namespace Vivaply.API.Entities.Entertainment
         // Watch Status
         public WatchStatus Status { get; set; } = WatchStatus.PlanToWatch;
 
+        // Production status
+        [MaxLength(50)]
+        public string? ProductionStatus { get; set; }
+
         public DateTime? WatchedAt { get; set; } // When watched
 
         [MaxLength(20)]
