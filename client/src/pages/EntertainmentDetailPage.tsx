@@ -8,6 +8,7 @@ import {
 import { toast } from "react-toastify";
 import StarRating from "../features/entertainment/components/StarRating";
 import ProdStatusBadge from "../features/entertainment/components/ProdStatusBadge";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function EntertainmentDetailPage() {
   const { type, id } = useParams();
@@ -24,6 +25,14 @@ export default function EntertainmentDetailPage() {
 
   // Dropdown Menü Durumu
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Confirmation Dialog State
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | null>(
+    null
+  );
 
   // Helper: Buton Tasarımı (Renk/İkon)
   const getStatusButtonConfig = (status: WatchStatus) => {
@@ -99,11 +108,19 @@ export default function EntertainmentDetailPage() {
   };
 
   // Listeden Kaldırma Fonksiyonu
-  const handleRemove = async () => {
+  const handleRemoveClick = () => {
     if (!data) return;
-    if (!confirm("Bunu kütüphanenizden kaldırmak istediğinize emin misiniz?"))
-      return;
+    setConfirmTitle("Listeden Kaldır");
+    setConfirmMessage(
+      "Bunu kütüphanenizden kaldırmak istediğinize emin misiniz?"
+    );
+    setOnConfirmAction(() => executeRemove);
+    setIsConfirmOpen(true);
+    setIsDropdownOpen(false); // Close dropdown immediately
+  };
 
+  const executeRemove = async () => {
+    if (!data) return;
     try {
       await entertainmentService.removeFromLibrary(
         data.id,
@@ -113,7 +130,6 @@ export default function EntertainmentDetailPage() {
 
       // UI Güncelle: Statüyü undefined yap, böylece buton tekrar mavi "+ Takip Et" olur.
       setData((prev: any) => ({ ...prev, user_status: undefined }));
-      setIsDropdownOpen(false);
       if (type === "tv") {
         try {
           const seasonData = await entertainmentService.getTvSeasonDetail(
@@ -297,15 +313,18 @@ export default function EntertainmentDetailPage() {
     }
   };
 
-  const handleMarkSeasonWatched = async () => {
+  const handleMarkSeasonWatchedClick = () => {
     if (!id) return;
-    if (
-      !confirm(
-        `${selectedSeason}. Sezonu tamamlandı olarak işaretlemek istiyor musunuz?`
-      )
-    )
-      return;
+    setConfirmTitle("Sezonu Tamamla");
+    setConfirmMessage(
+      `${selectedSeason}. Sezonu tamamlandı olarak işaretlemek istiyor musunuz?`
+    );
+    setOnConfirmAction(() => executeMarkSeasonWatched);
+    setIsConfirmOpen(true);
+  };
 
+  const executeMarkSeasonWatched = async () => {
+    if (!id) return;
     try {
       await entertainmentService.markSeasonWatched({
         tmdbShowId: Number(id),
@@ -345,6 +364,17 @@ export default function EntertainmentDetailPage() {
 
   return (
     <div className="text-white pb-20">
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          if (onConfirmAction) onConfirmAction();
+        }}
+        title={confirmTitle}
+        message={confirmMessage}
+      />
+
       {bgImage && (
         <div
           className="fixed inset-0 w-full h-full bg-cover bg-center opacity-20 -z-10 blur-sm"
@@ -448,7 +478,7 @@ export default function EntertainmentDetailPage() {
                       </button>
                     ))}
                     <button
-                      onClick={handleRemove}
+                      onClick={handleRemoveClick}
                       className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition flex items-center gap-2"
                     >
                       <span>🗑️</span> Listeden Kaldır
@@ -518,7 +548,7 @@ export default function EntertainmentDetailPage() {
               <>
                 <div className="flex justify-end mb-4">
                   <button
-                    onClick={handleMarkSeasonWatched}
+                    onClick={handleMarkSeasonWatchedClick}
                     className="text-xs bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 px-3 py-1.5 rounded-lg transition flex items-center gap-2"
                   >
                     <span>✓</span> Sezonu Tamamla

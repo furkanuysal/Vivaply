@@ -288,7 +288,7 @@ export default function EntertainmentLibraryPage() {
       </div>
 
       {/* 👇 BURADA statusFilters KULLANIYORUZ */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700">
+      <div className="flex flex-wrap gap-2 pb-2">
         {statusFilters.map((filter) => (
           <button
             key={filter.value}
@@ -315,27 +315,54 @@ export default function EntertainmentLibraryPage() {
           {filteredItems.length > 0 ? (
             viewMode === "grid" ? (
               // GRID VIEW
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {filteredItems.map((item) => (
                   <MediaCard key={item.id} content={item} type={activeTab} />
                 ))}
               </div>
             ) : (
               // TABLE VIEW
-              <div className="overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
-                <table className="w-full text-left text-sm text-gray-400">
+              <div className="w-full overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
+                <table className="w-full table-fixed text-left text-sm text-gray-400">
                   <thead className="bg-gray-800 text-gray-200 uppercase font-bold text-xs">
                     <tr>
                       <th className="px-4 py-4">Afiş</th>
                       <th className="px-4 py-4">Başlık</th>
-                      <th className="px-4 py-4">Genel Puan</th>
-                      <th className="px-4 py-4">Puanım</th>
-                      <th className="px-4 py-4">Son İzlenen</th>
-                      <th className="px-4 py-4">Son Çıkan</th>
-                      <th className="px-4 py-4">Yapım Durumu</th>
-                      <th className="px-4 py-4">Durum</th>
-                      <th className="px-4 py-4">Tarih</th>
-                      <th className="px-4 py-4 text-right">İşlem</th>
+                      <th className="px-4 py-4 hidden md:table-cell">
+                        Genel Puan
+                      </th>
+                      <th
+                        className={`px-4 py-4 ${
+                          activeTab === "movie" ? "" : "hidden md:table-cell"
+                        }`}
+                      >
+                        Puanım
+                      </th>
+                      <th
+                        className={`px-4 py-4 ${
+                          activeTab === "movie" ? "hidden" : ""
+                        }`}
+                      >
+                        Son İzlenen
+                      </th>
+                      <th
+                        className={`px-4 py-4 ${
+                          activeTab === "movie" ? "hidden" : ""
+                        }`}
+                      >
+                        Son Çıkan
+                      </th>
+                      <th className="px-4 py-4 hidden md:table-cell">
+                        Yapım Durumu
+                      </th>
+                      <th
+                        className={`px-4 py-4 ${
+                          activeTab === "movie" ? "" : "hidden md:table-cell"
+                        }`}
+                      >
+                        Durum
+                      </th>
+                      <th className="px-4 py-4 hidden md:table-cell">Tarih</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700 bg-gray-900/50">
@@ -366,12 +393,16 @@ export default function EntertainmentLibraryPage() {
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 hidden md:table-cell">
                           <span className="text-yellow-400 font-bold">
                             ★ {(item.vote_average || 0).toFixed(1)}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td
+                          className={`px-4 py-3 ${
+                            activeTab === "movie" ? "" : "hidden md:table-cell"
+                          }`}
+                        >
                           {item.user_rating ? (
                             <span className="text-blue-400 font-bold">
                               ★ {Number(item.user_rating).toFixed(1)}
@@ -380,16 +411,25 @@ export default function EntertainmentLibraryPage() {
                             <span className="text-gray-600">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-300">
+                        <td
+                          className={`px-4 py-3 text-sm text-gray-300 ${
+                            activeTab === "movie" ? "hidden" : ""
+                          }`}
+                        >
                           <div className="flex items-center gap-2">
                             <span>
-                              {formatEpisodeString(item.last_watched)}
+                              <span className="md:hidden">
+                                {item.last_watched || "-"}
+                              </span>
+                              <span className="hidden md:inline">
+                                {formatEpisodeString(item.last_watched)}
+                              </span>
                             </span>
                             {item.latest_episode &&
                             item.last_watched &&
                             item.latest_episode === item.last_watched ? (
                               <CheckCircleIcon
-                                className="w-5 h-5 text-green-400"
+                                className="w-6 h-6 text-green-400 flex-shrink-0"
                                 title="Güncel bölümler izlendi"
                               />
                             ) : (
@@ -411,13 +451,26 @@ export default function EntertainmentLibraryPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-300">
-                          {formatEpisodeString(item.latest_episode)}
+                        <td
+                          className={`px-4 py-3 text-sm text-gray-300 ${
+                            activeTab === "movie" ? "hidden" : ""
+                          }`}
+                        >
+                          <span className="md:hidden">
+                            {item.latest_episode || "-"}
+                          </span>
+                          <span className="hidden md:inline">
+                            {formatEpisodeString(item.latest_episode)}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 hidden md:table-cell">
                           <ProdStatusBadge status={item.status} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td
+                          className={`px-4 py-3 ${
+                            activeTab === "movie" ? "" : "hidden md:table-cell"
+                          }`}
+                        >
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
                               item.user_status
@@ -426,21 +479,8 @@ export default function EntertainmentLibraryPage() {
                             {getStatusLabel(item.user_status)}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 hidden md:table-cell">
                           {item.display_date?.split("-")[0] || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(
-                                `/entertainment/${activeTab}/${item.id}`
-                              );
-                            }}
-                            className="text-blue-400 hover:text-blue-300 hover:underline"
-                          >
-                            Detay
-                          </button>
                         </td>
                       </tr>
                     ))}

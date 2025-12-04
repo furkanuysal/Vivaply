@@ -5,10 +5,14 @@ import {
   FilmIcon,
   BookOpenIcon,
   ArrowRightOnRectangleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 export default function DashboardLayout() {
   const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
     {
@@ -45,14 +49,36 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex font-sans">
       {/* 🟢 SIDEBAR (Masaüstü) */}
-      <aside className="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col fixed h-full z-20">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 text-xl">
+      <aside
+        className={`${
+          isCollapsed ? "w-20" : "w-64"
+        } bg-gray-800 border-r border-gray-700 hidden md:flex flex-col fixed h-full z-20 transition-all duration-300 ease-in-out`}
+      >
+        <div
+          className={`p-6 flex items-center ${
+            isCollapsed ? "justify-center" : "gap-3"
+          } relative`}
+        >
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 text-xl shrink-0">
             V
           </div>
-          <h1 className="text-xl font-bold tracking-wide text-gray-100">
-            Vivaply
-          </h1>
+          {!isCollapsed && (
+            <h1 className="text-xl font-bold tracking-wide text-gray-100 whitespace-nowrap overflow-hidden">
+              Vivaply
+            </h1>
+          )}
+
+          {/* Toggle Button */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-8 bg-gray-800 border border-gray-700 rounded-full p-1 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors shadow-lg"
+          >
+            {isCollapsed ? (
+              <ChevronRightIcon className="w-4 h-4" />
+            ) : (
+              <ChevronLeftIcon className="w-4 h-4" />
+            )}
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -60,14 +86,21 @@ export default function DashboardLayout() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center ${
+                isCollapsed ? "justify-center px-2" : "gap-3 px-4"
+              } py-3 rounded-xl transition-all duration-200 group ${
                 location.pathname === item.path
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40 translate-x-1"
                   : "text-gray-400 hover:bg-gray-700/50 hover:text-white hover:translate-x-1"
               }`}
+              title={isCollapsed ? item.name : ""}
             >
               {item.icon}
-              <span className="font-medium">{item.name}</span>
+              {!isCollapsed && (
+                <span className="font-medium whitespace-nowrap">
+                  {item.name}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -75,16 +108,25 @@ export default function DashboardLayout() {
         <div className="p-4 border-t border-gray-700/50">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl transition-colors duration-200"
+            className={`flex items-center ${
+              isCollapsed ? "justify-center px-2" : "gap-3 px-4"
+            } w-full py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl transition-colors duration-200`}
+            title={isCollapsed ? "Çıkış Yap" : ""}
           >
             <ArrowRightOnRectangleIcon className="w-6 h-6" />
-            <span className="font-medium">Çıkış Yap</span>
+            {!isCollapsed && (
+              <span className="font-medium whitespace-nowrap">Çıkış Yap</span>
+            )}
           </button>
         </div>
       </aside>
 
       {/* 🔵 CONTENT AREA */}
-      <main className="flex-1 md:ml-64 bg-gray-900 min-h-screen relative">
+      <main
+        className={`flex-1 ${
+          isCollapsed ? "md:ml-20" : "md:ml-64"
+        } bg-gray-900 min-h-screen relative transition-all duration-300 ease-in-out`}
+      >
         <header className="md:hidden p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center sticky top-0 z-30 shadow-md">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
