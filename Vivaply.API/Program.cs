@@ -23,6 +23,13 @@ builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// HTTP Client Configuration for Google Books Service
+builder.Services.AddHttpClient<IGoogleBooksService, GoogleBooksService>(client =>
+{
+    client.BaseAddress = new Uri("https://www.googleapis.com/books/v1/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 // Services Configuration
 builder.Services.AddControllers();
 

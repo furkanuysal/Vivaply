@@ -3,6 +3,7 @@ using Vivaply.API.Entities.Entertainment;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
+using Vivaply.API.Entities.Knowledge;
 
 namespace Vivaply.API.Data
 {
@@ -23,6 +24,9 @@ namespace Vivaply.API.Data
         public DbSet<UserShow> UserShows { get; set; }
         public DbSet<UserMovie> UserMovies { get; set; }
         public DbSet<WatchedEpisode> WatchedEpisodes { get; set; }
+
+        // Knowledge Tables
+        public DbSet<UserBook> UserBooks { get; set; }
 
         // Relationship Configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -66,6 +70,13 @@ namespace Vivaply.API.Data
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Knowledge Relationships
+            // User - UserBook Relationships (1-to-Many)
+            modelBuilder.Entity<UserBook>()
+                .HasOne(b => b.User)
+                .WithMany()
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
