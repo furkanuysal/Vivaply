@@ -36,7 +36,12 @@ export default function DashboardLayout() {
 
     {
       name: "Kitaplar",
-      path: "/books",
+      path: "/knowledge",
+      icon: <BookOpenIcon className="w-6 h-6" />,
+    },
+    {
+      name: "Kitap Kütüphanem",
+      path: "/knowledge/library",
       icon: <BookOpenIcon className="w-6 h-6" />,
     },
   ];

@@ -1,13 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProfilePage from './pages/ProfilePage';
-import DashboardLayout from './components/DashboardLayout';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import EntertainmentPage from './pages/EntertainmentPage';
-import EntertainmentDetailPage from './pages/EntertainmentDetailPage';
-import EntertainmentLibraryPage from './pages/EntertainmentLibraryPage';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
+import DashboardLayout from "./components/DashboardLayout";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import EntertainmentPage from "./pages/EntertainmentPage";
+import EntertainmentDetailPage from "./pages/EntertainmentDetailPage";
+import EntertainmentLibraryPage from "./pages/EntertainmentLibraryPage";
+import BookLibraryPage from "./pages/BookLibraryPage";
+import BookDetailPage from "./pages/BookDetailPage";
+import KnowledgePage from "./pages/KnowledgePage";
 
 function App() {
   return (
@@ -24,8 +27,17 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/entertainment" element={<EntertainmentPage />} />
           {/* İleride buraya /movies, /books gelecek */}
-          <Route path="/entertainment/:type/:id" element={<EntertainmentDetailPage />} />
-          <Route path="/entertainment/library" element={<EntertainmentLibraryPage />} />
+          <Route
+            path="/entertainment/:type/:id"
+            element={<EntertainmentDetailPage />}
+          />
+          <Route
+            path="/entertainment/library"
+            element={<EntertainmentLibraryPage />}
+          />
+          <Route path="/knowledge" element={<KnowledgePage />} />
+          <Route path="/knowledge/library" element={<BookLibraryPage />} />
+          <Route path="/knowledge/:id" element={<BookDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
