@@ -43,4 +43,22 @@ namespace Vivaply.API.DTOs.GoogleBooks
         [JsonPropertyName("currentPage")]
         public int CurrentPage { get; set; }
     }
+
+    // User rating
+    public class RateBookDto
+    {
+        [JsonPropertyName("googleBookId")]
+        public string GoogleBookId { get; set; } = string.Empty;
+        [JsonPropertyName("rating")]
+        public double Rating { get; set; }
+    }
+
+    // User review
+    public class ReviewBookDto
+    {
+        [JsonPropertyName("googleBookId")]
+        public string GoogleBookId { get; set; } = string.Empty;
+        [JsonPropertyName("review")]
+        public string Review { get; set; } = string.Empty;
+    }
 }

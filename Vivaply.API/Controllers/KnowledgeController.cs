@@ -181,5 +181,59 @@ namespace Vivaply.API.Controllers
             await _dbContext.SaveChangesAsync();
             return Ok(new { message = "Kitap kütüphaneden kaldırıldı." });
         }
+
+        // Book Review
+        [HttpPut("books/rating")]
+        public async Task<IActionResult> RateBook([FromBody] RateBookDto request)
+        {
+            if (request.Rating < 0 || request.Rating > 10) return BadRequest("Puan 0-10 arasında olmalı.");
+
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+            var book = await _dbContext.UserBooks.FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
+
+            // If the book is not tracked yet, add it first
+            if (book == null)
+            {
+                var details = await _booksService.GetBookDetailsAsync(request.GoogleBookId);
+                if (details == null) return NotFound("Kitap bulunamadı.");
+
+                book = new UserBook
+                {
+                    UserId = userId,
+                    GoogleBookId = request.GoogleBookId,
+                    Title = details.Title,
+                    Authors = string.Join(", ", details.Authors),
+                    CoverUrl = details.CoverUrl,
+                    PageCount = details.PageCount,
+                    Status = ReadStatus.Reading, // Default status when rating
+                    DateAdded = DateTime.UtcNow
+                };
+                _dbContext.UserBooks.Add(book);
+            }
+
+            book.UserRating = request.Rating;
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = $"Puan verildi: {request.Rating}/10 ⭐" });
+        }
+
+        // Review Book
+        [HttpPut("books/review")]
+        public async Task<IActionResult> AddReview([FromBody] ReviewBookDto request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+            var book = await _dbContext.UserBooks.FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
+
+            if (book == null) return BadRequest("Yorum yapmak için önce kitabı kütüphanenize ekleyin.");
+
+            book.Review = request.Review;
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Notunuz kaydedildi!" });
+        }
     }
 }
