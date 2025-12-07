@@ -42,3 +42,13 @@ export interface UpdateBookProgressDto {
   googleBookId: string;
   currentPage: number;
 }
+
+export interface RateBookDto {
+  googleBookId: string;
+  rating: number;
+}
+
+export interface ReviewBookDto {
+  googleBookId: string;
+  review: string;
+}

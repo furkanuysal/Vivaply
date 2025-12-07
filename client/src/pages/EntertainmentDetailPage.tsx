@@ -6,7 +6,7 @@ import {
   type TmdbEpisodeDto,
 } from "../features/entertainment/types";
 import { toast } from "react-toastify";
-import StarRating from "../features/entertainment/components/StarRating";
+import StarRating from "../components/StarRating";
 import ProdStatusBadge from "../features/entertainment/components/ProdStatusBadge";
 import ConfirmDialog from "../components/ConfirmDialog";
 

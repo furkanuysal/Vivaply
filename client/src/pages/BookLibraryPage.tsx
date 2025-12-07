@@ -230,7 +230,6 @@ export default function BookLibraryPage() {
                       <th className="px-4 py-4">Puanım</th>
                       <th className="px-4 py-4">İlerleme</th>
                       <th className="px-4 py-4">Durum</th>
-                      <th className="px-4 py-4 text-right">İşlem</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700 bg-gray-900/50">
@@ -246,7 +245,9 @@ export default function BookLibraryPage() {
                         <tr
                           key={book.id}
                           className="hover:bg-gray-800/50 transition cursor-pointer group"
-                          onClick={() => navigate(`/books/${book.id}`)}
+                          onClick={() =>
+                            navigate(`/knowledge/books/${book.id}`)
+                          }
                         >
                           {/* Kapak */}
                           <td className="px-4 py-3">
@@ -280,8 +281,8 @@ export default function BookLibraryPage() {
                           {/* Puan */}
                           <td className="px-4 py-3">
                             {book.userRating ? (
-                              <span className="text-blue-400 font-bold bg-blue-400/10 px-2 py-1 rounded border border-blue-400/20">
-                                ★ {book.userRating}
+                              <span className="text-blue-400 font-bold">
+                                ★ {book.userRating.toFixed(1)}
                               </span>
                             ) : (
                               <span className="text-gray-600">-</span>
@@ -321,19 +322,6 @@ export default function BookLibraryPage() {
                             >
                               {getStatusLabel(book.userStatus)}
                             </span>
-                          </td>
-
-                          {/* İşlem */}
-                          <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/books/${book.id}`);
-                              }}
-                              className="text-blue-400 hover:text-blue-300 hover:underline"
-                            >
-                              Detay
-                            </button>
                           </td>
                         </tr>
                       );

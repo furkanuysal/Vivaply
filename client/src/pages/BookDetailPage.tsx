@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { booksService } from "../features/knowledge/services/booksService";
 import { ReadStatus } from "../features/knowledge/types";
 import { toast } from "react-toastify";
-import StarRating from "../features/entertainment/components/StarRating"; // Ortak bileşeni kullanıyoruz
+import StarRating from "../components/StarRating"; // Ortak bileşeni kullanıyoruz
 import ConfirmDialog from "../components/ConfirmDialog"; // Ortak bileşen
 
 export default function BookDetailPage() {
@@ -75,10 +75,16 @@ export default function BookDetailPage() {
   // Puan Verme (Backend'e Puan Endpoint'i ekleyince aktifleşecek)
   const handleRate = async (rating: number) => {
     if (!data) return;
-    // TODO: Backend'e 'RateBook' endpoint'i ekleyince burayı açacağız.
-    // Şimdilik sadece UI'da gösterelim.
+    try {
+      await booksService.rateBook({
+        googleBookId: data.id,
+        rating,
+      });
+      toast.success(`Puan verildi: ${rating}/10 ⭐`);
+    } catch (error: any) {
+      toast.error("Puan verme işlemi başarısız.");
+    }
     setData((prev: any) => ({ ...prev, userRating: rating }));
-    toast.success(`Puan verildi: ${rating}/10 ⭐ (Simülasyon)`);
   };
 
   // Listeden Kaldırma
@@ -145,8 +151,16 @@ export default function BookDetailPage() {
 
   // Yorum Kaydetme
   const handleSaveReview = async () => {
-    // TODO: Backend'e 'AddBookReview' ekleyince burayı bağlayacağız.
-    toast.success("Notunuz kaydedildi! 📝 (Simülasyon)");
+    if (!data) return;
+    try {
+      await booksService.reviewBook({
+        googleBookId: data.id,
+        review: reviewText,
+      });
+      toast.success("Notunuz kaydedildi! 📝");
+    } catch (error: any) {
+      toast.error("Not kaydetme işlemi başarısız.");
+    }
     setData((prev: any) => ({ ...prev, userReview: reviewText }));
   };
 
@@ -230,15 +244,10 @@ export default function BookDetailPage() {
             </p>
 
             <div className="flex items-center gap-4 mb-6 flex-wrap">
-              {/* Google Rating */}
-              <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-lg font-bold border border-yellow-500/40">
-                Google: ⭐ {(data.averageRating || 0).toFixed(1)}
-              </span>
-
               {/* User Rating */}
               <div className="relative group">
                 <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-lg font-bold border border-blue-500/40 cursor-pointer flex items-center gap-2">
-                  Benim Puanım: ★ {data.userRating || 0}
+                  ★ {data.userRating || 0}
                 </span>
                 {/* Hover Yıldızları */}
                 <div className="absolute top-full left-0 mt-2 bg-gray-800 border border-gray-700 p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">

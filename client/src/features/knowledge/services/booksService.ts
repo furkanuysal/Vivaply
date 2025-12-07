@@ -4,6 +4,8 @@ import type {
   AddBookDto,
   ReadStatus,
   UpdateBookProgressDto,
+  ReviewBookDto,
+  RateBookDto,
 } from "../types";
 
 export const booksService = {
@@ -53,6 +55,18 @@ export const booksService = {
   // Remove book
   removeBook: async (id: string) => {
     const response = await api.delete(`/Knowledge/books/remove/${id}`);
+    return response.data;
+  },
+
+  // Rate book
+  rateBook: async (data: RateBookDto) => {
+    const response = await api.put("/Knowledge/books/rating", data);
+    return response.data;
+  },
+
+  // Review book
+  reviewBook: async (data: ReviewBookDto) => {
+    const response = await api.put("/Knowledge/books/review", data);
     return response.data;
   },
 };

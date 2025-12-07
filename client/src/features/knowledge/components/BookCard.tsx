@@ -49,7 +49,7 @@ export default function BookCard({ book }: Props) {
 
   return (
     <div
-      onClick={() => navigate(`/knowledge/${book.id}`)}
+      onClick={() => navigate(`/knowledge/books/${book.id}`)}
       className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-gray-700 group cursor-pointer flex flex-col h-full"
     >
       {/* Kapak */}
