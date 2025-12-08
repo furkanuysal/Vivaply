@@ -1,0 +1,35 @@
+{
+  "messages": {
+    "watch_episode_success": "Episode {{episodeNumber}} has been watched!",
+    "mark_season_as_completed_success": "Season {{seasonNumber}} has been marked as completed!"
+  },
+  "dialogs": {
+    "mark_season_as_completed_title": "Mark Season as Completed",
+    "mark_season_as_completed_message": "Are you sure you want to mark Season {{seasonNumber}} as completed?"
+  },
+  "status": {
+    "plan_to_watch": "Plan to Watch",
+    "watching": "Watching",
+    "completed": "Completed",
+    "on_hold": "On Hold",
+    "dropped": "Dropped",
+    "add_to_library": "+ Add to Library"
+  },
+  "prod_status": {
+    "ended": "Ended",
+    "returning_series": "Returning Series",
+    "canceled": "Canceled",
+    "in_production": "In Production",
+    "released": "Released"
+  },
+  "detail": {
+    "personal_review": "Personal Review",
+    "personal_review_placeholder": "What do you think about this content?",
+    "seasons_and_episodes": "Seasons & Episodes",
+    "season_shortcut": "S",
+    "mark_season_as_completed": "Mark Season as Completed",
+    "no_picture": "No Picture",
+    "overview": "Overview",
+    "overview_not_available": "Overview not available"
+  }
+}

@@ -7,17 +7,20 @@
     "status_update_error": "Durum güncelleme işlemi başarısız.",
     "rate_error": "Puan verme işlemi başarısız.",
     "review_error": "Not kaydetme işlemi başarısız.",
-    "not_found": "İçerik bulunamadı.",
+    "content_not_found": "İçerik bulunamadı.",
     "general_error": "İşlem başarısız.",
     "remove_error": "İçerik kütüphanenizden kaldırılamadı.",
     "library_couldnt_load": "Kütüphane yüklenemedi.",
     "library_content_refreshed": "Kütüphane içerikleri yenilendi.",
-    "search_no_results": "Sonuç bulunamadı. Başka bir kelime deneyin."
+    "search_no_results": "Sonuç bulunamadı. Başka bir kelime deneyin.",
+    "remove_from_library_success": "İçerik kütüphanenizden kaldırıldı.",
+    "content_update_success": "İçerik güncellendi.",
+    "content_update_error": "İçerik güncellenemedi.",
+    "no_date": "Tarih Yok"
   },
   "dialogs": {
     "remove_from_library_title": "İçeriği Kütüphaneden Kaldır",
-    "remove_from_library_message": "Bu içeriği kütüphanenizden kaldırmak istediğinize emin misiniz?",
-    "remove_from_library_success": "İçerik kütüphanenizden kaldırıldı."
+    "remove_from_library_message": "Bu içeriği kütüphanenizden kaldırmak istediğinize emin misiniz?"
   },
   "buttons": {
     "yes": "Evet",

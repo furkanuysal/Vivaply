@@ -10,6 +10,7 @@ declare module "i18next" {
       common: typeof common;
       layout: typeof layout;
       knowledge: typeof knowledge;
+      entertainment: typeof entertainment;
     };
   }
 }

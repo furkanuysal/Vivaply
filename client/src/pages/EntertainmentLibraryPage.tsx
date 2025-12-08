@@ -8,6 +8,7 @@ import MediaCard from "../features/entertainment/components/MediaCard";
 import ProdStatusBadge from "../features/entertainment/components/ProdStatusBadge";
 import type { TmdbContentDto } from "../features/entertainment/types";
 import { WatchStatus } from "../features/entertainment/types";
+import { useWatchStatusConfig } from "../features/entertainment/hooks/useWatchStatusConfig";
 
 export default function EntertainmentLibraryPage() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function EntertainmentLibraryPage() {
     movie: TmdbContentDto[];
   }>({ tv: [], movie: [] });
   const [activeTab, setActiveTab] = useState<"tv" | "movie">("tv");
+
   const [filterStatus, setFilterStatus] = useState<WatchStatus | 0>(
     WatchStatus.Watching
   );
@@ -97,76 +99,18 @@ export default function EntertainmentLibraryPage() {
 
   const currentItems = activeTab === "tv" ? libraryData.tv : libraryData.movie;
 
-  const statusOrder: Record<number, number> = {
-    [WatchStatus.Watching]: 1,
-    [WatchStatus.PlanToWatch]: 2,
-    [WatchStatus.OnHold]: 3,
-    [WatchStatus.Dropped]: 4,
-    [WatchStatus.Completed]: 5,
-  };
+  const { STATUS_CONFIG, FILTER_OPTIONS, STATUS_ORDER } =
+    useWatchStatusConfig(activeTab);
 
   const filteredItems = (
     filterStatus === 0
       ? currentItems
       : currentItems.filter((item) => item.user_status === filterStatus)
   ).sort((a, b) => {
-    const orderA = statusOrder[a.user_status] || 99;
-    const orderB = statusOrder[b.user_status] || 99;
+    const orderA = STATUS_ORDER[a.user_status] || 99;
+    const orderB = STATUS_ORDER[b.user_status] || 99;
     return orderA - orderB;
   });
-
-  const TV_FILTERS = [
-    { label: "Hepsi", value: 0 },
-    { label: "İzliyorum", value: WatchStatus.Watching },
-    { label: "Listemde", value: WatchStatus.PlanToWatch },
-    { label: "Tamamlandı", value: WatchStatus.Completed },
-    { label: "Bıraktım", value: WatchStatus.Dropped },
-    { label: "Ara Verdim", value: WatchStatus.OnHold },
-  ];
-
-  const MOVIE_FILTERS = [
-    { label: "Hepsi", value: 0 },
-    { label: "Listemde", value: WatchStatus.PlanToWatch },
-    { label: "Tamamlandı", value: WatchStatus.Completed },
-  ];
-
-  const statusFilters = activeTab === "tv" ? TV_FILTERS : MOVIE_FILTERS;
-
-  // Helper: Status Label
-  const getStatusLabel = (status: number) => {
-    switch (status) {
-      case WatchStatus.PlanToWatch:
-        return "Listemde";
-      case WatchStatus.Watching:
-        return "İzliyorum";
-      case WatchStatus.Completed:
-        return "Tamamlandı";
-      case WatchStatus.OnHold:
-        return "Ara Verdim";
-      case WatchStatus.Dropped:
-        return "Bıraktım";
-      default:
-        return "-";
-    }
-  };
-
-  // Helper: Status Color
-  const getStatusColor = (status: number) => {
-    switch (status) {
-      case WatchStatus.Watching:
-        return "text-green-400 bg-green-400/10 border-green-400/20";
-      case WatchStatus.PlanToWatch:
-        return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-      case WatchStatus.Completed:
-        return "text-purple-400 bg-purple-400/10 border-purple-400/20";
-      case WatchStatus.Dropped:
-        return "text-red-400 bg-red-400/10 border-red-400/20";
-      case WatchStatus.OnHold:
-        return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
-      default:
-        return "text-gray-400 bg-gray-400/10 border-gray-400/20";
-    }
-  };
 
   // Helper: Episode String Formatter (S4 E23 -> 4. Sezon 23. Bölüm)
   const formatEpisodeString = (epString?: string) => {
@@ -289,7 +233,7 @@ export default function EntertainmentLibraryPage() {
 
       {/* 👇 BURADA statusFilters KULLANIYORUZ */}
       <div className="flex flex-wrap gap-2 pb-2">
-        {statusFilters.map((filter) => (
+        {FILTER_OPTIONS.map((filter) => (
           <button
             key={filter.value}
             onClick={() => setFilterStatus(filter.value as any)}
@@ -472,11 +416,11 @@ export default function EntertainmentLibraryPage() {
                           }`}
                         >
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
-                              item.user_status
-                            )}`}
+                            className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                              STATUS_CONFIG[item.user_status].badge
+                            }`}
                           >
-                            {getStatusLabel(item.user_status)}
+                            {STATUS_CONFIG[item.user_status].label}
                           </span>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">

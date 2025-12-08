@@ -7,17 +7,20 @@
     "status_update_error": "Status update failed.",
     "review_error": "Review save failed.",
     "rate_error": "Failed to save rating.",
-    "not_found": "Content not found.",
+    "content_not_found": "Content not found.",
     "general_error": "Operation failed.",
     "remove_error": "Failed to remove content.",
     "library_couldnt_load": "Library could not be loaded.",
     "library_content_refreshed": "Library content refreshed.",
-    "search_no_results": "No results found. Try a different keyword."
+    "search_no_results": "No results found. Try a different keyword.",
+    "remove_from_library_success": "Content removed from library.",
+    "content_update_success": "Content updated.",
+    "content_update_error": "Content update failed.",
+    "no_date": "No Date"
   },
   "dialogs": {
     "remove_from_library_title": "Remove Content from Library",
-    "remove_from_library_message": "Are you sure you want to remove this content from your library?",
-    "remove_from_library_success": "Content removed from library."
+    "remove_from_library_message": "Are you sure you want to remove this content from your library?"
   },
   "buttons": {
     "yes": "Yes",

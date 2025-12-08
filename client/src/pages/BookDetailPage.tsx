@@ -61,7 +61,7 @@ export default function BookDetailPage() {
     if (!data || !id) return;
     try {
       await booksService.removeBook(id);
-      toast.info(t("common:dialogs.remove_from_library_success"));
+      toast.info(t("common:messages.remove_from_library_success"));
 
       // UI Update
       setData((prev: any) => ({
@@ -132,7 +132,7 @@ export default function BookDetailPage() {
         setData(result);
         setReviewText(result.userReview || "");
       } catch (error) {
-        toast.error(t("common:messages.not_found"));
+        toast.error(t("common:messages.content_not_found"));
         navigate("/books"); // Go back
       } finally {
         setLoading(false);

@@ -1,0 +1,35 @@
+{
+  "messages": {
+    "watch_episode_success": "{{episodeNumber}}. Bölüm izlendi!",
+    "mark_season_as_completed_success": "{{seasonNumber}}. Sezon tamamlandı!"
+  },
+  "dialogs": {
+    "mark_season_as_completed_title": "Sezon tamamlansın mı?",
+    "mark_season_as_completed_message": "{{seasonNumber}}. Sezonu tamamlandı olarak işaretlemek istiyor musunuz?"
+  },
+  "status": {
+    "plan_to_watch": "İzleme Listemde",
+    "watching": "İzliyorum",
+    "completed": "İzledim",
+    "on_hold": "Ara Verdim",
+    "dropped": "Bıraktım",
+    "add_to_library": "+ Kütüphaneye Ekle"
+  },
+  "prod_status": {
+    "ended": "Sona Erdi",
+    "returning_series": "Devam Ediyor",
+    "canceled": "İptal Edildi",
+    "in_production": "Yapım Aşamasında",
+    "released": "Vizyonda / Çıktı"
+  },
+  "detail": {
+    "personal_review": "Kişisel Notlarım",
+    "personal_review_placeholder": "Bu içerik hakkında ne düşünüyorsun?",
+    "seasons_and_episodes": "Sezonlar & Bölümler",
+    "season_shortcut": "S",
+    "mark_season_as_completed": "Sezonu Tamamla",
+    "no_picture": "Resim Yok",
+    "overview": "Özet",
+    "overview_not_available": "Özet bilgisi bulunmuyor."
+  }
+}
