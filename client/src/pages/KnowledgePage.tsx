@@ -1,47 +1,82 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { booksService } from "../features/knowledge/services/booksService";
 import BookCard from "../features/knowledge/components/BookCard";
 import type { BookContentDto } from "../features/knowledge/types";
+import { useTranslation } from "react-i18next";
 
 export default function BooksPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BookContentDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation(["common", "knowledge"]);
 
-  // Sayfa açılınca varsayılan önerileri getir (Boş durmasın)
+  // AbortController Ref (previous request cancel)
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
-    // Google Books'ta "subject:fiction" veya "subject:popular" gibi aramalarla öneri listesi oluşturabiliriz
-    performSearch("subject:fiction");
+    performSearch("subject:fiction&orderBy=newest");
   }, []);
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
+
+    // Cancel previous search request if still running
+    abortControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
-      const data = await booksService.searchBooks(searchQuery);
+      const data = await booksService.searchBooks(searchQuery, {
+        signal: controller.signal,
+      });
       setResults(data);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.error("Search error:", err);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
+  // Dynamic search: debounce + min 3 chars
+  useEffect(() => {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      performSearch("subject:fiction");
+      return;
+    }
+
+    if (trimmed.length < 3) return;
+
+    const debounceTimer = setTimeout(() => {
+      performSearch(trimmed);
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [query]);
+
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    await performSearch(query);
+    if (query.trim().length >= 3) {
+      performSearch(query.trim());
+    }
   };
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* 🟢 Başlık ve Arama Alanı */}
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold text-white">Kitap Keşfet</h1>
+        <h1 className="text-3xl font-bold text-white">
+          {t("knowledge:books.discover_books")}
+        </h1>
 
-        {/* Arama Kutusu */}
         <form onSubmit={handleSearch} className="relative w-full">
           <input
             type="text"
-            placeholder="Kitap adı, yazar veya tür ara... (Örn: Harry Potter, Psychology)"
+            placeholder={t("knowledge:books.search_placeholder")}
             className="w-full bg-gray-800 border border-gray-700 text-white px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-lg"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -51,21 +86,21 @@ export default function BooksPage() {
             type="submit"
             className="absolute right-3 top-2.5 bg-blue-600 hover:bg-blue-700 text-white px-6 py-1.5 rounded-lg font-medium transition"
           >
-            Ara
+            {t("common:buttons.search")}
           </button>
         </form>
       </div>
 
-      {/* 🔴 Sonuçlar Grid */}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : (
         <>
-          {/* Başlık (Arama yaptıysa 'Sonuçlar', yapmadıysa 'Önerilenler') */}
           <h2 className="text-xl font-semibold text-gray-300 border-l-4 border-blue-500 pl-3">
-            {query ? `"${query}" için sonuçlar` : "Sizin için Önerilenler"}
+            {query
+              ? t("common:search.search_results", { query })
+              : t("common:search.recommended_for_you")}
           </h2>
 
           {results.length > 0 ? (
@@ -76,7 +111,7 @@ export default function BooksPage() {
             </div>
           ) : (
             <div className="text-center text-gray-500 py-10 bg-gray-800/30 rounded-xl border border-gray-700/50">
-              Sonuç bulunamadı. Başka bir kelime deneyin.
+              {t("common:messages.search_no_results")}
             </div>
           )}
         </>

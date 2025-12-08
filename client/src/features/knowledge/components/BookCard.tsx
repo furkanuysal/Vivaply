@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ReadStatus, type BookContentDto } from "../types";
+import { useReadStatusConfig } from "../hooks/useReadStatusConfig";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   book: BookContentDto;
@@ -7,41 +9,14 @@ interface Props {
 
 export default function BookCard({ book }: Props) {
   const navigate = useNavigate();
+  const { STATUS_CONFIG } = useReadStatusConfig();
+  const { t } = useTranslation(["common", "knowledge"]);
 
   const imageUrl =
     book.coverUrl?.replace("http:", "https:") ||
     "https://via.placeholder.com/128x192?text=No+Cover";
 
-  // Durum Etiketi Rengi
-  const getStatusColor = (status: ReadStatus) => {
-    switch (status) {
-      case ReadStatus.Reading:
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case ReadStatus.Completed:
-        return "bg-purple-500/20 text-purple-400 border-purple-500/30";
-      case ReadStatus.PlanToRead:
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-      default:
-        return "bg-gray-700 text-gray-400";
-    }
-  };
-
-  const getStatusLabel = (status: ReadStatus) => {
-    switch (status) {
-      case ReadStatus.Reading:
-        return "Okunuyor";
-      case ReadStatus.Completed:
-        return "Bitti";
-      case ReadStatus.PlanToRead:
-        return "Listede";
-      case ReadStatus.Dropped:
-        return "Bırakıldı";
-      default:
-        return "";
-    }
-  };
-
-  // İlerleme Yüzdesi
+  // Progress Percentage
   const progress =
     book.pageCount > 0
       ? Math.min((book.currentPage / book.pageCount) * 100, 100)
@@ -52,22 +27,22 @@ export default function BookCard({ book }: Props) {
       onClick={() => navigate(`/knowledge/books/${book.id}`)}
       className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-gray-700 group cursor-pointer flex flex-col h-full"
     >
-      {/* Kapak */}
+      {/* Cover */}
       <div className="relative aspect-[2/3] overflow-hidden">
         <img
           src={imageUrl}
           alt={book.title}
           className="w-full h-full object-cover"
         />
-        {/* Hover Butonu */}
+        {/* Hover Button */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <button className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:bg-blue-700">
-            İncele
+            {t("buttons.view")}
           </button>
         </div>
       </div>
 
-      {/* Bilgiler */}
+      {/* Book Details */}
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
           <h3
@@ -77,22 +52,24 @@ export default function BookCard({ book }: Props) {
             {book.title}
           </h3>
           <p className="text-gray-400 text-xs line-clamp-1">
-            {book.authors.join(", ") || "Yazar Yok"}
+            {book.authors.join(", ") ||
+              t("knowledge:books.detail.unknown_author")}
           </p>
         </div>
 
         <div className="mt-3 space-y-2">
-          {/* Durum Varsa Göster */}
+          {/* Show Status if exists */}
           {book.userStatus !== ReadStatus.None && (
             <div className="flex justify-between items-center">
               <span
-                className={`text-[10px] px-2 py-0.5 rounded border ${getStatusColor(
-                  book.userStatus
-                )}`}
+                className={`text-[10px] px-2 py-0.5 rounded border ${
+                  STATUS_CONFIG[book.userStatus]?.badge ??
+                  "text-gray-400 bg-gray-400/20 border-gray-500"
+                }`}
               >
-                {getStatusLabel(book.userStatus)}
+                {STATUS_CONFIG[book.userStatus]?.label ?? ""}
               </span>
-              {/* İlerleme % */}
+              {/* Show Progress if Reading */}
               {book.userStatus === ReadStatus.Reading && (
                 <span className="text-xs text-gray-300 font-mono">
                   {Math.round(progress)}%
@@ -101,7 +78,7 @@ export default function BookCard({ book }: Props) {
             </div>
           )}
 
-          {/* İlerleme Barı (Sadece Okunuyorsa) */}
+          {/* Progress Bar (Only if Reading) */}
           {book.userStatus === ReadStatus.Reading && (
             <div className="w-full bg-gray-700 rounded-full h-1.5">
               <div

@@ -5,28 +5,33 @@ import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { booksService } from "../features/knowledge/services/booksService";
 import BookCard from "../features/knowledge/components/BookCard";
 import { type BookContentDto, ReadStatus } from "../features/knowledge/types";
+import { useTranslation } from "react-i18next";
+import { useReadStatusConfig } from "../features/knowledge/hooks/useReadStatusConfig";
 
 export default function BookLibraryPage() {
   const navigate = useNavigate();
 
-  // Kitap Verisi (Tek liste, TV/Movie ayrımı yok)
+  // Book data
   const [books, setBooks] = useState<BookContentDto[]>([]);
+  const { t } = useTranslation(["common", "knowledge"]);
 
   const [filterStatus, setFilterStatus] = useState<ReadStatus | 0>(
     ReadStatus.Reading
-  ); // Varsayılan: Okuduklarım
+  ); // Default: Reading
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Kütüphaneyi Çek
+  const { STATUS_CONFIG, FILTER_OPTIONS } = useReadStatusConfig();
+
+  // Load Library
   const loadLibrary = async () => {
     setLoading(true);
     try {
       const data = await booksService.getLibrary();
       setBooks(data);
     } catch (error) {
-      toast.error("Kütüphane yüklenemedi.");
+      toast.error(t("common:messages.library_couldnt_load"));
     } finally {
       setLoading(false);
     }
@@ -36,77 +41,33 @@ export default function BookLibraryPage() {
     loadLibrary();
   }, []);
 
-  // Manuel Yenileme (Refresh)
+  // Manual Refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       const data = await booksService.getLibrary();
       setBooks(data);
-      toast.success("Liste yenilendi.");
+      toast.success(t("common:messages.library_content_refreshed"));
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  // Filtreleme Mantığı
+  // Filter Logic
   const filteredItems =
     filterStatus === 0
       ? books
       : books.filter((item) => item.userStatus === filterStatus);
 
-  // Filtre Seçenekleri
-  const FILTERS = [
-    { label: "Hepsi", value: 0 },
-    { label: "Okuyorum", value: ReadStatus.Reading },
-    { label: "Okuyacağım", value: ReadStatus.PlanToRead },
-    { label: "Bitti", value: ReadStatus.Completed },
-    { label: "Yarım Bıraktım", value: ReadStatus.Dropped },
-    { label: "Ara Verdim", value: ReadStatus.OnHold },
-  ];
-
-  // Helper: Status Metni
-  const getStatusLabel = (status: number) => {
-    switch (status) {
-      case ReadStatus.PlanToRead:
-        return "Listemde";
-      case ReadStatus.Reading:
-        return "Okuyorum";
-      case ReadStatus.Completed:
-        return "Bitti";
-      case ReadStatus.OnHold:
-        return "Ara Verdim";
-      case ReadStatus.Dropped:
-        return "Bıraktım";
-      default:
-        return "-";
-    }
-  };
-
-  // Helper: Status Rengi
-  const getStatusColor = (status: number) => {
-    switch (status) {
-      case ReadStatus.Reading:
-        return "text-green-400 bg-green-400/10 border-green-400/20";
-      case ReadStatus.PlanToRead:
-        return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-      case ReadStatus.Completed:
-        return "text-purple-400 bg-purple-400/10 border-purple-400/20";
-      case ReadStatus.Dropped:
-        return "text-red-400 bg-red-400/10 border-red-400/20";
-      case ReadStatus.OnHold:
-        return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
-      default:
-        return "text-gray-400 bg-gray-400/10 border-gray-400/20";
-    }
-  };
-
   return (
     <div className="space-y-8 animate-fade-in text-white">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Kitaplığım</h1>
+          <h1 className="text-3xl font-bold">
+            {t("knowledge:books.library.title")}
+          </h1>
           <span className="bg-gray-800 text-gray-400 px-3 py-1 rounded-full text-sm font-mono border border-gray-700">
-            {books.length} Kitap
+            {books.length} {t("knowledge:books.library.book")}
           </span>
         </div>
 
@@ -120,7 +81,7 @@ export default function BookLibraryPage() {
                 ? "animate-spin cursor-not-allowed opacity-50"
                 : "hover:text-blue-400"
             }`}
-            title="Listeyi Yenile"
+            title={t("common:buttons.refresh_library")}
           >
             <ArrowPathIcon className="w-5 h-5" />
           </button>
@@ -134,7 +95,7 @@ export default function BookLibraryPage() {
                   ? "bg-blue-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Izgara Görünümü"
+              title={t("common:buttons.grid_view")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -160,7 +121,7 @@ export default function BookLibraryPage() {
                   ? "bg-blue-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Tablo Görünümü"
+              title={t("common:buttons.table_view")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -185,9 +146,9 @@ export default function BookLibraryPage() {
         </div>
       </div>
 
-      {/* Filtreler */}
+      {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700">
-        {FILTERS.map((filter) => (
+        {FILTER_OPTIONS.map((filter) => (
           <button
             key={filter.value}
             onClick={() => setFilterStatus(filter.value as any)}
@@ -212,24 +173,36 @@ export default function BookLibraryPage() {
         <>
           {filteredItems.length > 0 ? (
             viewMode === "grid" ? (
-              // GRID GÖRÜNÜMÜ (BookCard Kullanır)
+              // GRID VIEW (BookCard Component)
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
                 {filteredItems.map((book) => (
                   <BookCard key={book.id} book={book} />
                 ))}
               </div>
             ) : (
-              // TABLO GÖRÜNÜMÜ
+              // TABLE VIEW
               <div className="w-full overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
                 <table className="w-full table-fixed text-left text-sm text-gray-400">
                   <thead className="bg-gray-800 text-gray-200 uppercase font-bold text-xs">
                     <tr>
-                      <th className="px-4 py-4 w-24">Kapak</th>
-                      <th className="px-4 py-4 w-1/3">Kitap</th>
-                      <th className="px-4 py-4 hidden md:table-cell">Yazar</th>
-                      <th className="px-4 py-4">Puanım</th>
-                      <th className="px-4 py-4">İlerleme</th>
-                      <th className="px-4 py-4">Durum</th>
+                      <th className="px-4 py-4 w-24">
+                        {t("knowledge:books.library.cover")}
+                      </th>
+                      <th className="px-4 py-4 w-1/3">
+                        {t("knowledge:books.library.book")}
+                      </th>
+                      <th className="px-4 py-4 hidden md:table-cell">
+                        {t("knowledge:books.library.author")}
+                      </th>
+                      <th className="px-4 py-4">
+                        {t("knowledge:books.library.personal_rating")}
+                      </th>
+                      <th className="px-4 py-4">
+                        {t("knowledge:books.library.progress")}
+                      </th>
+                      <th className="px-4 py-4">
+                        {t("knowledge:books.library.status")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700 bg-gray-900/50">
@@ -249,7 +222,7 @@ export default function BookLibraryPage() {
                             navigate(`/knowledge/books/${book.id}`)
                           }
                         >
-                          {/* Kapak */}
+                          {/* Cover */}
                           <td className="px-4 py-3">
                             <img
                               src={
@@ -261,7 +234,7 @@ export default function BookLibraryPage() {
                             />
                           </td>
 
-                          {/* Başlık */}
+                          {/* Title */}
                           <td className="px-4 py-3 font-medium text-white">
                             <div className="line-clamp-2 text-base">
                               {book.title}
@@ -273,12 +246,12 @@ export default function BookLibraryPage() {
                             )}
                           </td>
 
-                          {/* Yazar */}
+                          {/* Author */}
                           <td className="px-4 py-3 hidden md:table-cell">
                             {book.authors.slice(0, 2).join(", ")}
                           </td>
 
-                          {/* Puan */}
+                          {/* Rating */}
                           <td className="px-4 py-3">
                             {book.userRating ? (
                               <span className="text-blue-400 font-bold">
@@ -289,7 +262,7 @@ export default function BookLibraryPage() {
                             )}
                           </td>
 
-                          {/* İlerleme Barı ve Sayfa */}
+                          {/* Progress Bar and Page */}
                           <td className="px-4 py-3">
                             <div className="flex flex-col gap-1 min-w-[100px]">
                               <div className="flex justify-between text-xs">
@@ -313,14 +286,15 @@ export default function BookLibraryPage() {
                             </div>
                           </td>
 
-                          {/* Durum */}
+                          {/* Status */}
                           <td className="px-4 py-3">
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
-                                book.userStatus
-                              )}`}
+                              className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                                STATUS_CONFIG[book.userStatus]?.badge ??
+                                "text-gray-400 bg-gray-400/10 border-gray-400/20"
+                              }`}
                             >
-                              {getStatusLabel(book.userStatus)}
+                              {STATUS_CONFIG[book.userStatus]?.label ?? "-"}
                             </span>
                           </td>
                         </tr>
@@ -333,13 +307,13 @@ export default function BookLibraryPage() {
           ) : (
             <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700/50">
               <p className="text-gray-400 text-lg">
-                Kütüphanende henüz hiç kitap yok.
+                {t("knowledge:books.library.no_content")}
               </p>
               <button
                 onClick={() => navigate("/books")}
                 className="mt-4 text-blue-400 hover:underline"
               >
-                Kitap Keşfet
+                {t("knowledge:books.discover_books")}
               </button>
             </div>
           )}

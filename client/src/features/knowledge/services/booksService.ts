@@ -10,9 +10,10 @@ import type {
 
 export const booksService = {
   // Search books
-  searchBooks: async (query: string) => {
+  searchBooks: async (query: string, options?: { signal?: AbortSignal }) => {
     const response = await api.get<BookContentDto[]>(
-      `/Knowledge/books/search?query=${query}`
+      `/Knowledge/books/search?query=${query}`,
+      { signal: options?.signal }
     );
     return response.data;
   },
