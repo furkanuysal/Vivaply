@@ -1,0 +1,42 @@
+{
+  "messages": {
+    "rate_success": "Puan verildi: {{rating}}/10 ⭐",
+    "track_success": "Kütüphaneye eklendi! 🎉",
+    "status_update_success": "Durum güncellendi.",
+    "review_success": "Not kaydedildi! 📝",
+    "status_update_error": "Durum güncelleme işlemi başarısız.",
+    "rate_error": "Puan verme işlemi başarısız.",
+    "review_error": "Not kaydetme işlemi başarısız.",
+    "not_found": "İçerik bulunamadı.",
+    "general_error": "İşlem başarısız.",
+    "remove_error": "İçerik kütüphanenizden kaldırılamadı.",
+    "library_couldnt_load": "Kütüphane yüklenemedi.",
+    "library_content_refreshed": "Kütüphane içerikleri yenilendi.",
+    "search_no_results": "Sonuç bulunamadı. Başka bir kelime deneyin."
+  },
+  "dialogs": {
+    "remove_from_library_title": "İçeriği Kütüphaneden Kaldır",
+    "remove_from_library_message": "Bu içeriği kütüphanenizden kaldırmak istediğinize emin misiniz?",
+    "remove_from_library_success": "İçerik kütüphanenizden kaldırıldı."
+  },
+  "buttons": {
+    "yes": "Evet",
+    "accept": "Onaylıyorum",
+    "no": "Hayır",
+    "cancel": "İptal",
+    "ok": "Tamam",
+    "save": "Kaydet",
+    "remove_from_library": "Kütüphaneden Kaldır",
+    "all": "Hepsi",
+    "grid_view": "Izgara Görünümü",
+    "table_view": "Tablo Görünümü",
+    "refresh_library": "Kütüphaneyi Yenile",
+    "search": "Ara",
+    "view": "Görüntüle"
+  },
+  "search": {
+    "recommended_for_you": "Sizin için Önerilenler",
+    "search_results": "'{{query}}' için Sonuçlar"
+  },
+  "loading": "Yükleniyor..."
+}

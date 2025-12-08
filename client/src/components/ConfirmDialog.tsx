@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,6 +15,8 @@ export default function ConfirmDialog({
   title,
   message,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation("common");
+
   if (!isOpen) return null;
 
   return (
@@ -29,7 +33,7 @@ export default function ConfirmDialog({
             }}
             className="px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition font-medium"
           >
-            İptal
+            {t("buttons.cancel")}
           </button>
           <button
             type="button"
@@ -40,7 +44,7 @@ export default function ConfirmDialog({
             }}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/30 transition font-bold"
           >
-            Evet, Onaylıyorum
+            {t("buttons.accept")}
           </button>
         </div>
       </div>

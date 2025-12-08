@@ -4,19 +4,22 @@ import {
   HomeIcon,
   FilmIcon,
   BookOpenIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
 
 export default function DashboardLayout() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useTranslation("layout");
 
   const menuItems = [
     {
-      name: "Profil",
+      name: t("menu.profile"),
       path: "/profile",
       icon: <HomeIcon className="w-6 h-6" />,
     },
@@ -24,23 +27,23 @@ export default function DashboardLayout() {
     // ✅ DÜZELTME: App.tsx'teki rota ile aynı yaptık (/entertainment)
     // İsmini de "Keşfet" yaptık çünkü hem Dizi hem Film var.
     {
-      name: "Eğlence Keşfet",
+      name: t("menu.entertainment_discover"),
       path: "/entertainment",
       icon: <FilmIcon className="w-6 h-6" />,
     },
     {
-      name: "Eğlence Kütüphanem",
+      name: t("menu.entertainment_library"),
       path: "/entertainment/library",
       icon: <FilmIcon className="w-6 h-6" />,
     },
 
     {
-      name: "Kitaplar",
+      name: t("menu.books_discover"),
       path: "/knowledge/books",
       icon: <BookOpenIcon className="w-6 h-6" />,
     },
     {
-      name: "Kitap Kütüphanem",
+      name: t("menu.books_library"),
       path: "/knowledge/books/library",
       icon: <BookOpenIcon className="w-6 h-6" />,
     },
@@ -69,7 +72,7 @@ export default function DashboardLayout() {
           </div>
           {!isCollapsed && (
             <h1 className="text-xl font-bold tracking-wide text-gray-100 whitespace-nowrap overflow-hidden">
-              Vivaply
+              {t("brand")}
             </h1>
           )}
 
@@ -110,7 +113,8 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-700/50">
+        <div className="p-4 border-t border-gray-700/50 space-y-2">
+          <LanguageSelector isCollapsed={isCollapsed} />
           <button
             onClick={handleLogout}
             className={`flex items-center ${
@@ -118,9 +122,11 @@ export default function DashboardLayout() {
             } w-full py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl transition-colors duration-200`}
             title={isCollapsed ? "Çıkış Yap" : ""}
           >
-            <ArrowRightOnRectangleIcon className="w-6 h-6" />
+            <ArrowRightStartOnRectangleIcon className="w-6 h-6" />
             {!isCollapsed && (
-              <span className="font-medium whitespace-nowrap">Çıkış Yap</span>
+              <span className="font-medium whitespace-nowrap">
+                {t("buttons.logout")}
+              </span>
             )}
           </button>
         </div>
@@ -137,10 +143,12 @@ export default function DashboardLayout() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
               V
             </div>
-            <span className="font-bold text-gray-100 text-lg">Vivaply</span>
+            <span className="font-bold text-gray-100 text-lg">
+              {t("brand")}
+            </span>
           </div>
           <button onClick={handleLogout} className="text-red-400 p-2">
-            <ArrowRightOnRectangleIcon className="w-6 h-6" />
+            <ArrowRightStartOnRectangleIcon className="w-6 h-6" />
           </button>
         </header>
 

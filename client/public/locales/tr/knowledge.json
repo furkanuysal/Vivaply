@@ -1,0 +1,32 @@
+{
+  "books": {
+    "discover_books": "Kitap Keşfet",
+    "search_placeholder": "Kitap adı, yazar veya tür ara... (Örn: Harry Potter, Psychology)",
+    "status": {
+      "plan_to_read": "Okuyacağım",
+      "reading": "Okuyorum",
+      "completed": "Bitti",
+      "on_hold": "Ara Verdim",
+      "dropped": "Bıraktım",
+      "add_to_library": "+ Kütüphaneye Ekle"
+    },
+    "detail": {
+      "unknown_author": "Bilinmeyen Yazar",
+      "page_suffix": "Sayfa",
+      "summary_title": "Özet",
+      "no_summary": "Özet bilgisi bulunmuyor.",
+      "personal_notes": "Kişisel Notlarım",
+      "notes_placeholder": "Bu kitap hakkında ne düşünüyorsun?"
+    },
+    "library": {
+      "title": "Kütüphanem",
+      "book": "Kitap",
+      "cover": "Kapak",
+      "author": "Yazar",
+      "personal_rating": "Puanım",
+      "progress": "İlerleme",
+      "status": "Durum",
+      "no_content": "Kütüphanenizde kitap bulunmuyor."
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "brand": "Vivaply",
+  "menu": {
+    "profile": "Profil",
+    "entertainment_discover": "Eğlence Keşfet",
+    "entertainment_library": "Eğlence Kütüphanem",
+    "books_discover": "Kitaplar",
+    "books_library": "Kitap Kütüphanem"
+  },
+  "buttons": {
+    "logout": "Çıkış Yap"
+  },
+  "languageSelection": {
+    "language": "Dil",
+    "select_language": "Dil Seçin",
+    "language_hint": "Değişiklikler anında uygulanacaktır."
+  }
+}

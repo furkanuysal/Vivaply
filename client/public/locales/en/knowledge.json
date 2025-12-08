@@ -1,0 +1,32 @@
+{
+  "books": {
+    "discover_books": "Discover Books",
+    "search_placeholder": "Search books by name, author or genre... (e.g. Harry Potter, Psychology)",
+    "status": {
+      "plan_to_read": "Plan To Read",
+      "reading": "Reading",
+      "completed": "Completed",
+      "on_hold": "On Hold",
+      "dropped": "Dropped",
+      "add_to_library": "+ Add to Library"
+    },
+    "detail": {
+      "unknown_author": "Unknown Author",
+      "page_suffix": "Page",
+      "summary_title": "Summary",
+      "no_summary": "No summary available.",
+      "personal_notes": "Personal Notes",
+      "notes_placeholder": "What do you think about this book?"
+    },
+    "library": {
+      "title": "My Library",
+      "book": "Book",
+      "cover": "Cover",
+      "author": "Author",
+      "personal_rating": "My Rating",
+      "progress": "Progress",
+      "status": "Status",
+      "no_content": "No books in your library."
+    }
+  }
+}

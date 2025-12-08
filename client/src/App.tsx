@@ -11,8 +11,16 @@ import EntertainmentLibraryPage from "./pages/EntertainmentLibraryPage";
 import BookLibraryPage from "./pages/BookLibraryPage";
 import BookDetailPage from "./pages/BookDetailPage";
 import KnowledgePage from "./pages/KnowledgePage";
+import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.resolvedLanguage || "en";
+  }, [i18n.resolvedLanguage]);
+
   return (
     <BrowserRouter>
       <ToastContainer position="top-right" theme="dark" />

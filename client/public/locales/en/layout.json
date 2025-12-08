@@ -1,0 +1,18 @@
+{
+  "brand": "Vivaply",
+  "menu": {
+    "profile": "Profile",
+    "entertainment_discover": "Discover Entertainment",
+    "entertainment_library": "Entertainment Library",
+    "books_discover": "Books",
+    "books_library": "Book Library"
+  },
+  "buttons": {
+    "logout": "Logout"
+  },
+  "languageSelection": {
+    "language": "Language",
+    "select_language": "Select Language",
+    "language_hint": "Changes will apply immediately."
+  }
+}

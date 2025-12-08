@@ -1,0 +1,42 @@
+{
+  "messages": {
+    "rate_success": "Rating saved: {{rating}}/10 ⭐",
+    "track_success": "Added to library! 🎉",
+    "status_update_success": "Status updated.",
+    "review_success": "Review saved.",
+    "status_update_error": "Status update failed.",
+    "review_error": "Review save failed.",
+    "rate_error": "Failed to save rating.",
+    "not_found": "Content not found.",
+    "general_error": "Operation failed.",
+    "remove_error": "Failed to remove content.",
+    "library_couldnt_load": "Library could not be loaded.",
+    "library_content_refreshed": "Library content refreshed.",
+    "search_no_results": "No results found. Try a different keyword."
+  },
+  "dialogs": {
+    "remove_from_library_title": "Remove Content from Library",
+    "remove_from_library_message": "Are you sure you want to remove this content from your library?",
+    "remove_from_library_success": "Content removed from library."
+  },
+  "buttons": {
+    "yes": "Yes",
+    "accept": "Accept",
+    "no": "No",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "save": "Save",
+    "remove_from_library": "Remove from Library",
+    "all": "All",
+    "grid_view": "Grid View",
+    "table_view": "Table View",
+    "refresh_library": "Refresh Library",
+    "search": "Search",
+    "view": "View"
+  },
+  "search": {
+    "recommended_for_you": "Recommended for You",
+    "search_results": "Search Results for '{{query}}'"
+  },
+  "loading": "Loading..."
+}
