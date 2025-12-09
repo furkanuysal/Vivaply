@@ -9,7 +9,7 @@ interface Props {
 
 export default function MediaCard({ content, type }: Props) {
   const navigate = useNavigate();
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common", "entertainment"]);
   const imageUrl = content.poster_path
     ? `https://image.tmdb.org/t/p/w500${content.poster_path}`
     : "https://via.placeholder.com/500x750?text=No+Image";
@@ -54,7 +54,7 @@ export default function MediaCard({ content, type }: Props) {
               t("common:messages.no_date")}
           </span>
           <span className="uppercase border border-gray-600 px-1 rounded">
-            {type}
+            {t(`entertainment:common.${type}`)}
           </span>
         </div>
       </div>

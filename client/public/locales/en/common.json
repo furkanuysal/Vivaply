@@ -12,6 +12,7 @@
     "remove_error": "Failed to remove content.",
     "library_couldnt_load": "Library could not be loaded.",
     "library_content_refreshed": "Library content refreshed.",
+    "library_content_couldnt_refresh": "Library content could not be refreshed.",
     "search_no_results": "No results found. Try a different keyword.",
     "remove_from_library_success": "Content removed from library.",
     "content_update_success": "Content updated.",

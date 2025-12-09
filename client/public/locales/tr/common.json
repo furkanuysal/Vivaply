@@ -12,6 +12,7 @@
     "remove_error": "İçerik kütüphanenizden kaldırılamadı.",
     "library_couldnt_load": "Kütüphane yüklenemedi.",
     "library_content_refreshed": "Kütüphane içerikleri yenilendi.",
+    "library_content_couldnt_refresh": "Kütüphane içerikleri yenilenemedi.",
     "search_no_results": "Sonuç bulunamadı. Başka bir kelime deneyin.",
     "remove_from_library_success": "İçerik kütüphanenizden kaldırıldı.",
     "content_update_success": "İçerik güncellendi.",

@@ -9,6 +9,7 @@ import ProdStatusBadge from "../features/entertainment/components/ProdStatusBadg
 import type { TmdbContentDto } from "../features/entertainment/types";
 import { WatchStatus } from "../features/entertainment/types";
 import { useWatchStatusConfig } from "../features/entertainment/hooks/useWatchStatusConfig";
+import { useTranslation } from "react-i18next";
 
 export default function EntertainmentLibraryPage() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function EntertainmentLibraryPage() {
     movie: TmdbContentDto[];
   }>({ tv: [], movie: [] });
   const [activeTab, setActiveTab] = useState<"tv" | "movie">("tv");
+  const { t } = useTranslation(["entertainment", "common"]);
 
   const [filterStatus, setFilterStatus] = useState<WatchStatus | 0>(
     WatchStatus.Watching
@@ -49,7 +51,7 @@ export default function EntertainmentLibraryPage() {
         }),
       }));
     } catch (error: any) {
-      toast.error(error.response?.data || "İşlem başarısız.");
+      toast.error(error.response?.data || t("common:messages.general_error"));
     } finally {
       setLoadingItems((prev) => {
         const next = new Set(prev);
@@ -63,13 +65,13 @@ export default function EntertainmentLibraryPage() {
     setIsSyncing(true);
     try {
       await entertainmentService.syncLibrary();
-      toast.success("Kütüphane güncellendi! 🔄");
+      toast.success(t("common:messages.library_content_refreshed"));
 
-      // Verileri tekrar çekip ekrana yansıt
+      // Fetch updated library data
       const data = await entertainmentService.getLibrary();
       setLibraryData(data);
     } catch (error) {
-      toast.error("Güncelleme başarısız.");
+      toast.error(t("common:messages.library_content_couldnt_refresh"));
     } finally {
       setIsSyncing(false);
     }
@@ -88,7 +90,7 @@ export default function EntertainmentLibraryPage() {
     loadLibrary();
   }, []);
 
-  // Sekme değişince filtreyi ayarla
+  // Tab change, set filter to Watching for TV, reset for Movie
   useEffect(() => {
     if (activeTab === "tv") {
       setFilterStatus(WatchStatus.Watching);
@@ -112,21 +114,31 @@ export default function EntertainmentLibraryPage() {
     return orderA - orderB;
   });
 
-  // Helper: Episode String Formatter (S4 E23 -> 4. Sezon 23. Bölüm)
-  const formatEpisodeString = (epString?: string) => {
+  // Helper: Episode String Formatter
+  const formatEpisodeString = (epString?: string, isShort = false) => {
     if (!epString) return "-";
-    // Regex ile S ve E harflerinden sonraki sayıları yakala
+
     const match = epString.match(/S(\d+)\s*E(\d+)/i);
     if (match) {
-      return `${match[1]}. Sezon ${match[2]}. Bölüm`;
+      // If isShort is true, use the short format, otherwise use the long format
+      const key = isShort
+        ? "entertainment:format.season_episode_short"
+        : "entertainment:format.season_episode";
+
+      return t(key, {
+        season: match[1],
+        episode: match[2],
+      });
     }
-    return epString; // Format uymazsa olduğu gibi döndür
+    return epString;
   };
 
   return (
     <div className="space-y-8 animate-fade-in text-white">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <h1 className="text-3xl font-bold">Kütüphanem</h1>
+        <h1 className="text-3xl font-bold">
+          {t("entertainment:library.title")}
+        </h1>
 
         <div className="flex items-center gap-4">
           {/* Sync Button */}
@@ -138,7 +150,7 @@ export default function EntertainmentLibraryPage() {
                 ? "animate-spin cursor-not-allowed opacity-50"
                 : "hover:text-blue-400"
             }`}
-            title="Kütüphaneyi Güncelle"
+            title={t("common:buttons.refresh_library")}
           >
             <ArrowPathIcon className="w-5 h-5" />
           </button>
@@ -151,7 +163,7 @@ export default function EntertainmentLibraryPage() {
                   ? "bg-blue-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Izgara Görünümü"
+              title={t("common:buttons.grid_view")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +189,7 @@ export default function EntertainmentLibraryPage() {
                   ? "bg-blue-600 text-white"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Tablo Görünümü"
+              title={t("common:buttons.table_view")}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -209,7 +221,7 @@ export default function EntertainmentLibraryPage() {
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              Dizilerim{" "}
+              {t("entertainment:common.tv_shows")}{" "}
               <span className="ml-2 bg-black/20 px-2 rounded-full text-xs">
                 {libraryData.tv.length}
               </span>
@@ -222,7 +234,7 @@ export default function EntertainmentLibraryPage() {
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              Filmlerim{" "}
+              {t("entertainment:common.movies")}{" "}
               <span className="ml-2 bg-black/20 px-2 rounded-full text-xs">
                 {libraryData.movie.length}
               </span>
@@ -231,7 +243,7 @@ export default function EntertainmentLibraryPage() {
         </div>
       </div>
 
-      {/* 👇 BURADA statusFilters KULLANIYORUZ */}
+      {/* Status Filter */}
       <div className="flex flex-wrap gap-2 pb-2">
         {FILTER_OPTIONS.map((filter) => (
           <button
@@ -258,55 +270,61 @@ export default function EntertainmentLibraryPage() {
         <>
           {filteredItems.length > 0 ? (
             viewMode === "grid" ? (
-              // GRID VIEW
+              // Grid View
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {filteredItems.map((item) => (
                   <MediaCard key={item.id} content={item} type={activeTab} />
                 ))}
               </div>
             ) : (
-              // TABLE VIEW
+              // Table View
               <div className="w-full overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
                 <table className="w-full table-fixed text-left text-sm text-gray-400">
                   <thead className="bg-gray-800 text-gray-200 uppercase font-bold text-xs">
                     <tr>
-                      <th className="px-4 py-4">Afiş</th>
-                      <th className="px-4 py-4">Başlık</th>
+                      <th className="px-4 py-4">
+                        {t("entertainment:library.table.poster")}
+                      </th>
+                      <th className="px-4 py-4">
+                        {t("entertainment:library.table.title")}
+                      </th>
                       <th className="px-4 py-4 hidden md:table-cell">
-                        Genel Puan
+                        {t("entertainment:library.table.average_rating")}
                       </th>
                       <th
                         className={`px-4 py-4 ${
                           activeTab === "movie" ? "" : "hidden md:table-cell"
                         }`}
                       >
-                        Puanım
+                        {t("entertainment:library.table.personal_rating")}
                       </th>
                       <th
                         className={`px-4 py-4 ${
                           activeTab === "movie" ? "hidden" : ""
                         }`}
                       >
-                        Son İzlenen
+                        {t("entertainment:library.table.last_watched")}
                       </th>
                       <th
                         className={`px-4 py-4 ${
                           activeTab === "movie" ? "hidden" : ""
                         }`}
                       >
-                        Son Çıkan
+                        {t("entertainment:library.table.latest_episode")}
                       </th>
                       <th className="px-4 py-4 hidden md:table-cell">
-                        Yapım Durumu
+                        {t("entertainment:library.table.prod_status")}
                       </th>
                       <th
                         className={`px-4 py-4 ${
                           activeTab === "movie" ? "" : "hidden md:table-cell"
                         }`}
                       >
-                        Durum
+                        {t("entertainment:library.table.user_status")}
                       </th>
-                      <th className="px-4 py-4 hidden md:table-cell">Tarih</th>
+                      <th className="px-4 py-4 hidden md:table-cell">
+                        {t("entertainment:library.table.date")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700 bg-gray-900/50">
@@ -363,10 +381,11 @@ export default function EntertainmentLibraryPage() {
                           <div className="flex items-center gap-2">
                             <span>
                               <span className="md:hidden">
-                                {item.last_watched || "-"}
+                                {formatEpisodeString(item.last_watched, true) ||
+                                  "-"}
                               </span>
                               <span className="hidden md:inline">
-                                {formatEpisodeString(item.last_watched)}
+                                {formatEpisodeString(item.last_watched, false)}
                               </span>
                             </span>
                             {item.latest_episode &&
@@ -374,7 +393,9 @@ export default function EntertainmentLibraryPage() {
                             item.latest_episode === item.last_watched ? (
                               <CheckCircleIcon
                                 className="w-6 h-6 text-green-400 flex-shrink-0"
-                                title="Güncel bölümler izlendi"
+                                title={t(
+                                  "entertainment:library.table.watched_up_to_date"
+                                )}
                               />
                             ) : (
                               <button
@@ -384,7 +405,9 @@ export default function EntertainmentLibraryPage() {
                                 }}
                                 disabled={loadingItems.has(item.id)}
                                 className="text-blue-400 hover:text-blue-300 transition disabled:opacity-50"
-                                title="Sıradaki Bölümü İşaretle"
+                                title={t(
+                                  "entertainment:library.table.watch_next"
+                                )}
                               >
                                 {loadingItems.has(item.id) ? (
                                   <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
@@ -401,10 +424,11 @@ export default function EntertainmentLibraryPage() {
                           }`}
                         >
                           <span className="md:hidden">
-                            {item.latest_episode || "-"}
+                            {formatEpisodeString(item.latest_episode, true) ||
+                              "-"}
                           </span>
                           <span className="hidden md:inline">
-                            {formatEpisodeString(item.latest_episode)}
+                            {formatEpisodeString(item.latest_episode, false)}
                           </span>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
@@ -435,13 +459,13 @@ export default function EntertainmentLibraryPage() {
           ) : (
             <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700/50">
               <p className="text-gray-400 text-lg">
-                Bu listede henüz içerik yok.
+                {t("entertainment:library.no_content_in_this_list")}
               </p>
               <button
                 onClick={() => navigate("/entertainment")}
                 className="mt-4 text-blue-400 hover:underline"
               >
-                Keşfetmeye Başla
+                {t("entertainment:library.discover_new_content")}
               </button>
             </div>
           )}

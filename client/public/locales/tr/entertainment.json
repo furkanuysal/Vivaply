@@ -26,10 +26,43 @@
     "personal_review": "Kişisel Notlarım",
     "personal_review_placeholder": "Bu içerik hakkında ne düşünüyorsun?",
     "seasons_and_episodes": "Sezonlar & Bölümler",
-    "season_shortcut": "S",
+    "season_short": "S",
     "mark_season_as_completed": "Sezonu Tamamla",
     "no_picture": "Resim Yok",
     "overview": "Özet",
     "overview_not_available": "Özet bilgisi bulunmuyor."
+  },
+  "format": {
+    "season_episode": "Sezon {{season}} Bölüm {{episode}}",
+    "season_episode_short": "S{{season}} B{{episode}}"
+  },
+  "library": {
+    "title": "Kütüphanem",
+    "no_content_in_this_list": "Bu listede henüz içerik yok.",
+    "discover_new_content": "Yeni içerikleri keşfet!",
+    "table": {
+      "poster": "Afiş",
+      "title": "Başlık",
+      "average_rating": "Ortalama Puan",
+      "personal_rating": "Puanım",
+      "last_watched": "Son İzlenen",
+      "watch_next": "Sıradakini İzledim",
+      "latest_episode": "Son Çıkan",
+      "prod_status": "Yapım Durumu",
+      "user_status": "Kullanıcı Durumu",
+      "date": "Tarih",
+      "watched_up_to_date": "Güncel bölümler izlendi!"
+    }
+  },
+  "common": {
+    "tv": "Dizi",
+    "movie": "Film",
+    "tv_shows": "Diziler",
+    "movies": "Filmler"
+  },
+  "discovery": {
+    "discover": "Keşfet",
+    "search_tv_shows": "Dizi ara... (Örn: Breaking Bad)",
+    "search_movies": "Film ara... (Örn: Inception)"
   }
 }

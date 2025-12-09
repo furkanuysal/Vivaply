@@ -26,10 +26,43 @@
     "personal_review": "Personal Review",
     "personal_review_placeholder": "What do you think about this content?",
     "seasons_and_episodes": "Seasons & Episodes",
-    "season_shortcut": "S",
+    "season_short": "S",
     "mark_season_as_completed": "Mark Season as Completed",
     "no_picture": "No Picture",
     "overview": "Overview",
     "overview_not_available": "Overview not available"
+  },
+  "format": {
+    "season_episode": "Season {{season}} Episode {{episode}}",
+    "season_episode_short": "S{{season}} E{{episode}}"
+  },
+  "library": {
+    "title": "My Library",
+    "no_content_in_this_list": "There is no content in this list yet.",
+    "discover_new_content": "Discover new content!",
+    "table": {
+      "poster": "Poster",
+      "title": "Title",
+      "average_rating": "Average Rating",
+      "personal_rating": "My Rating",
+      "last_watched": "Last Watched",
+      "watch_next": "Watch Next",
+      "latest_episode": "Latest Episode",
+      "prod_status": "Production Status",
+      "user_status": "User Status",
+      "date": "Date",
+      "watched_up_to_date": "Up to date!"
+    }
+  },
+  "common": {
+    "tv": "TV",
+    "movie": "Movie",
+    "tv_shows": "TV Shows",
+    "movies": "Movies"
+  },
+  "discovery": {
+    "discover": "Discover",
+    "search_tv_shows": "Search TV Shows... (e.g. Breaking Bad)",
+    "search_movies": "Search Movies... (e.g. Inception)"
   }
 }

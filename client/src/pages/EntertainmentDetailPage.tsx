@@ -501,7 +501,7 @@ export default function EntertainmentDetailPage() {
                           : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
                       }`}
                     >
-                      {t("entertainment:detail.season_shortcut")}
+                      {t("entertainment:detail.season_short")}
                       {season.season_number}
                     </button>
                   )
