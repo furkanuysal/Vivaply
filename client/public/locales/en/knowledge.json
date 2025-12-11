@@ -16,7 +16,9 @@
       "summary_title": "Summary",
       "no_summary": "No summary available.",
       "personal_notes": "Personal Notes",
-      "notes_placeholder": "What do you think about this book?"
+      "progress_title": "Progress",
+      "notes_placeholder": "What do you think about this book?",
+      "track_to_progress": "Track to progress after adding to library."
     },
     "library": {
       "title": "My Library",

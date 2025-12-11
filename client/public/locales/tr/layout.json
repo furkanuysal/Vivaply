@@ -2,10 +2,12 @@
   "brand": "Vivaply",
   "menu": {
     "profile": "Profil",
-    "entertainment_discover": "Eğlence Keşfet",
-    "entertainment_library": "Eğlence Kütüphanem",
-    "books_discover": "Kitaplar",
-    "books_library": "Kitap Kütüphanem"
+    "discover": "Keşfet",
+    "entertainment": "Eğlence",
+    "knowledge": "Bilgi",
+    "library": "Kütüphane",
+    "discover_books": "Kitap Keşfet",
+    "books_library": "Kitap Kütüphanesi"
   },
   "buttons": {
     "logout": "Çıkış Yap"

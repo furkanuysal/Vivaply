@@ -9,6 +9,8 @@
     "rate_error": "Failed to save rating.",
     "content_not_found": "Content not found.",
     "general_error": "Operation failed.",
+    "update_progress_success": "Progress updated.",
+    "update_progress_error": "Progress update failed.",
     "remove_error": "Failed to remove content.",
     "library_couldnt_load": "Library could not be loaded.",
     "library_content_refreshed": "Library content refreshed.",

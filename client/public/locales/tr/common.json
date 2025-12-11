@@ -9,6 +9,8 @@
     "review_error": "Not kaydetme işlemi başarısız.",
     "content_not_found": "İçerik bulunamadı.",
     "general_error": "İşlem başarısız.",
+    "update_progress_success": "İlerleme güncellendi.",
+    "update_progress_error": "İlerleme güncelleme işlemi başarısız.",
     "remove_error": "İçerik kütüphanenizden kaldırılamadı.",
     "library_couldnt_load": "Kütüphane yüklenemedi.",
     "library_content_refreshed": "Kütüphane içerikleri yenilendi.",

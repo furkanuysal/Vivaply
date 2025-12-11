@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
 import ProfilePage from "./pages/ProfilePage";
 import DashboardLayout from "./components/DashboardLayout";
 import { ToastContainer } from "react-toastify";
@@ -25,16 +24,13 @@ function App() {
     <BrowserRouter>
       <ToastContainer position="top-right" theme="dark" />
       <Routes>
-        {/* Public Routes (Layoutsuz) */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        {/* Public Routes (No layout) */}
+        <Route path="/" element={<LandingPage />} />
 
-        {/* Protected Routes (Sidebarlı Layout) */}
+        {/* Protected Routes (Sidebar layout) */}
         <Route element={<DashboardLayout />}>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/entertainment" element={<EntertainmentPage />} />
-          {/* İleride buraya /movies, /books gelecek */}
           <Route
             path="/entertainment/:type/:id"
             element={<EntertainmentDetailPage />}

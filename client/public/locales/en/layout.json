@@ -2,10 +2,12 @@
   "brand": "Vivaply",
   "menu": {
     "profile": "Profile",
-    "entertainment_discover": "Discover Entertainment",
-    "entertainment_library": "Entertainment Library",
-    "books_discover": "Books",
-    "books_library": "Book Library"
+    "discover": "Discover",
+    "entertainment": "Entertainment",
+    "knowledge": "Knowledge",
+    "library": "Library",
+    "discover_books": "Discover Books",
+    "books_library": "Books Library"
   },
   "buttons": {
     "logout": "Logout"
