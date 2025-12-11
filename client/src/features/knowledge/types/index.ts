@@ -16,7 +16,7 @@ export interface BookContentDto {
   authors: string[];
   coverUrl?: string;
   description?: string;
-  pageCount: number;
+  pageCount?: number;
   publishedDate?: string;
   averageRating: number;
 

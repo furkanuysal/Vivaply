@@ -29,18 +29,18 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
               <div className="absolute inset-0 pointer-events-none">
                 {displayRating >= starValue ? (
                   // Tam Dolu Yıldız
-                  <StarIcon className="w-6 h-6 text-yellow-400" />
+                  <StarIcon className="w-6 h-6 text-skin-primary" />
                 ) : displayRating >= starValue - 0.5 ? (
                   // Yarım Dolu Yıldız (Maskeleme ile)
                   <div className="relative w-6 h-6">
-                    <StarOutline className="absolute w-6 h-6 text-gray-500" />
+                    <StarOutline className="absolute w-6 h-6 text-skin-muted" />
                     <div className="absolute inset-0 overflow-hidden w-[50%]">
-                      <StarIcon className="w-6 h-6 text-yellow-400" />
+                      <StarIcon className="w-6 h-6 text-skin-primary" />
                     </div>
                   </div>
                 ) : (
                   // Boş Yıldız
-                  <StarOutline className="w-6 h-6 text-gray-500" />
+                  <StarOutline className="w-6 h-6 text-skin-muted" />
                 )}
               </div>
 
@@ -69,7 +69,7 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
       </div>
 
       {/* Puan Yazısı */}
-      <span className="ml-3 text-lg font-bold text-yellow-400 w-10 text-center">
+      <span className="ml-3 text-lg font-bold text-skin-primary w-10 text-center">
         {displayRating.toFixed(1)}
       </span>
     </div>

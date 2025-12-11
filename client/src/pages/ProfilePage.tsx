@@ -26,8 +26,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[50vh] text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center h-[50vh] text-skin-text">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
       </div>
     );
   }
@@ -35,50 +35,52 @@ export default function ProfilePage() {
   return (
     <div className="animate-fade-in">
       {/* Başlık yerine Avatar Kartı */}
-      <div className="bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700">
+      <div className="bg-skin-surface rounded-2xl shadow-xl p-8 border border-skin-border">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-4xl font-bold shadow-lg mb-4 text-white">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-skin-primary to-skin-secondary flex items-center justify-center text-4xl font-bold shadow-lg mb-4 text-white">
               {user?.username.charAt(0).toUpperCase()}
             </div>
-            <h2 className="text-2xl font-bold text-white">{user?.username}</h2>
-            <p className="text-gray-400">{user?.email}</p>
-            <div className="mt-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold border border-blue-500/30">
+            <h2 className="text-2xl font-bold text-skin-text">
+              {user?.username}
+            </h2>
+            <p className="text-skin-muted">{user?.email}</p>
+            <div className="mt-2 px-3 py-1 bg-skin-primary/20 text-skin-primary rounded-full text-xs font-bold border border-skin-primary/30">
               Level {user?.level}
             </div>
           </div>
 
           <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-gray-700/30 p-5 rounded-xl border border-gray-700/50 hover:bg-gray-700/50 transition">
-              <div className="text-gray-400 text-sm mb-1">Cüzdan</div>
-              <div className="text-2xl font-bold text-green-400">
+            <div className="bg-skin-surface/50 p-5 rounded-xl border border-skin-border/50 hover:bg-skin-surface/70 transition">
+              <div className="text-skin-muted text-sm mb-1">Cüzdan</div>
+              <div className="text-2xl font-bold text-skin-secondary">
                 {user?.money}{" "}
-                <span className="text-xs text-gray-500">LifeCoin</span>
+                <span className="text-xs text-skin-muted">LifeCoin</span>
               </div>
             </div>
 
-            <div className="bg-gray-700/30 p-5 rounded-xl border border-gray-700/50 hover:bg-gray-700/50 transition">
-              <div className="text-gray-400 text-sm mb-1">Zincir</div>
-              <div className="text-2xl font-bold text-orange-500 flex items-center gap-2">
+            <div className="bg-skin-surface/50 p-5 rounded-xl border border-skin-border/50 hover:bg-skin-surface/70 transition">
+              <div className="text-skin-muted text-sm mb-1">Zincir</div>
+              <div className="text-2xl font-bold text-skin-primary flex items-center gap-2">
                 🔥 {user?.currentStreak}{" "}
-                <span className="text-sm text-gray-500">Gün</span>
+                <span className="text-sm text-skin-muted">Gün</span>
               </div>
             </div>
 
-            <div className="col-span-1 sm:col-span-2 bg-gray-700/30 p-5 rounded-xl border border-gray-700/50 hover:bg-gray-700/50 transition">
+            <div className="col-span-1 sm:col-span-2 bg-skin-surface/50 p-5 rounded-xl border border-skin-border/50 hover:bg-skin-surface/70 transition">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">XP İlerlemesi</span>
-                <span className="text-blue-400 font-bold">
+                <span className="text-skin-muted">XP İlerlemesi</span>
+                <span className="text-skin-primary font-bold">
                   {user?.xp} / 100 XP
                 </span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-skin-base rounded-full h-2.5 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-skin-primary h-2.5 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(user?.xp || 0, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-right">
+              <p className="text-xs text-skin-muted mt-2 text-right">
                 Toplam: {user?.totalXp} XP
               </p>
             </div>

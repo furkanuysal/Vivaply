@@ -62,18 +62,18 @@ export default function EntertainmentPage() {
     <div className="space-y-8 animate-fade-in">
       {/* Search and Filter Area */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-skin-text">
           {t("entertainment:discovery.discover")}
         </h1>
 
         {/* Tab Switcher */}
-        <div className="bg-gray-800 p-1 rounded-lg flex gap-1 border border-gray-700">
+        <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
           <button
             onClick={() => setActiveTab("tv")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition ${
               activeTab === "tv"
-                ? "bg-blue-600 text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-skin-primary text-skin-base"
+                : "text-skin-muted hover:text-skin-text"
             }`}
           >
             {t("entertainment:common.tv_shows")}
@@ -82,8 +82,8 @@ export default function EntertainmentPage() {
             onClick={() => setActiveTab("movie")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition ${
               activeTab === "movie"
-                ? "bg-blue-600 text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-skin-primary text-skin-base"
+                : "text-skin-muted hover:text-skin-text"
             }`}
           >
             {t("entertainment:common.movies")}
@@ -100,14 +100,14 @@ export default function EntertainmentPage() {
               ? t("entertainment:discovery.search_tv_shows")
               : t("entertainment:discovery.search_movies")
           }`}
-          className="w-full bg-gray-800 border border-gray-700 text-white px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+          className="w-full bg-skin-surface border border-skin-border text-skin-text px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition placeholder:text-skin-muted"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <MagnifyingGlassIcon className="w-6 h-6 text-gray-400 absolute left-4 top-4" />
+        <MagnifyingGlassIcon className="w-6 h-6 text-skin-muted absolute left-4 top-4" />
         <button
           type="submit"
-          className="absolute right-3 top-2.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-medium transition"
+          className="absolute right-3 top-2.5 bg-skin-primary hover:bg-skin-primary/90 text-skin-base px-4 py-1.5 rounded-lg font-medium transition"
         >
           {t("common:buttons.search")}
         </button>
@@ -116,7 +116,7 @@ export default function EntertainmentPage() {
       {/* Results Grid */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -127,7 +127,7 @@ export default function EntertainmentPage() {
       )}
 
       {!loading && results.length === 0 && (
-        <div className="text-center text-gray-500 py-10">
+        <div className="text-center text-skin-muted py-10">
           {t("common:messages.search_no_results")}
         </div>
       )}

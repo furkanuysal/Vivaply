@@ -17,15 +17,14 @@ export default function BookCard({ book }: Props) {
     "https://via.placeholder.com/128x192?text=No+Cover";
 
   // Progress Percentage
+  const pageCount = book.pageCount ?? 0;
   const progress =
-    book.pageCount > 0
-      ? Math.min((book.currentPage / book.pageCount) * 100, 100)
-      : 0;
+    pageCount > 0 ? Math.min((book.currentPage / pageCount) * 100, 100) : 0;
 
   return (
     <div
       onClick={() => navigate(`/knowledge/books/${book.id}`)}
-      className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-gray-700 group cursor-pointer flex flex-col h-full"
+      className="bg-skin-surface/60 backdrop-blur-md rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-skin-border group cursor-pointer flex flex-col h-full"
     >
       {/* Cover */}
       <div className="relative aspect-[2/3] overflow-hidden">
@@ -36,7 +35,7 @@ export default function BookCard({ book }: Props) {
         />
         {/* Hover Button */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:bg-blue-700">
+          <button className="bg-skin-primary text-skin-base px-4 py-2 rounded-full font-bold hover:bg-skin-primary/90">
             {t("buttons.view")}
           </button>
         </div>
@@ -46,12 +45,12 @@ export default function BookCard({ book }: Props) {
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
           <h3
-            className="text-white font-bold text-sm line-clamp-2 mb-1"
+            className="text-skin-text font-bold text-sm line-clamp-2 mb-1"
             title={book.title}
           >
             {book.title}
           </h3>
-          <p className="text-gray-400 text-xs line-clamp-1">
+          <p className="text-skin-muted text-xs line-clamp-1">
             {book.authors.join(", ") ||
               t("knowledge:books.detail.unknown_author")}
           </p>
@@ -64,14 +63,14 @@ export default function BookCard({ book }: Props) {
               <span
                 className={`text-[10px] px-2 py-0.5 rounded border ${
                   STATUS_CONFIG[book.userStatus]?.badge ??
-                  "text-gray-400 bg-gray-400/20 border-gray-500"
+                  "text-skin-muted bg-skin-base/50 border-skin-border"
                 }`}
               >
                 {STATUS_CONFIG[book.userStatus]?.label ?? ""}
               </span>
               {/* Show Progress if Reading */}
               {book.userStatus === ReadStatus.Reading && (
-                <span className="text-xs text-gray-300 font-mono">
+                <span className="text-xs text-skin-muted font-mono">
                   {Math.round(progress)}%
                 </span>
               )}
@@ -80,9 +79,9 @@ export default function BookCard({ book }: Props) {
 
           {/* Progress Bar (Only if Reading) */}
           {book.userStatus === ReadStatus.Reading && (
-            <div className="w-full bg-gray-700 rounded-full h-1.5">
+            <div className="w-full bg-skin-base rounded-full h-1.5">
               <div
-                className="bg-green-500 h-1.5 rounded-full"
+                className="bg-skin-primary h-1.5 rounded-full"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>

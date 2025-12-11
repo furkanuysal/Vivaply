@@ -60,13 +60,13 @@ export default function BookLibraryPage() {
       : books.filter((item) => item.userStatus === filterStatus);
 
   return (
-    <div className="space-y-8 animate-fade-in text-white">
+    <div className="space-y-8 animate-fade-in text-skin-text">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold">
             {t("knowledge:books.library.title")}
           </h1>
-          <span className="bg-gray-800 text-gray-400 px-3 py-1 rounded-full text-sm font-mono border border-gray-700">
+          <span className="bg-skin-surface text-skin-muted px-3 py-1 rounded-full text-sm font-mono border border-skin-border">
             {books.length} {t("knowledge:books.library.book")}
           </span>
         </div>
@@ -76,10 +76,10 @@ export default function BookLibraryPage() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700 transition ${
+            className={`p-2 rounded-full bg-skin-surface hover:bg-skin-surface/80 border border-skin-border transition ${
               isRefreshing
                 ? "animate-spin cursor-not-allowed opacity-50"
-                : "hover:text-blue-400"
+                : "hover:text-skin-primary"
             }`}
             title={t("common:buttons.refresh_library")}
           >
@@ -87,13 +87,13 @@ export default function BookLibraryPage() {
           </button>
 
           {/* View Toggle Buttons */}
-          <div className="bg-gray-800 p-1 rounded-lg flex gap-1 border border-gray-700">
+          <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-md transition ${
                 viewMode === "grid"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.grid_view")}
             >
@@ -118,8 +118,8 @@ export default function BookLibraryPage() {
               onClick={() => setViewMode("table")}
               className={`p-2 rounded-md transition ${
                 viewMode === "table"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.table_view")}
             >
@@ -147,7 +147,7 @@ export default function BookLibraryPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-skin-border">
         {FILTER_OPTIONS.map((filter) => (
           <button
             key={filter.value}
@@ -155,8 +155,8 @@ export default function BookLibraryPage() {
             className={`px-4 py-2 rounded-full text-sm border transition whitespace-nowrap
                 ${
                   filterStatus === filter.value
-                    ? "bg-gray-700 border-gray-500 text-white"
-                    : "bg-transparent border-gray-700 text-gray-400 hover:border-gray-500"
+                    ? "bg-skin-surface border-skin-primary text-skin-primary"
+                    : "bg-transparent border-skin-border text-skin-muted hover:border-skin-text"
                 }
             `}
           >
@@ -167,7 +167,7 @@ export default function BookLibraryPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
         </div>
       ) : (
         <>
@@ -181,9 +181,9 @@ export default function BookLibraryPage() {
               </div>
             ) : (
               // TABLE VIEW
-              <div className="w-full overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
-                <table className="w-full table-fixed text-left text-sm text-gray-400">
-                  <thead className="bg-gray-800 text-gray-200 uppercase font-bold text-xs">
+              <div className="w-full overflow-x-auto rounded-xl border border-skin-border shadow-xl">
+                <table className="w-full table-fixed text-left text-sm text-skin-muted">
+                  <thead className="bg-skin-surface text-skin-text uppercase font-bold text-xs">
                     <tr>
                       <th className="px-4 py-4 w-24">
                         {t("knowledge:books.library.cover")}
@@ -205,19 +205,18 @@ export default function BookLibraryPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700 bg-gray-900/50">
+                  <tbody className="divide-y divide-skin-border/50 bg-skin-surface/50">
                     {filteredItems.map((book) => {
+                      const pageCount = book.pageCount ?? 0;
                       const progress =
-                        book.pageCount > 0
-                          ? Math.round(
-                              (book.currentPage / book.pageCount) * 100
-                            )
+                        pageCount > 0
+                          ? Math.round((book.currentPage / pageCount) * 100)
                           : 0;
 
                       return (
                         <tr
                           key={book.id}
-                          className="hover:bg-gray-800/50 transition cursor-pointer group"
+                          className="hover:bg-skin-base/50 transition cursor-pointer group"
                           onClick={() =>
                             navigate(`/knowledge/books/${book.id}`)
                           }
@@ -235,12 +234,12 @@ export default function BookLibraryPage() {
                           </td>
 
                           {/* Title */}
-                          <td className="px-4 py-3 font-medium text-white">
+                          <td className="px-4 py-3 font-medium text-skin-text">
                             <div className="line-clamp-2 text-base">
                               {book.title}
                             </div>
                             {book.publishedDate && (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-skin-muted">
                                 {book.publishedDate.split("-")[0]}
                               </span>
                             )}
@@ -254,11 +253,11 @@ export default function BookLibraryPage() {
                           {/* Rating */}
                           <td className="px-4 py-3">
                             {book.userRating ? (
-                              <span className="text-blue-400 font-bold">
+                              <span className="text-skin-primary font-bold">
                                 ★ {book.userRating.toFixed(1)}
                               </span>
                             ) : (
-                              <span className="text-gray-600">-</span>
+                              <span className="text-skin-muted">-</span>
                             )}
                           </td>
 
@@ -266,19 +265,19 @@ export default function BookLibraryPage() {
                           <td className="px-4 py-3">
                             <div className="flex flex-col gap-1 min-w-[100px]">
                               <div className="flex justify-between text-xs">
-                                <span className="text-gray-300">
+                                <span className="text-skin-text">
                                   {book.currentPage} / {book.pageCount}
                                 </span>
-                                <span className="text-gray-500">
+                                <span className="text-skin-muted">
                                   {progress}%
                                 </span>
                               </div>
-                              <div className="w-full bg-gray-700 rounded-full h-1.5">
+                              <div className="w-full bg-skin-base rounded-full h-1.5">
                                 <div
                                   className={`h-1.5 rounded-full ${
                                     book.userStatus === ReadStatus.Completed
-                                      ? "bg-purple-500"
-                                      : "bg-green-500"
+                                      ? "bg-skin-secondary"
+                                      : "bg-skin-primary"
                                   }`}
                                   style={{ width: `${progress}%` }}
                                 ></div>
@@ -291,7 +290,7 @@ export default function BookLibraryPage() {
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-bold border ${
                                 STATUS_CONFIG[book.userStatus]?.badge ??
-                                "text-gray-400 bg-gray-400/10 border-gray-400/20"
+                                "text-skin-muted bg-skin-base/10 border-skin-border/20"
                               }`}
                             >
                               {STATUS_CONFIG[book.userStatus]?.label ?? "-"}
@@ -305,13 +304,13 @@ export default function BookLibraryPage() {
               </div>
             )
           ) : (
-            <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700/50">
-              <p className="text-gray-400 text-lg">
+            <div className="text-center py-20 bg-skin-surface/30 rounded-2xl border border-skin-border/50">
+              <p className="text-skin-muted text-lg">
                 {t("knowledge:books.library.no_content")}
               </p>
               <button
                 onClick={() => navigate("/books")}
-                className="mt-4 text-blue-400 hover:underline"
+                className="mt-4 text-skin-primary hover:underline"
               >
                 {t("knowledge:books.discover_books")}
               </button>

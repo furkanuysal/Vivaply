@@ -134,7 +134,7 @@ export default function EntertainmentLibraryPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in text-white">
+    <div className="space-y-8 animate-fade-in text-skin-text">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <h1 className="text-3xl font-bold">
           {t("entertainment:library.title")}
@@ -145,23 +145,23 @@ export default function EntertainmentLibraryPage() {
           <button
             onClick={handleSync}
             disabled={isSyncing}
-            className={`p-2 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700 transition ${
+            className={`p-2 rounded-full bg-skin-surface hover:bg-skin-surface/90 border border-skin-border transition ${
               isSyncing
                 ? "animate-spin cursor-not-allowed opacity-50"
-                : "hover:text-blue-400"
+                : "hover:text-skin-primary"
             }`}
             title={t("common:buttons.refresh_library")}
           >
             <ArrowPathIcon className="w-5 h-5" />
           </button>
           {/* View Toggle Buttons */}
-          <div className="bg-gray-800 p-1 rounded-lg flex gap-1 border border-gray-700">
+          <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-md transition ${
                 viewMode === "grid"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.grid_view")}
             >
@@ -186,8 +186,8 @@ export default function EntertainmentLibraryPage() {
               onClick={() => setViewMode("table")}
               className={`p-2 rounded-md transition ${
                 viewMode === "table"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.table_view")}
             >
@@ -212,17 +212,17 @@ export default function EntertainmentLibraryPage() {
             </button>
           </div>
 
-          <div className="bg-gray-800 p-1 rounded-lg flex gap-1 border border-gray-700">
+          <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
             <button
               onClick={() => setActiveTab("tv")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === "tv"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
             >
               {t("entertainment:common.tv_shows")}{" "}
-              <span className="ml-2 bg-black/20 px-2 rounded-full text-xs">
+              <span className="ml-2 bg-skin-text/20 px-2 rounded-full text-xs">
                 {libraryData.tv.length}
               </span>
             </button>
@@ -230,12 +230,12 @@ export default function EntertainmentLibraryPage() {
               onClick={() => setActiveTab("movie")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === "movie"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-skin-primary text-skin-base"
+                  : "text-skin-muted hover:text-skin-text"
               }`}
             >
               {t("entertainment:common.movies")}{" "}
-              <span className="ml-2 bg-black/20 px-2 rounded-full text-xs">
+              <span className="ml-2 bg-skin-text/20 px-2 rounded-full text-xs">
                 {libraryData.movie.length}
               </span>
             </button>
@@ -252,8 +252,8 @@ export default function EntertainmentLibraryPage() {
             className={`px-4 py-2 rounded-full text-sm border transition whitespace-nowrap
                     ${
                       filterStatus === filter.value
-                        ? "bg-gray-700 border-gray-500 text-white"
-                        : "bg-transparent border-gray-700 text-gray-400 hover:border-gray-500"
+                        ? "bg-skin-surface border-skin-primary text-skin-primary"
+                        : "bg-transparent border-skin-border text-skin-muted hover:border-skin-text"
                     }
                 `}
           >
@@ -264,7 +264,7 @@ export default function EntertainmentLibraryPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
         </div>
       ) : (
         <>
@@ -278,9 +278,9 @@ export default function EntertainmentLibraryPage() {
               </div>
             ) : (
               // Table View
-              <div className="w-full overflow-x-auto rounded-xl border border-gray-700 shadow-xl">
-                <table className="w-full table-fixed text-left text-sm text-gray-400">
-                  <thead className="bg-gray-800 text-gray-200 uppercase font-bold text-xs">
+              <div className="w-full overflow-x-auto rounded-xl border border-skin-border shadow-xl">
+                <table className="w-full table-fixed text-left text-sm text-skin-muted">
+                  <thead className="bg-skin-surface text-skin-text uppercase font-bold text-xs">
                     <tr>
                       <th className="px-4 py-4">
                         {t("entertainment:library.table.poster")}
@@ -327,11 +327,11 @@ export default function EntertainmentLibraryPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-700 bg-gray-900/50">
+                  <tbody className="divide-y divide-skin-border bg-skin-base/50">
                     {filteredItems.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-gray-800/50 transition cursor-pointer group"
+                        className="hover:bg-skin-surface/50 transition cursor-pointer group"
                         onClick={() =>
                           navigate(`/entertainment/${activeTab}/${item.id}`)
                         }
@@ -347,16 +347,16 @@ export default function EntertainmentLibraryPage() {
                             className="w-12 h-18 rounded-md shadow-md object-cover group-hover:scale-105 transition"
                           />
                         </td>
-                        <td className="px-4 py-3 font-medium text-white text-base">
+                        <td className="px-4 py-3 font-medium text-skin-text text-base">
                           {item.display_name}
                           {item.tagline && (
-                            <p className="text-xs text-gray-500 font-normal mt-1 line-clamp-1">
+                            <p className="text-xs text-skin-muted font-normal mt-1 line-clamp-1">
                               {item.tagline}
                             </p>
                           )}
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
-                          <span className="text-yellow-400 font-bold">
+                          <span className="text-skin-accent font-bold">
                             ★ {(item.vote_average || 0).toFixed(1)}
                           </span>
                         </td>
@@ -366,15 +366,15 @@ export default function EntertainmentLibraryPage() {
                           }`}
                         >
                           {item.user_rating ? (
-                            <span className="text-blue-400 font-bold">
+                            <span className="text-skin-primary font-bold">
                               ★ {Number(item.user_rating).toFixed(1)}
                             </span>
                           ) : (
-                            <span className="text-gray-600">-</span>
+                            <span className="text-skin-muted">-</span>
                           )}
                         </td>
                         <td
-                          className={`px-4 py-3 text-sm text-gray-300 ${
+                          className={`px-4 py-3 text-sm text-skin-text ${
                             activeTab === "movie" ? "hidden" : ""
                           }`}
                         >
@@ -392,7 +392,7 @@ export default function EntertainmentLibraryPage() {
                             item.last_watched &&
                             item.latest_episode === item.last_watched ? (
                               <CheckCircleIcon
-                                className="w-6 h-6 text-green-400 flex-shrink-0"
+                                className="w-6 h-6 text-skin-secondary flex-shrink-0"
                                 title={t(
                                   "entertainment:library.table.watched_up_to_date"
                                 )}
@@ -404,13 +404,13 @@ export default function EntertainmentLibraryPage() {
                                   handleWatchNext(item);
                                 }}
                                 disabled={loadingItems.has(item.id)}
-                                className="text-blue-400 hover:text-blue-300 transition disabled:opacity-50"
+                                className="text-skin-primary hover:text-skin-primary/80 transition disabled:opacity-50"
                                 title={t(
                                   "entertainment:library.table.watch_next"
                                 )}
                               >
                                 {loadingItems.has(item.id) ? (
-                                  <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                  <div className="w-5 h-5 border-2 border-skin-primary border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
                                   <PlusCircleIcon className="w-6 h-6" />
                                 )}
@@ -419,7 +419,7 @@ export default function EntertainmentLibraryPage() {
                           </div>
                         </td>
                         <td
-                          className={`px-4 py-3 text-sm text-gray-300 ${
+                          className={`px-4 py-3 text-sm text-skin-muted ${
                             activeTab === "movie" ? "hidden" : ""
                           }`}
                         >
@@ -457,13 +457,13 @@ export default function EntertainmentLibraryPage() {
               </div>
             )
           ) : (
-            <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700/50">
-              <p className="text-gray-400 text-lg">
+            <div className="text-center py-20 bg-skin-surface/30 rounded-2xl border border-skin-border/50">
+              <p className="text-skin-muted text-lg">
                 {t("entertainment:library.no_content_in_this_list")}
               </p>
               <button
                 onClick={() => navigate("/entertainment")}
-                className="mt-4 text-blue-400 hover:underline"
+                className="mt-4 text-skin-primary hover:underline"
               >
                 {t("entertainment:library.discover_new_content")}
               </button>

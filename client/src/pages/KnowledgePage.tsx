@@ -69,7 +69,7 @@ export default function BooksPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-skin-text">
           {t("knowledge:books.discover_books")}
         </h1>
 
@@ -77,14 +77,14 @@ export default function BooksPage() {
           <input
             type="text"
             placeholder={t("knowledge:books.search_placeholder")}
-            className="w-full bg-gray-800 border border-gray-700 text-white px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-lg"
+            className="w-full bg-skin-surface border border-skin-border text-skin-text px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition shadow-lg placeholder:text-skin-muted"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <MagnifyingGlassIcon className="w-6 h-6 text-gray-400 absolute left-4 top-4" />
+          <MagnifyingGlassIcon className="w-6 h-6 text-skin-muted absolute left-4 top-4" />
           <button
             type="submit"
-            className="absolute right-3 top-2.5 bg-blue-600 hover:bg-blue-700 text-white px-6 py-1.5 rounded-lg font-medium transition"
+            className="absolute right-3 top-2.5 bg-skin-primary hover:bg-skin-primary/90 text-skin-base px-6 py-1.5 rounded-lg font-medium transition"
           >
             {t("common:buttons.search")}
           </button>
@@ -93,11 +93,11 @@ export default function BooksPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
         </div>
       ) : (
         <>
-          <h2 className="text-xl font-semibold text-gray-300 border-l-4 border-blue-500 pl-3">
+          <h2 className="text-xl font-semibold text-skin-text border-l-4 border-skin-primary pl-3">
             {query
               ? t("common:search.search_results", { query })
               : t("common:search.recommended_for_you")}
@@ -110,7 +110,7 @@ export default function BooksPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-500 py-10 bg-gray-800/30 rounded-xl border border-gray-700/50">
+            <div className="text-center text-skin-muted py-10 bg-skin-surface/30 rounded-xl border border-skin-border/50">
               {t("common:messages.search_no_results")}
             </div>
           )}
