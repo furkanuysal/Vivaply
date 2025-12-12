@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vivaply.API.Entities.Entertainment;
+using Vivaply.API.Entities.Entertainment.Igdb;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
@@ -24,6 +25,7 @@ namespace Vivaply.API.Data
         public DbSet<UserShow> UserShows { get; set; }
         public DbSet<UserMovie> UserMovies { get; set; }
         public DbSet<WatchedEpisode> WatchedEpisodes { get; set; }
+        public DbSet<UserGame> UserGames { get; set; }
 
         // Knowledge Tables
         public DbSet<UserBook> UserBooks { get; set; }
@@ -68,6 +70,13 @@ namespace Vivaply.API.Data
                 .HasOne(m => m.User)
                 .WithMany()
                 .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Game - User Relationships (1-to-Many)
+            modelBuilder.Entity<UserGame>()
+                .HasOne(g => g.User)
+                .WithMany()
+                .HasForeignKey(g => g.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Knowledge Relationships

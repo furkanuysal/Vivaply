@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
+using Vivaply.API.Services.Igdb;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,12 @@ builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
 builder.Services.AddHttpClient<IGoogleBooksService, GoogleBooksService>(client =>
 {
     client.BaseAddress = new Uri("https://www.googleapis.com/books/v1/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+builder.Services.AddHttpClient<IIgdbService, IgdbService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 

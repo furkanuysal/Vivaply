@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Vivaply.API.Data;
-using Vivaply.API.DTOs;
 using Vivaply.API.DTOs.Tmdb;
 using Vivaply.API.Entities.Entertainment;
 using Vivaply.API.Services;
@@ -613,7 +612,7 @@ namespace Vivaply.API.Controllers
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
 
-// Rate show
+            // Rate show
             if (request.Type == "tv")
             {
                 var show = await _dbContext.UserShows.FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId);
