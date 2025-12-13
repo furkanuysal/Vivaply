@@ -57,12 +57,28 @@
   "common": {
     "tv": "TV",
     "movie": "Movie",
+    "game": "Game",
     "tv_shows": "TV Shows",
-    "movies": "Movies"
+    "movies": "Movies",
+    "games": "Games"
   },
   "discovery": {
     "discover": "Discover",
     "search_tv_shows": "Search TV Shows... (e.g. Breaking Bad)",
-    "search_movies": "Search Movies... (e.g. Inception)"
+    "search_movies": "Search Movies... (e.g. Inception)",
+    "search_games": "Search Games... (e.g. Minecraft)"
+  },
+  "games": {
+    "status": {
+      "plan_to_play": "Plan to Play",
+      "playing": "Playing",
+      "completed": "Completed",
+      "on_hold": "On Hold",
+      "dropped": "Dropped"
+    },
+    "platform": "Platform",
+    "genre": "Genre",
+    "developer": "Developer",
+    "release_date": "Release Date"
   }
 }

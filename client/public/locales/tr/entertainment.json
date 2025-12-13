@@ -57,12 +57,28 @@
   "common": {
     "tv": "Dizi",
     "movie": "Film",
+    "game": "Oyun",
     "tv_shows": "Diziler",
-    "movies": "Filmler"
+    "movies": "Filmler",
+    "games": "Oyunlar"
   },
   "discovery": {
     "discover": "Keşfet",
     "search_tv_shows": "Dizi ara... (Örn: Breaking Bad)",
-    "search_movies": "Film ara... (Örn: Inception)"
+    "search_movies": "Film ara... (Örn: Inception)",
+    "search_games": "Oyun ara... (Örn: Minecraft)"
+  },
+  "games": {
+    "status": {
+      "plan_to_play": "Oynayacağım",
+      "playing": "Oynuyorum",
+      "completed": "Oynadım",
+      "on_hold": "Ara Verdim",
+      "dropped": "Bıraktım"
+    },
+    "platform": "Platform",
+    "genre": "Tür",
+    "developer": "Geliştirici",
+    "release_date": "Çıkış Tarihi"
   }
 }

@@ -47,11 +47,11 @@ export interface TmdbSeasonDetailDto {
 
 export const WatchStatus = {
   None: 0,
-  PlanToWatch: 1, // Listemde / İzleyeceğim
-  Watching: 2, // İzliyorum
-  Completed: 3, // Bitirdim
-  OnHold: 4, // Ara verdim
-  Dropped: 5, // Bıraktım
+  PlanToWatch: 1,
+  Watching: 2,
+  Completed: 3,
+  OnHold: 4,
+  Dropped: 5,
 } as const;
 export type WatchStatus = (typeof WatchStatus)[keyof typeof WatchStatus];
 
@@ -63,4 +63,44 @@ export interface LibraryResponse {
 export interface MarkSeasonWatchedDto {
   tmdbShowId: number;
   seasonNumber: number;
+}
+
+// GAMES
+
+// Play Status
+export const PlayStatus = {
+  None: 0,
+  PlanToPlay: 1,
+  Playing: 2,
+  Completed: 3,
+  OnHold: 4,
+  Dropped: 5,
+} as const;
+export type PlayStatus = (typeof PlayStatus)[keyof typeof PlayStatus];
+
+// Game Content
+export interface GameContentDto {
+  id: number; // IGDB ID
+  title: string;
+  coverUrl?: string;
+  summary?: string;
+  voteAverage: number;
+  releaseDate?: string;
+  platforms: string;
+  developers: string;
+  genres: string;
+
+  // User Fields
+  userStatus: PlayStatus;
+  userRating?: number;
+  userReview?: string;
+}
+
+// Track Game
+export interface TrackGameDto {
+  igdbId: number;
+  title: string;
+  coverUrl?: string;
+  releaseDate?: string;
+  status: PlayStatus;
 }

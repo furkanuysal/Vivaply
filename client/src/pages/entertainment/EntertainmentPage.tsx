@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
-import { entertainmentService } from "../features/entertainment/services/entertainmentService";
-import MediaCard from "../features/entertainment/components/MediaCard";
-import type { TmdbContentDto } from "../features/entertainment/types";
+import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
+import MediaCard from "../../features/entertainment/components/MediaCard";
+import type {
+  TmdbContentDto,
+  GameContentDto,
+} from "../../features/entertainment/types";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import { gamesService } from "../../features/entertainment/services/gameService";
+import GameCard from "../../features/entertainment/components/GameCard";
 
 export default function EntertainmentPage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<TmdbContentDto[]>([]);
-  const [activeTab, setActiveTab] = useState<"tv" | "movie">("tv");
+  const [results, setResults] = useState<(TmdbContentDto | GameContentDto)[]>(
+    []
+  );
+  const [activeTab, setActiveTab] = useState<"tv" | "movie" | "game">("tv");
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation(["common", "entertainment"]);
 
@@ -28,8 +35,10 @@ export default function EntertainmentPage() {
       let data;
       if (activeTab === "tv") {
         data = await entertainmentService.getTrendingTv();
-      } else {
+      } else if (activeTab === "movie") {
         data = await entertainmentService.getTrendingMovie();
+      } else {
+        data = await gamesService.getTrendingGames();
       }
       setResults(data);
     } finally {
@@ -49,8 +58,10 @@ export default function EntertainmentPage() {
       let data;
       if (activeTab === "tv") {
         data = await entertainmentService.searchTv(query);
-      } else {
+      } else if (activeTab === "movie") {
         data = await entertainmentService.searchMovie(query);
+      } else {
+        data = await gamesService.searchGames(query);
       }
       setResults(data);
     } finally {
@@ -88,6 +99,16 @@ export default function EntertainmentPage() {
           >
             {t("entertainment:common.movies")}
           </button>
+          <button
+            onClick={() => setActiveTab("game")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeTab === "game"
+                ? "bg-skin-primary text-skin-base"
+                : "text-skin-muted hover:text-skin-text"
+            }`}
+          >
+            {t("entertainment:common.games")}
+          </button>
         </div>
       </div>
 
@@ -98,7 +119,9 @@ export default function EntertainmentPage() {
           placeholder={`${
             activeTab === "tv"
               ? t("entertainment:discovery.search_tv_shows")
-              : t("entertainment:discovery.search_movies")
+              : activeTab === "movie"
+              ? t("entertainment:discovery.search_movies")
+              : t("entertainment:discovery.search_games")
           }`}
           className="w-full bg-skin-surface border border-skin-border text-skin-text px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition placeholder:text-skin-muted"
           value={query}
@@ -120,9 +143,17 @@ export default function EntertainmentPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {results.map((item) => (
-            <MediaCard key={item.id} content={item} type={activeTab} />
-          ))}
+          {results.map((item) =>
+            activeTab === "game" ? (
+              <GameCard key={item.id} game={item as GameContentDto} />
+            ) : (
+              <MediaCard
+                key={item.id}
+                content={item as TmdbContentDto}
+                type={activeTab as "tv" | "movie"}
+              />
+            )
+          )}
         </div>
       )}
 

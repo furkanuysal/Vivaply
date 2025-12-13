@@ -1,24 +1,37 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { entertainmentService } from "../features/entertainment/services/entertainmentService";
+import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
 import {
   WatchStatus,
   type TmdbEpisodeDto,
-} from "../features/entertainment/types";
+} from "../../features/entertainment/types";
 import { toast } from "react-toastify";
-import StarRating from "../components/StarRating";
-import ProdStatusBadge from "../features/entertainment/components/ProdStatusBadge";
-import ConfirmDialog from "../components/ConfirmDialog";
-import { useWatchStatusConfig } from "../features/entertainment/hooks/useWatchStatusConfig";
+import StarRating from "../../components/StarRating";
+import ProdStatusBadge from "../../features/entertainment/components/ProdStatusBadge";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatchStatusConfig";
 import { useTranslation } from "react-i18next";
+import { gamesService } from "../../features/entertainment/services/gameService";
+import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayStatusConfig";
+import { PlayStatus } from "../../features/entertainment/types";
 
 export default function EntertainmentDetailPage() {
   const { type, id } = useParams();
   const navigate = useNavigate();
 
-  const { STATUS_CONFIG, STATUS_OPTIONS } = useWatchStatusConfig(
-    type as "tv" | "movie"
-  );
+  const {
+    STATUS_CONFIG: WATCH_STATUS_CONFIG,
+    STATUS_OPTIONS: WATCH_STATUS_OPTIONS,
+  } = useWatchStatusConfig(type as "tv" | "movie");
+  const {
+    STATUS_CONFIG: PLAY_STATUS_CONFIG,
+    STATUS_OPTIONS: PLAY_STATUS_OPTIONS,
+  } = usePlayStatusConfig();
+
+  const STATUS_CONFIG =
+    type === "game" ? PLAY_STATUS_CONFIG : WATCH_STATUS_CONFIG;
+  const STATUS_OPTIONS =
+    type === "game" ? PLAY_STATUS_OPTIONS : WATCH_STATUS_OPTIONS;
   const { t } = useTranslation(["common", "entertainment"]);
 
   const [data, setData] = useState<any>(null);
@@ -42,11 +55,15 @@ export default function EntertainmentDetailPage() {
   const handleRate = async (rating: number) => {
     if (!data) return;
     try {
-      await entertainmentService.rateItem(
-        data.id,
-        type as "tv" | "movie",
-        rating
-      );
+      if (type === "game") {
+        await gamesService.rateGame(data.id, rating);
+      } else {
+        await entertainmentService.rateItem(
+          data.id,
+          type as "tv" | "movie",
+          rating
+        );
+      }
       toast.success(t("common:messages.rate_success", { rating }));
 
       // Update UI
@@ -80,10 +97,14 @@ export default function EntertainmentDetailPage() {
   const executeRemove = async () => {
     if (!data) return;
     try {
-      await entertainmentService.removeFromLibrary(
-        data.id,
-        type as "tv" | "movie"
-      );
+      if (type === "game") {
+        await gamesService.removeGame(data.id);
+      } else {
+        await entertainmentService.removeFromLibrary(
+          data.id,
+          type as "tv" | "movie"
+        );
+      }
       toast.info(t("common:messages.remove_from_library_success"));
 
       // Update UI: Set status to undefined, so the button turns back to blue "+ Follow"
@@ -115,39 +136,53 @@ export default function EntertainmentDetailPage() {
     try {
       if (!data.user_status) {
         // If not added yet, automatically added, so update status
-        if (newStatus === WatchStatus.Completed) {
-          await entertainmentService.trackItem({
-            tmdbId: data.id,
-            type: type as "tv" | "movie",
-            title: data.display_name,
-            posterPath: data.poster_path,
-            date: data.display_date,
-            status: WatchStatus.PlanToWatch,
+        if (type === "game") {
+          await gamesService.trackGame({
+            igdbId: data.id,
+            title: data.title,
+            coverUrl: data.coverUrl,
+            releaseDate: data.releaseDate,
+            status: newStatus as PlayStatus,
           });
-
-          await entertainmentService.updateStatus(
-            data.id,
-            type as "tv" | "movie",
-            WatchStatus.Completed
-          );
         } else {
-          await entertainmentService.trackItem({
-            tmdbId: data.id,
-            type: type as "tv" | "movie",
-            title: data.display_name,
-            posterPath: data.poster_path,
-            date: data.display_date,
-            status: newStatus,
-          });
+          if (newStatus === WatchStatus.Completed) {
+            await entertainmentService.trackItem({
+              tmdbId: data.id,
+              type: type as "tv" | "movie",
+              title: data.display_name,
+              posterPath: data.poster_path,
+              date: data.display_date,
+              status: WatchStatus.PlanToWatch,
+            });
+
+            await entertainmentService.updateStatus(
+              data.id,
+              type as "tv" | "movie",
+              WatchStatus.Completed
+            );
+          } else {
+            await entertainmentService.trackItem({
+              tmdbId: data.id,
+              type: type as "tv" | "movie",
+              title: data.display_name,
+              posterPath: data.poster_path,
+              date: data.display_date,
+              status: newStatus as WatchStatus,
+            });
+          }
         }
         toast.success(t("common:messages.track_success"));
       } else {
         // If already added, update status
-        await entertainmentService.updateStatus(
-          data.id,
-          type as "tv" | "movie",
-          newStatus
-        );
+        if (type === "game") {
+          await gamesService.updateStatus(data.id, newStatus as PlayStatus);
+        } else {
+          await entertainmentService.updateStatus(
+            data.id,
+            type as "tv" | "movie",
+            newStatus as WatchStatus
+          );
+        }
         toast.info(t("common:messages.status_update_success"));
       }
 
@@ -186,8 +221,22 @@ export default function EntertainmentDetailPage() {
         let result;
         if (type === "tv") {
           result = await entertainmentService.getTvDetail(Number(id));
-        } else {
+        } else if (type === "movie") {
           result = await entertainmentService.getMovieDetail(Number(id));
+        } else {
+          const gameResult = await gamesService.getGameDetail(Number(id));
+
+          // Normalize game data for UI (create a new object with adapted fields)
+          result = {
+            ...gameResult,
+            user_status: gameResult.userStatus,
+            user_rating: gameResult.userRating,
+            user_review: gameResult.userReview,
+            display_name: gameResult.title,
+            poster_path: gameResult.coverUrl,
+            display_date: gameResult.releaseDate,
+            vote_average: gameResult.voteAverage,
+          };
         }
         setData(result);
         setReviewText(result.user_review || "");
@@ -229,11 +278,15 @@ export default function EntertainmentDetailPage() {
   const handleSaveReview = async () => {
     if (!data) return;
     try {
-      await entertainmentService.addReview(
-        data.id,
-        type as "tv" | "movie",
-        reviewText
-      );
+      if (type === "game") {
+        await gamesService.addReview(data.id, reviewText);
+      } else {
+        await entertainmentService.addReview(
+          data.id,
+          type as "tv" | "movie",
+          reviewText
+        );
+      }
       toast.success(t("common:messages.review_success"));
 
       setData((prev: any) => ({ ...prev, user_review: reviewText }));
@@ -314,7 +367,9 @@ export default function EntertainmentDetailPage() {
   if (!data) return null;
 
   const bgImage = data.poster_path
-    ? `https://image.tmdb.org/t/p/original${data.poster_path}`
+    ? data.poster_path.startsWith("http")
+      ? data.poster_path
+      : `https://image.tmdb.org/t/p/original${data.poster_path}`
     : null;
   const statusConfig = STATUS_CONFIG[data.user_status] ?? {
     label: t("entertainment:status.add_to_library"),
@@ -348,7 +403,9 @@ export default function EntertainmentDetailPage() {
             <img
               src={
                 data.poster_path
-                  ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+                  ? data.poster_path.startsWith("http")
+                    ? data.poster_path
+                    : `https://image.tmdb.org/t/p/w500${data.poster_path}`
                   : "https://via.placeholder.com/500x750"
               }
               alt={data.display_name}
@@ -386,7 +443,7 @@ export default function EntertainmentDetailPage() {
                 {data.display_date?.split("-")[0]}
               </span>
               <span className="uppercase bg-skin-surface/50 px-2 py-1 rounded text-xs">
-                {type}
+                {t(`entertainment:common.${type}`)}
               </span>
               <ProdStatusBadge status={data.status} />
             </div>
@@ -398,6 +455,35 @@ export default function EntertainmentDetailPage() {
               {data.overview ||
                 t("entertainment:detail.overview_not_available")}
             </div>
+
+            {type === "game" && ( // Game Details (Platforms, etc.)
+              <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                <div className="bg-skin-surface/50 p-3 rounded-lg border border-skin-border">
+                  <h4 className="text-skin-muted font-bold text-xs uppercase mb-1">
+                    {t("entertainment:games.platform")}
+                  </h4>
+                  <p className="text-skin-text font-medium">
+                    {data.platforms || "-"}
+                  </p>
+                </div>
+                <div className="bg-skin-surface/50 p-3 rounded-lg border border-skin-border">
+                  <h4 className="text-skin-muted font-bold text-xs uppercase mb-1">
+                    {t("entertainment:games.genre")}
+                  </h4>
+                  <p className="text-skin-text font-medium">
+                    {data.genres || "-"}
+                  </p>
+                </div>
+                <div className="bg-skin-surface/50 p-3 rounded-lg border border-skin-border col-span-2">
+                  <h4 className="text-skin-muted font-bold text-xs uppercase mb-1">
+                    {t("entertainment:games.developer")}
+                  </h4>
+                  <p className="text-skin-text font-medium">
+                    {data.developers || "-"}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-6">
               {/* Action Buttons (Dropdown) */}
