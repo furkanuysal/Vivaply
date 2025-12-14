@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
 import MediaCard from "../../features/entertainment/components/MediaCard";
@@ -15,6 +15,7 @@ import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatc
 import { gamesService } from "../../features/entertainment/services/gameService";
 import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayStatusConfig";
 import GameCard from "../../features/entertainment/components/GameCard";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 
 export default function EntertainmentLibraryPage() {
@@ -34,6 +35,45 @@ export default function EntertainmentLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loadingItems, setLoadingItems] = useState<Set<number>>(new Set());
+
+  // Confirm Dialog State
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState<any | null>(null);
+
+  const handleRemoveClick = (item: any) => {
+    setItemToRemove(item);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!itemToRemove) return;
+
+    try {
+      if (activeTab === "game") {
+        await gamesService.removeGame(itemToRemove.id); // igdbId or id depending on tracking? Library usually returns id or object with id.
+      } else {
+        await entertainmentService.removeFromLibrary(
+          itemToRemove.id,
+          activeTab as "tv" | "movie"
+        );
+      }
+
+      toast.success(t("common:messages.remove_from_library_success"));
+
+      // Update local state by filtering out the removed item
+      setLibraryData((prev) => ({
+        ...prev,
+        [activeTab]: prev[activeTab].filter(
+          (i: any) => i.id !== itemToRemove.id
+        ),
+      }));
+    } catch (error) {
+      console.error(error);
+      toast.error(t("common:messages.remove_error"));
+    } finally {
+      setItemToRemove(null);
+    }
+  };
 
   const handleWatchNext = async (item: TmdbContentDto) => {
     setLoadingItems((prev) => new Set(prev).add(item.id));
@@ -74,7 +114,6 @@ export default function EntertainmentLibraryPage() {
       await entertainmentService.syncLibrary();
       toast.success(t("common:messages.library_content_refreshed"));
 
-      // Fetch updated library data
       // Fetch updated library data
       const data = await entertainmentService.getLibrary();
       const gameData = await gamesService.getLibrary();
@@ -406,6 +445,9 @@ export default function EntertainmentLibraryPage() {
                       <th className="px-4 py-4 hidden md:table-cell">
                         {t("entertainment:library.table.date")}
                       </th>
+                      <th className="px-4 py-4 text-right">
+                        {t("entertainment:library.table.actions") || "Actions"}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-skin-border bg-skin-base/50">
@@ -577,6 +619,18 @@ export default function EntertainmentLibraryPage() {
                           <td className="px-4 py-3 hidden md:table-cell">
                             {dateStr?.split("-")[0] || "-"}
                           </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveClick(item);
+                              }}
+                              className="p-2 text-skin-muted hover:text-red-500 hover:bg-skin-surface rounded-full transition"
+                              title={t("common:buttons.remove_from_library")}
+                            >
+                              <TrashIcon className="w-5 h-5" />
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -599,6 +653,15 @@ export default function EntertainmentLibraryPage() {
           )}
         </>
       )}
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmRemove}
+        title={`${t("common:dialogs.remove_from_library_title")}: ${
+          itemToRemove?.display_name || itemToRemove?.title || ""
+        }`}
+        message={t("common:dialogs.remove_from_library_message")}
+      />
     </div>
   );
 }
