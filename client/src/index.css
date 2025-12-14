@@ -13,6 +13,16 @@
     --color-primary-base: #fe5f55;
     --color-secondary-base: #2a9d8f;
     --color-accent: #d97706;
+
+    /* Rating Colors */
+    --rating-95: 37 99 235; /* Blue-600 */
+    --rating-90: 5 150 105; /* Emerald-600 */
+    --rating-80: 22 163 74; /* Green-600 */
+    --rating-70: 202 138 4; /* Yellow-600 */
+    --rating-60: 234 88 12; /* Orange-600 */
+    --rating-45: 220 38 38; /* Red-600 */
+    --rating-bad: 127 29 29; /* Red-900 */
+    --rating-none: 107 114 128; /* Gray-500 */
   }
 
   .dark {
@@ -25,6 +35,16 @@
     --color-primary-base: #84dccf;
     --color-secondary-base: #a6d9f7;
     --color-accent: #facc15;
+
+    /* Rating Colors */
+    --rating-95: 96 165 250; /* Blue-400 */
+    --rating-90: 52 211 153; /* Emerald-400 */
+    --rating-80: 74 222 128; /* Green-400 */
+    --rating-70: 250 204 21; /* Yellow-400 */
+    --rating-60: 251 146 60; /* Orange-400 */
+    --rating-45: 248 113 113; /* Red-400 */
+    --rating-bad: 252 165 165; /* Red-300 */
+    --rating-none: 156 163 175; /* Gray-400 */
   }
 
   ::-webkit-scrollbar {
