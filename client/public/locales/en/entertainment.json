@@ -30,11 +30,15 @@
     "mark_season_as_completed": "Mark Season as Completed",
     "no_picture": "No Picture",
     "overview": "Overview",
-    "overview_not_available": "Overview not available"
+    "overview_not_available": "Overview not available",
+    "show_all_scores": "Show All Scores",
+    "show_watched_episodes": "Show Watched Episodes"
   },
   "format": {
     "season_episode": "Season {{season}} Episode {{episode}}",
-    "season_episode_short": "S{{season}} E{{episode}}"
+    "season_episode_short": "S{{season}} E{{episode}}",
+    "season_short": "S{{season}}",
+    "episode_short": "E{{episode}}"
   },
   "library": {
     "title": "My Library",
@@ -51,6 +55,7 @@
       "prod_status": "Production Status",
       "user_status": "User Status",
       "date": "Date",
+      "actions": "Actions",
       "watched_up_to_date": "Up to date!"
     }
   },

@@ -36,6 +36,7 @@
     "all": "All",
     "grid_view": "Grid View",
     "table_view": "Table View",
+    "list_view": "List View",
     "refresh_library": "Refresh Library",
     "search": "Search",
     "view": "View"

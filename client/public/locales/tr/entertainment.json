@@ -30,11 +30,15 @@
     "mark_season_as_completed": "Sezonu Tamamla",
     "no_picture": "Resim Yok",
     "overview": "Özet",
-    "overview_not_available": "Özet bilgisi bulunmuyor."
+    "overview_not_available": "Özet bilgisi bulunmuyor.",
+    "show_all_scores": "Tüm Puanları Göster",
+    "show_watched_episodes": "İzlediğim Bölümleri Göster"
   },
   "format": {
     "season_episode": "Sezon {{season}} Bölüm {{episode}}",
-    "season_episode_short": "S{{season}} B{{episode}}"
+    "season_episode_short": "S{{season}} B{{episode}}",
+    "season_short": "S{{season}}",
+    "episode_short": "B{{episode}}"
   },
   "library": {
     "title": "Kütüphanem",
@@ -51,6 +55,7 @@
       "prod_status": "Yapım Durumu",
       "user_status": "Kullanıcı Durumu",
       "date": "Tarih",
+      "actions": "Eylemler",
       "watched_up_to_date": "Güncel bölümler izlendi!"
     }
   },
