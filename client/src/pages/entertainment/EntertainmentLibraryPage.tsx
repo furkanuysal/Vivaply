@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowPathIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
-import MediaCard from "../../features/entertainment/components/MediaCard";
-import ProdStatusBadge from "../../features/entertainment/components/ProdStatusBadge";
+import MediaCard from "../../features/entertainment/components/shared/MediaCard";
+import ProdStatusBadge from "../../features/entertainment/components/shared/ProdStatusBadge";
 import type {
   TmdbContentDto,
   GameContentDto,
@@ -14,8 +14,8 @@ import { WatchStatus, PlayStatus } from "../../features/entertainment/types";
 import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatchStatusConfig";
 import { gamesService } from "../../features/entertainment/services/gameService";
 import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayStatusConfig";
-import GameCard from "../../features/entertainment/components/GameCard";
-import ConfirmDialog from "../../components/ConfirmDialog";
+import GameCard from "../../features/entertainment/components/shared/GameCard";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 
 export default function EntertainmentLibraryPage() {

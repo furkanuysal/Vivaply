@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { booksService } from "../features/knowledge/services/booksService";
-import BookCard from "../features/knowledge/components/BookCard";
-import type { BookContentDto } from "../features/knowledge/types";
+import { booksService } from "../../features/knowledge/services/booksService";
+import BookCard from "../../features/knowledge/components/BookCard";
+import type { BookContentDto } from "../../features/knowledge/types";
 import { useTranslation } from "react-i18next";
 
 export default function BooksPage() {

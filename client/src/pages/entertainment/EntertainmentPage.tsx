@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
-import MediaCard from "../../features/entertainment/components/MediaCard";
+import MediaCard from "../../features/entertainment/components/shared/MediaCard";
 import type {
   TmdbContentDto,
   GameContentDto,
@@ -8,7 +8,7 @@ import type {
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { gamesService } from "../../features/entertainment/services/gameService";
-import GameCard from "../../features/entertainment/components/GameCard";
+import GameCard from "../../features/entertainment/components/shared/GameCard";
 
 export default function EntertainmentPage() {
   const [query, setQuery] = useState("");

@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { booksService } from "../features/knowledge/services/booksService";
-import { ReadStatus } from "../features/knowledge/types";
+import { booksService } from "../../features/knowledge/services/booksService";
+import { ReadStatus } from "../../features/knowledge/types";
 import { toast } from "react-toastify";
-import StarRating from "../components/StarRating";
-import ConfirmDialog from "../components/ConfirmDialog";
+import StarRating from "../../components/common/StarRating";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
-import { useReadStatusConfig } from "../features/knowledge/hooks/useReadStatusConfig";
+import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
 
 const BookProgressWidget = ({
   progressPercent,

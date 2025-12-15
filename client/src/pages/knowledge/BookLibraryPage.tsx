@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { booksService } from "../features/knowledge/services/booksService";
-import BookCard from "../features/knowledge/components/BookCard";
-import { type BookContentDto, ReadStatus } from "../features/knowledge/types";
+import { booksService } from "../../features/knowledge/services/booksService";
+import BookCard from "../../features/knowledge/components/BookCard";
+import {
+  type BookContentDto,
+  ReadStatus,
+} from "../../features/knowledge/types";
 import { useTranslation } from "react-i18next";
-import { useReadStatusConfig } from "../features/knowledge/hooks/useReadStatusConfig";
+import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
 
 export default function BookLibraryPage() {
   const navigate = useNavigate();

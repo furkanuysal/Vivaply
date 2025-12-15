@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { type GameContentDto } from "../../entertainment/types";
+import { type GameContentDto } from "../../types";
 import { useTranslation } from "react-i18next";
 
 interface Props {

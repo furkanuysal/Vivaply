@@ -7,9 +7,9 @@ import "react-toastify/dist/ReactToastify.css";
 import EntertainmentPage from "./pages/entertainment/EntertainmentPage";
 import EntertainmentDetailPage from "./pages/entertainment/EntertainmentDetailPage";
 import EntertainmentLibraryPage from "./pages/entertainment/EntertainmentLibraryPage";
-import BookLibraryPage from "./pages/BookLibraryPage";
-import BookDetailPage from "./pages/BookDetailPage";
-import KnowledgePage from "./pages/KnowledgePage";
+import BookLibraryPage from "./pages/knowledge/BookLibraryPage";
+import BookDetailPage from "./pages/knowledge/BookDetailPage";
+import KnowledgePage from "./pages/knowledge/KnowledgePage";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 
