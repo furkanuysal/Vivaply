@@ -78,5 +78,8 @@ namespace Vivaply.API.DTOs.Igdb
         public PlayStatus UserStatus { get; set; } = PlayStatus.None;
         public double? UserRating { get; set; }
         public string? UserReview { get; set; }
+        public string? UserPlatform { get; set; }
+        public double UserPlaytime { get; set; }
+        public GameCompletionType CompletionType { get; set; } = GameCompletionType.None;
     }
 }

@@ -20,6 +20,9 @@ namespace Vivaply.API.DTOs.Igdb
 
         [JsonPropertyName("status")]
         public PlayStatus Status { get; set; }
+
+        [JsonPropertyName("userPlatform")]
+        public string? UserPlatform { get; set; }
     }
 
     // Update Play Status
@@ -30,6 +33,21 @@ namespace Vivaply.API.DTOs.Igdb
 
         [JsonPropertyName("status")]
         public PlayStatus Status { get; set; }
+    }
+
+    public class UpdateGameProgressDto
+    {
+        [JsonPropertyName("igdbId")]
+        public int IgdbId { get; set; }
+
+        [JsonPropertyName("userPlaytime")]
+        public double UserPlaytime { get; set; }
+
+        [JsonPropertyName("completionType")]
+        public GameCompletionType CompletionType { get; set; }
+
+        [JsonPropertyName("userPlatform")]
+        public string? UserPlatform { get; set; }
     }
 
     // Rate Game

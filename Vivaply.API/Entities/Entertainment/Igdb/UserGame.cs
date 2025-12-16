@@ -36,6 +36,16 @@ namespace Vivaply.API.Entities.Entertainment.Igdb
         [Range(0, 10)]
         public double? UserRating { get; set; } // User's personal rating (0-10)
 
+        // User platform preference
+        [MaxLength(100)]
+        public string? UserPlatform { get; set; }
+
+        // User playtime in hours
+        public double UserPlaytime { get; set; } = 0;
+
+        // User's completion type
+        public GameCompletionType CompletionType { get; set; } = GameCompletionType.None;
+
         public double VoteAverage { get; set; } // IGDB Average Rating (0-100, we'll convert to 0-10 later)
 
         [MaxLength(2000)]

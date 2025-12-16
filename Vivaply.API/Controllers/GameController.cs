@@ -62,6 +62,9 @@ namespace Vivaply.API.Controllers
                     game.UserStatus = userGame.Status;
                     game.UserRating = userGame.UserRating;
                     game.UserReview = userGame.Review;
+                    game.UserPlatform = userGame.UserPlatform;
+                    game.UserPlaytime = userGame.UserPlaytime;
+                    game.CompletionType = userGame.CompletionType;
                 }
             }
             return Ok(game);
@@ -91,7 +94,10 @@ namespace Vivaply.API.Controllers
                 ReleaseDate = x.ReleaseDate,
                 Platforms = x.Platforms ?? "",
                 Developers = x.Developers ?? "",
-                Genres = x.Genres ?? ""
+                Genres = x.Genres ?? "",
+                UserPlatform = x.UserPlatform,
+                UserPlaytime = x.UserPlaytime,
+                CompletionType = x.CompletionType
             });
 
             return Ok(dtos);
@@ -123,7 +129,8 @@ namespace Vivaply.API.Controllers
                 Platforms = details.Platforms,
                 Developers = details.Developers,
                 Genres = details.Genres,
-                DateAdded = DateTime.UtcNow
+                DateAdded = DateTime.UtcNow,
+                UserPlatform = request.UserPlatform
             };
 
             _dbContext.UserGames.Add(newGame);
@@ -147,6 +154,27 @@ namespace Vivaply.API.Controllers
 
             await _dbContext.SaveChangesAsync();
             return Ok(new { message = "Durum güncellendi." });
+        }
+        // Update Progress
+        [HttpPut("progress")]
+        public async Task<IActionResult> UpdateProgress([FromBody] UpdateGameProgressDto request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+            var game = await _dbContext.UserGames.FirstOrDefaultAsync(x => x.UserId == userId && x.IgdbId == request.IgdbId);
+            if (game == null) return NotFound("Oyun kütüphanenizde bulunamadı.");
+
+            // Update fields
+            game.UserPlaytime = request.UserPlaytime;
+            game.CompletionType = request.CompletionType;
+            if (!string.IsNullOrEmpty(request.UserPlatform))
+            {
+                game.UserPlatform = request.UserPlatform;
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return Ok(new { message = "Oyun detayları kaydedildi." });
         }
 
         // Rate
