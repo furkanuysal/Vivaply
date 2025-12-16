@@ -19,11 +19,15 @@
     "remove_from_library_success": "Content removed from library.",
     "content_update_success": "Content updated.",
     "content_update_error": "Content update failed.",
-    "no_date": "No Date"
+    "no_date": "No Date",
+    "save_success": "Saved successfully.",
+    "save_error": "Failed to save."
   },
   "dialogs": {
     "remove_from_library_title": "Remove Content from Library",
-    "remove_from_library_message": "Are you sure you want to remove this content from your library?"
+    "remove_from_library_message": "Are you sure you want to remove this content from your library?",
+    "select_option": "Select an option",
+    "update_content_title": "Update Content"
   },
   "buttons": {
     "yes": "Yes",
@@ -39,7 +43,8 @@
     "list_view": "List View",
     "refresh_library": "Refresh Library",
     "search": "Search",
-    "view": "View"
+    "view": "View",
+    "update": "Update"
   },
   "search": {
     "recommended_for_you": "Recommended for You",

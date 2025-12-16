@@ -81,9 +81,20 @@
       "on_hold": "On Hold",
       "dropped": "Dropped"
     },
+    "completionType": {
+      "none": "-",
+      "mainStory": "Main Story",
+      "mainPlusExtras": "Main + Extras",
+      "completionist": "100% / Platinum",
+      "speedrun": "Speedrun"
+    },
     "platform": "Platform",
     "genre": "Genre",
     "developer": "Developer",
-    "release_date": "Release Date"
+    "release_date": "Release Date",
+    "completion": "Completion",
+    "playtime": "Playtime",
+    "hours": "Hours",
+    "hours_short": "h"
   }
 }

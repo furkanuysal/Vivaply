@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { ArrowPathIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  TrashIcon,
+  PencilIcon,
+} from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
 import MediaCard from "../../features/entertainment/components/shared/MediaCard";
@@ -9,13 +13,19 @@ import ProdStatusBadge from "../../features/entertainment/components/shared/Prod
 import type {
   TmdbContentDto,
   GameContentDto,
+  UpdateGameProgressDto,
 } from "../../features/entertainment/types";
-import { WatchStatus, PlayStatus } from "../../features/entertainment/types";
+import {
+  WatchStatus,
+  PlayStatus,
+  GameCompletionType,
+} from "../../features/entertainment/types";
 import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatchStatusConfig";
 import { gamesService } from "../../features/entertainment/services/gameService";
 import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayStatusConfig";
 import GameCard from "../../features/entertainment/components/shared/GameCard";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import GameProgressDialog from "../../features/entertainment/components/library/GameProgressDialog";
 import { useTranslation } from "react-i18next";
 
 export default function EntertainmentLibraryPage() {
@@ -43,6 +53,40 @@ export default function EntertainmentLibraryPage() {
   const handleRemoveClick = (item: any) => {
     setItemToRemove(item);
     setIsConfirmOpen(true);
+  };
+
+  // Quick Edit State
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [gameToEdit, setGameToEdit] = useState<GameContentDto | null>(null);
+
+  const handleEditClick = (item: GameContentDto) => {
+    setGameToEdit(item);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveProgress = async (data: UpdateGameProgressDto) => {
+    try {
+      await gamesService.updateProgress(data);
+      toast.success(t("common:messages.save_success"));
+
+      // Update local state
+      setLibraryData((prev) => ({
+        ...prev,
+        game: prev.game.map((g) =>
+          g.id === data.igdbId
+            ? {
+                ...g,
+                userPlatform: data.userPlatform,
+                completionType: data.completionType,
+                userPlaytime: data.userPlaytime,
+              }
+            : g
+        ),
+      }));
+    } catch (error) {
+      console.error(error);
+      toast.error(t("common:messages.save_error"));
+    }
   };
 
   const handleConfirmRemove = async () => {
@@ -220,6 +264,21 @@ export default function EntertainmentLibraryPage() {
       });
     }
     return epString;
+  };
+
+  const getCompletionLabel = (type?: GameCompletionType) => {
+    switch (type) {
+      case GameCompletionType.MainStory:
+        return "Main Story";
+      case GameCompletionType.MainPlusExtras:
+        return "Main + Extras";
+      case GameCompletionType.Completionist:
+        return "100% / Platinum";
+      case GameCompletionType.Speedrun:
+        return "Speedrun";
+      default:
+        return "-";
+    }
   };
 
   return (
@@ -433,6 +492,16 @@ export default function EntertainmentLibraryPage() {
                           ? t("entertainment:games.platform")
                           : t("entertainment:library.table.prod_status")}
                       </th>
+                      {activeTab === "game" && (
+                        <>
+                          <th className="px-4 py-4 hidden md:table-cell">
+                            {t("entertainment:games.playtime")}
+                          </th>
+                          <th className="px-4 py-4 hidden md:table-cell">
+                            {t("entertainment:games.completion")}
+                          </th>
+                        </>
+                      )}
                       <th
                         className={`px-4 py-4 ${
                           activeTab === "movie" || activeTab === "game"
@@ -442,9 +511,11 @@ export default function EntertainmentLibraryPage() {
                       >
                         {t("entertainment:library.table.user_status")}
                       </th>
-                      <th className="px-4 py-4 hidden md:table-cell">
-                        {t("entertainment:library.table.date")}
-                      </th>
+                      {activeTab !== "game" && (
+                        <th className="px-4 py-4 hidden md:table-cell">
+                          {t("entertainment:library.table.date")}
+                        </th>
+                      )}
                       <th className="px-4 py-4 text-right">
                         {t("entertainment:library.table.actions") || "Actions"}
                       </th>
@@ -596,11 +667,25 @@ export default function EntertainmentLibraryPage() {
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
                             {activeTab === "game" ? (
-                              <span>-</span>
+                              <span>{item.userPlatform || "-"}</span>
                             ) : (
                               <ProdStatusBadge status={item.status} />
                             )}
                           </td>
+                          {activeTab === "game" && (
+                            <>
+                              <td className="px-4 py-3 hidden md:table-cell">
+                                {item.userPlaytime
+                                  ? `${item.userPlaytime} ${t(
+                                      "entertainment:games.hours_short"
+                                    )}`
+                                  : "-"}
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell">
+                                {getCompletionLabel(item.completionType)}
+                              </td>
+                            </>
+                          )}
                           <td
                             className={`px-4 py-3 ${
                               activeTab === "movie" || activeTab === "game"
@@ -616,10 +701,24 @@ export default function EntertainmentLibraryPage() {
                               {STATUS_CONFIG[userStatus]?.label}
                             </span>
                           </td>
-                          <td className="px-4 py-3 hidden md:table-cell">
-                            {dateStr?.split("-")[0] || "-"}
-                          </td>
+                          {activeTab !== "game" && (
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              {dateStr?.split("-")[0] || "-"}
+                            </td>
+                          )}
                           <td className="px-4 py-3 text-right">
+                            {activeTab === "game" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditClick(item as GameContentDto);
+                                }}
+                                className="p-2 text-skin-muted hover:text-skin-primary hover:bg-skin-surface rounded-full transition"
+                                title={t("common:buttons.update")}
+                              >
+                                <PencilIcon className="w-5 h-5" />
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -661,6 +760,12 @@ export default function EntertainmentLibraryPage() {
           itemToRemove?.display_name || itemToRemove?.title || ""
         }`}
         message={t("common:dialogs.remove_from_library_message")}
+      />
+      <GameProgressDialog
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        game={gameToEdit}
+        onSave={handleSaveProgress}
       />
     </div>
   );

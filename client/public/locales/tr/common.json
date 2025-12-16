@@ -19,11 +19,15 @@
     "remove_from_library_success": "İçerik kütüphanenizden kaldırıldı.",
     "content_update_success": "İçerik güncellendi.",
     "content_update_error": "İçerik güncellenemedi.",
-    "no_date": "Tarih Yok"
+    "no_date": "Tarih Yok",
+    "save_success": "Kaydedildi.",
+    "save_error": "Kaydetme işlemi başarısız."
   },
   "dialogs": {
     "remove_from_library_title": "İçeriği Kütüphaneden Kaldır",
-    "remove_from_library_message": "Bu içeriği kütüphanenizden kaldırmak istediğinize emin misiniz?"
+    "remove_from_library_message": "Bu içeriği kütüphanenizden kaldırmak istediğinize emin misiniz?",
+    "select_option": "Bir seçenek seçin",
+    "update_content_title": "İçeriği Güncelle"
   },
   "buttons": {
     "yes": "Evet",
@@ -39,7 +43,8 @@
     "list_view": "Liste Görünümü",
     "refresh_library": "Kütüphaneyi Yenile",
     "search": "Ara",
-    "view": "Görüntüle"
+    "view": "Görüntüle",
+    "update": "Güncelle"
   },
   "search": {
     "recommended_for_you": "Sizin için Önerilenler",

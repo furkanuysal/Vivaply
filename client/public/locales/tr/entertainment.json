@@ -81,9 +81,20 @@
       "on_hold": "Ara Verdim",
       "dropped": "Bıraktım"
     },
+    "completionType": {
+      "none": "-",
+      "mainStory": "Ana Hikaye",
+      "mainPlusExtras": "Ana Hikaye + Ekstra",
+      "completionist": "100% / Platin",
+      "speedrun": "Speedrun"
+    },
     "platform": "Platform",
     "genre": "Tür",
     "developer": "Geliştirici",
-    "release_date": "Çıkış Tarihi"
+    "release_date": "Çıkış Tarihi",
+    "completion": "Tamamlama",
+    "playtime": "Oynama Süresi",
+    "hours": "Saat",
+    "hours_short": "sa"
   }
 }

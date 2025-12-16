@@ -78,6 +78,17 @@ export const PlayStatus = {
 } as const;
 export type PlayStatus = (typeof PlayStatus)[keyof typeof PlayStatus];
 
+// Game Completion Type
+export const GameCompletionType = {
+  None: 0,
+  MainStory: 1, // Main Story
+  MainPlusExtras: 2, // Main + Extras
+  Completionist: 3, // %100 / Platinum
+  Speedrun: 4, // Speedrun
+} as const;
+export type GameCompletionType =
+  (typeof GameCompletionType)[keyof typeof GameCompletionType];
+
 // Game Content
 export interface GameContentDto {
   id: number; // IGDB ID
@@ -92,6 +103,9 @@ export interface GameContentDto {
 
   // User Fields
   userStatus: PlayStatus;
+  userPlatform?: string;
+  completionType?: GameCompletionType;
+  userPlaytime?: number;
   userRating?: number;
   userReview?: string;
 }
@@ -103,4 +117,12 @@ export interface TrackGameDto {
   coverUrl?: string;
   releaseDate?: string;
   status: PlayStatus;
+  userPlatform?: string;
+}
+
+export interface UpdateGameProgressDto {
+  igdbId: number;
+  userPlaytime: number;
+  completionType: GameCompletionType;
+  userPlatform?: string;
 }

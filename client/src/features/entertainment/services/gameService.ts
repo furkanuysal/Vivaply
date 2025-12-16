@@ -1,5 +1,10 @@
 import api from "../../../lib/api";
-import type { GameContentDto, TrackGameDto, PlayStatus } from "../types";
+import type {
+  GameContentDto,
+  TrackGameDto,
+  PlayStatus,
+  UpdateGameProgressDto,
+} from "../types";
 
 export const gamesService = {
   // Search
@@ -63,6 +68,12 @@ export const gamesService = {
       igdbId,
       review,
     });
+    return response.data;
+  },
+
+  // Update Progress
+  updateProgress: async (data: UpdateGameProgressDto) => {
+    const response = await api.put("/Entertainment/Game/progress", data);
     return response.data;
   },
 
