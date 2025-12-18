@@ -192,7 +192,8 @@ namespace Vivaply.API.Controllers
                     FirstAirDate = show.FirstAirDate,
                     LatestEpisode = show.LatestEpisodeInfo,
                     LastWatched = lastWatched != null ? $"S{lastWatched.SeasonNumber} E{lastWatched.EpisodeNumber}" : null, // Format as "S1 E1"
-                    Status = show.ProductionStatus
+                    Status = show.ProductionStatus,
+                    UserReview = show.Review
                 };
             }).ToList();
 
@@ -208,7 +209,8 @@ namespace Vivaply.API.Controllers
                     VoteAverage = x.VoteAverage,
                     UserRating = x.UserRating ?? 0,
                     ReleaseDate = x.ReleaseDate,
-                    Status = x.ProductionStatus
+                    Status = x.ProductionStatus,
+                    UserReview = x.Review
                 }).ToListAsync();
 
             return Ok(new { tv = showDtos, movie = movies });
@@ -343,6 +345,113 @@ namespace Vivaply.API.Controllers
 
             await _dbContext.SaveChangesAsync();
             return Ok(new { message = "Durum güncellendi!" });
+        }
+
+        // Combined Update for Progress (Status, Rating, Review)
+        [HttpPut("progress")]
+        public async Task<IActionResult> UpdateProgress([FromBody] UpdateEntertainmentDto request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+            if (request.Type == "tv")
+            {
+                var show = await _dbContext.UserShows
+                    .Include(x => x.WatchedEpisodes)
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId);
+
+                if (show == null) return NotFound("Dizi listenizde bulunamadı.");
+
+                // Update fields
+                show.Status = request.Status;
+                
+                if (request.Rating.HasValue)
+                {
+                    if (request.Rating == 0) // Treat 0 as "No Rating" / "Clear Rating"
+                    {
+                        show.UserRating = null;
+                    }
+                    else if (request.Rating < 0 || request.Rating > 10)
+                    {
+                        return BadRequest("Puan 0-10 arasında olmalı.");
+                    }
+                    else
+                    {
+                         show.UserRating = request.Rating.Value;
+                    }
+                }
+
+                if (request.Review != null)
+                {
+                    show.Review = request.Review;
+                }
+
+                // If completed logic (same as UpdateStatus)
+                if (request.Status == WatchStatus.Completed)
+                {
+                    var showDetails = await _tmdbService.GetTvShowDetailsAsync(request.TmdbId);
+                    if (showDetails != null)
+                    {
+                        var episodesToAdd = new List<WatchedEpisode>();
+                        var existingEpisodeKeys = new HashSet<string>(show.WatchedEpisodes.Select(e => $"{e.SeasonNumber}-{e.EpisodeNumber}"));
+
+                        foreach (var season in showDetails.Seasons)
+                        {
+                            if (season.SeasonNumber == 0) continue;
+
+                            var seasonDetail = await _tmdbService.GetTvSeasonDetailsAsync(request.TmdbId, season.SeasonNumber);
+                            if (seasonDetail != null)
+                            {
+                                foreach (var episode in seasonDetail.Episodes)
+                                {
+                                    if (!existingEpisodeKeys.Contains($"{season.SeasonNumber}-{episode.EpisodeNumber}"))
+                                    {
+                                        episodesToAdd.Add(new WatchedEpisode
+                                        {
+                                            UserShowId = show.Id,
+                                            SeasonNumber = season.SeasonNumber,
+                                            EpisodeNumber = episode.EpisodeNumber,
+                                            WatchedAt = DateTime.UtcNow
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        if (episodesToAdd.Count > 0) _dbContext.WatchedEpisodes.AddRange(episodesToAdd);
+                    }
+                }
+            }
+            else // Movie
+            {
+                var movie = await _dbContext.UserMovies.FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
+                if (movie == null) return NotFound("Film listenizde bulunamadı.");
+                
+                movie.Status = request.Status;
+                
+                if (request.Rating.HasValue)
+                {
+                    if (request.Rating == 0) // Treat 0 as "No Rating" / "Clear Rating"
+                    {
+                        movie.UserRating = null;
+                    }
+                    else if (request.Rating < 0 || request.Rating > 10)
+                    {
+                        return BadRequest("Puan 0-10 arasında olmalı.");
+                    }
+                    else
+                    {
+                        movie.UserRating = request.Rating.Value;
+                    }
+                }
+
+                if (request.Review != null)
+                {
+                    movie.Review = request.Review;
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return Ok(new { message = "İlerleme kaydedildi!" });
         }
 
         // Toggle an episode's watch status
