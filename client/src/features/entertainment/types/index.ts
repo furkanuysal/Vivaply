@@ -125,4 +125,13 @@ export interface UpdateGameProgressDto {
   userPlaytime: number;
   completionType: GameCompletionType;
   userPlatform?: string;
+  userRating?: number;
+}
+
+export interface UpdateEntertainmentStatusDto {
+  tmdbId: number;
+  type: "tv" | "movie";
+  status: WatchStatus;
+  rating?: number;
+  review?: string;
 }

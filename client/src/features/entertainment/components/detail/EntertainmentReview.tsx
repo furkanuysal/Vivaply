@@ -32,7 +32,7 @@ export default function EntertainmentReview({
       </div>
       <textarea
         rows={3}
-        className="w-full bg-skin-base/50 text-skin-text text-sm p-3 rounded-lg border border-skin-border/50 focus:border-skin-primary focus:outline-none resize-none transition"
+        className="w-full bg-skin-base hover:bg-skin-surface text-skin-text text-sm p-3 rounded-lg border border-skin-border/50 focus:border-skin-primary focus:outline-none resize-none transition"
         placeholder={t("entertainment:detail.personal_review_placeholder")}
         value={reviewText}
         onChange={(e) => onChange(e.target.value)}

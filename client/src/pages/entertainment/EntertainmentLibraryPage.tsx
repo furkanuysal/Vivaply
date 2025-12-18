@@ -19,6 +19,7 @@ import {
   WatchStatus,
   PlayStatus,
   GameCompletionType,
+  type UpdateEntertainmentStatusDto,
 } from "../../features/entertainment/types";
 import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatchStatusConfig";
 import { gamesService } from "../../features/entertainment/services/gameService";
@@ -26,6 +27,7 @@ import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayS
 import GameCard from "../../features/entertainment/components/shared/GameCard";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import GameProgressDialog from "../../features/entertainment/components/library/GameProgressDialog";
+import EntertainmentStatusDialog from "../../features/entertainment/components/library/EntertainmentStatusDialog";
 import { useTranslation } from "react-i18next";
 
 export default function EntertainmentLibraryPage() {
@@ -64,6 +66,24 @@ export default function EntertainmentLibraryPage() {
     setIsEditOpen(true);
   };
 
+  // Entertainment Status Dialog State (TV/Movie)
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [contentToEdit, setContentToEdit] = useState<TmdbContentDto | null>(
+    null
+  );
+  const [contentTypeToEdit, setContentTypeToEdit] = useState<"tv" | "movie">(
+    "tv"
+  );
+
+  const handleStatusEditClick = (
+    item: TmdbContentDto,
+    type: "tv" | "movie"
+  ) => {
+    setContentToEdit(item);
+    setContentTypeToEdit(type);
+    setIsStatusDialogOpen(true);
+  };
+
   const handleSaveProgress = async (data: UpdateGameProgressDto) => {
     try {
       await gamesService.updateProgress(data);
@@ -79,9 +99,38 @@ export default function EntertainmentLibraryPage() {
                 userPlatform: data.userPlatform,
                 completionType: data.completionType,
                 userPlaytime: data.userPlaytime,
+                userRating: data.userRating,
               }
             : g
         ),
+      }));
+    } catch (error) {
+      console.error(error);
+      toast.error(t("common:messages.save_error"));
+    }
+  };
+
+  const handleSaveEntertainmentStatus = async (
+    data: UpdateEntertainmentStatusDto
+  ) => {
+    try {
+      await entertainmentService.updateProgress(data);
+      toast.success(t("common:messages.save_success"));
+
+      // Update local state
+      setLibraryData((prev) => ({
+        ...prev,
+        [data.type]: prev[data.type].map((item) => {
+          if (item.id === data.tmdbId) {
+            return {
+              ...item,
+              user_status: data.status,
+              user_rating: data.rating,
+              user_review: data.review,
+            };
+          }
+          return item;
+        }),
       }));
     } catch (error) {
       console.error(error);
@@ -719,6 +768,21 @@ export default function EntertainmentLibraryPage() {
                                 <PencilIcon className="w-5 h-5" />
                               </button>
                             )}
+                            {activeTab !== "game" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusEditClick(
+                                    item as TmdbContentDto,
+                                    activeTab as "tv" | "movie"
+                                  );
+                                }}
+                                className="p-2 text-skin-muted hover:text-skin-primary hover:bg-skin-surface rounded-full transition"
+                                title={t("common:buttons.update")}
+                              >
+                                <PencilIcon className="w-5 h-5" />
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -766,6 +830,13 @@ export default function EntertainmentLibraryPage() {
         onClose={() => setIsEditOpen(false)}
         game={gameToEdit}
         onSave={handleSaveProgress}
+      />
+      <EntertainmentStatusDialog
+        isOpen={isStatusDialogOpen}
+        onClose={() => setIsStatusDialogOpen(false)}
+        content={contentToEdit}
+        type={contentTypeToEdit}
+        onSave={handleSaveEntertainmentStatus}
       />
     </div>
   );

@@ -1,63 +1,65 @@
 import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import StarRating from "../../../../components/common/StarRating";
 import {
-  type GameContentDto,
-  GameCompletionType,
-  type UpdateGameProgressDto,
+  type TmdbContentDto,
+  WatchStatus,
+  type UpdateEntertainmentStatusDto,
 } from "../../types";
+import { useWatchStatusConfig } from "../../hooks/useWatchStatusConfig";
+import StarRating from "../../../../components/common/StarRating";
 
-interface GameProgressDialogProps {
+interface EntertainmentStatusDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  game: GameContentDto | null;
-  onSave: (data: UpdateGameProgressDto) => Promise<void>;
+  content: TmdbContentDto | null;
+  type: "tv" | "movie";
+  onSave: (data: UpdateEntertainmentStatusDto) => Promise<void>;
 }
 
-export default function GameProgressDialog({
+export default function EntertainmentStatusDialog({
   isOpen,
   onClose,
-  game,
+  content,
+  type,
   onSave,
-}: GameProgressDialogProps) {
+}: EntertainmentStatusDialogProps) {
   const { t } = useTranslation(["entertainment", "common"]);
+  const { STATUS_CONFIG } = useWatchStatusConfig(type);
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState<{
-    userPlatform: string;
-    completionType: GameCompletionType;
-    userPlaytime: string; // string for input handling, convert to number on submit
+    status: WatchStatus;
     rating: number;
+    review: string;
   }>({
-    userPlatform: "",
-    completionType: GameCompletionType.None,
-    userPlaytime: "",
+    status: WatchStatus.None,
     rating: 0,
+    review: "",
   });
 
   useEffect(() => {
-    if (game) {
+    if (content) {
       setFormData({
-        userPlatform: game.userPlatform || "",
-        completionType: game.completionType || GameCompletionType.None,
-        userPlaytime: game.userPlaytime?.toString() || "",
-        rating: game.userRating || 0,
+        status: content.user_status,
+        rating: content.user_rating || 0,
+        review: content.user_review || "",
       });
     }
-  }, [game]);
+  }, [content]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!game) return;
+    if (!content) return;
 
     setLoading(true);
     try {
       await onSave({
-        igdbId: game.id,
-        userPlatform: formData.userPlatform,
-        completionType: formData.completionType,
-        userPlaytime: parseFloat(formData.userPlaytime) || 0,
-        userRating: formData.rating,
+        tmdbId: content.id,
+        type: type,
+        status: formData.status,
+        rating: formData.rating,
+        review: formData.review,
       });
       onClose();
     } catch (error) {
@@ -88,18 +90,20 @@ export default function GameProgressDialog({
             </button>
           </div>
 
-          {game && (
+          {content && (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Header with Cover */}
+              {/* Header with Poster */}
               <div className="flex gap-4 items-start">
-                <div className="w-24 aspect-[3/4] flex-shrink-0 rounded-lg overflow-hidden shadow-lg border border-skin-border/50 bg-skin-base relative">
-                  {game.coverUrl ? (
+                <div className="w-24 aspect-[2/3] flex-shrink-0 rounded-lg overflow-hidden shadow-lg border border-skin-border/50 bg-skin-base relative">
+                  {content.poster_path ? (
                     <img
-                      src={game.coverUrl.replace("t_thumb", "t_cover_big")}
-                      alt={game.title}
+                      src={
+                        content.poster_path
+                          ? `https://image.tmdb.org/t/p/w500${content.poster_path}`
+                          : "https://via.placeholder.com/500x750?text=No+Image"
+                      }
+                      alt={content.title || content.name}
                       className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                         (
@@ -111,7 +115,7 @@ export default function GameProgressDialog({
                   ) : null}
                   <div
                     className={`w-full h-full absolute inset-0 items-center justify-center text-skin-muted bg-skin-base ${
-                      game.coverUrl ? "hidden" : "flex"
+                      content.poster_path ? "hidden" : "flex"
                     }`}
                   >
                     <span className="text-xs">No Image</span>
@@ -119,117 +123,41 @@ export default function GameProgressDialog({
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
                   <h4 className="text-2xl font-bold text-skin-text leading-tight mb-2 truncate">
-                    {game.title}
+                    {type === "movie"
+                      ? content.title || content.name
+                      : content.name || content.title}
                   </h4>
                   <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-skin-base border border-skin-border text-xs font-semibold text-skin-muted uppercase tracking-wide">
-                    {t("entertainment:common.game")}
+                    {t(`entertainment:common.${type}`)}
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Platform */}
+                {/* Status */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-skin-text/80">
-                    {t("entertainment:games.platform")}
+                    {t("entertainment:library.table.user_status")}
                   </label>
                   <div className="relative">
                     <select
-                      value={formData.userPlatform}
+                      value={formData.status}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          userPlatform: e.target.value,
+                          status: Number(e.target.value) as WatchStatus,
                         })
                       }
                       className="w-full appearance-none bg-skin-base hover:bg-skin-surface border border-skin-border rounded-xl px-4 py-3 text-skin-text focus:ring-2 focus:ring-skin-primary/50 focus:border-skin-primary outline-none transition cursor-pointer"
                     >
-                      <option value="">
-                        {t("common:dialogs.select_option")}
-                      </option>
-                      {game.platforms?.split(",").map((platform) => {
-                        const p = platform.trim();
+                      {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                        if (key === "0") return null;
                         return (
-                          <option key={p} value={p}>
-                            {p}
+                          <option key={key} value={key}>
+                            {config.label}
                           </option>
                         );
                       })}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-skin-muted">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Playtime */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-skin-text/80">
-                    {t("entertainment:games.playtime")} (
-                    {t("entertainment:games.hours")})
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.userPlaytime}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        userPlaytime: e.target.value,
-                      })
-                    }
-                    className="w-full bg-skin-base hover:bg-skin-surface border border-skin-border rounded-xl px-4 py-3 text-skin-text focus:ring-2 focus:ring-skin-primary/50 focus:border-skin-primary outline-none transition placeholder-skin-muted/50"
-                    placeholder="0"
-                  />
-                </div>
-
-                {/* Completion Type */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-skin-text/80">
-                    {t("entertainment:games.completion")}
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.completionType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          completionType: Number(
-                            e.target.value
-                          ) as GameCompletionType,
-                        })
-                      }
-                      className="w-full appearance-none bg-skin-base hover:bg-skin-surface border border-skin-border rounded-xl px-4 py-3 text-skin-text focus:ring-2 focus:ring-skin-primary/50 focus:border-skin-primary outline-none transition cursor-pointer"
-                    >
-                      <option value={GameCompletionType.None}>
-                        {t("entertainment:games.completionType.none")}
-                      </option>
-                      <option value={GameCompletionType.MainStory}>
-                        {t("entertainment:games.completionType.mainStory")}
-                      </option>
-                      <option value={GameCompletionType.MainPlusExtras}>
-                        {t("entertainment:games.completionType.mainPlusExtras")}
-                      </option>
-                      <option value={GameCompletionType.Completionist}>
-                        {t("entertainment:games.completionType.completionist")}
-                      </option>
-                      <option value={GameCompletionType.Speedrun}>
-                        {t("entertainment:games.completionType.speedrun")}
-                      </option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-skin-muted">
                       <svg
@@ -259,7 +187,7 @@ export default function GameProgressDialog({
                     <div className="scale-90 origin-center">
                       <StarRating
                         currentRating={formData.rating}
-                        onRate={(rating) =>
+                        onRate={(rating: number) =>
                           setFormData({ ...formData, rating })
                         }
                       />
@@ -269,13 +197,37 @@ export default function GameProgressDialog({
                         type="button"
                         onClick={() => setFormData({ ...formData, rating: 0 })}
                         className="absolute -right-2 -top-2 bg-skin-surface border border-skin-border shadow-sm rounded-full p-1 text-skin-muted hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 duration-200"
-                        title={t("common:buttons.clear")}
+                        title={
+                          t("entertainment:library.clear_rating") ||
+                          "Clear Rating"
+                        }
                       >
                         <XMarkIcon className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Review */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-skin-text/80">
+                  {t("entertainment:detail.personal_review")}
+                </label>
+                <textarea
+                  value={formData.review}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      review: e.target.value,
+                    })
+                  }
+                  rows={4}
+                  className="w-full bg-skin-base hover:bg-skin-surface border border-skin-border rounded-xl px-4 py-3 text-skin-text focus:ring-2 focus:ring-skin-primary/50 focus:border-skin-primary outline-none transition resize-none placeholder-skin-muted/50 text-sm leading-relaxed"
+                  placeholder={t(
+                    "entertainment:detail.personal_review_placeholder"
+                  )}
+                />
               </div>
 
               <div className="flex gap-3 pt-2">

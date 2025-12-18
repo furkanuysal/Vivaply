@@ -6,6 +6,7 @@ import type {
   WatchStatus,
   LibraryResponse,
   MarkSeasonWatchedDto,
+  UpdateEntertainmentStatusDto,
 } from "../../entertainment/types";
 
 export const entertainmentService = {
@@ -153,6 +154,12 @@ export const entertainmentService = {
   // Sync library
   syncLibrary: async () => {
     const response = await api.post("/Entertainment/library/sync");
+    return response.data;
+  },
+
+  // Update progress (status, rating, review combined)
+  updateProgress: async (data: UpdateEntertainmentStatusDto) => {
+    const response = await api.put("/Entertainment/progress", data);
     return response.data;
   },
 };
