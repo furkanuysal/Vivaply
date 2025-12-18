@@ -48,6 +48,9 @@ namespace Vivaply.API.DTOs.Igdb
 
         [JsonPropertyName("userPlatform")]
         public string? UserPlatform { get; set; }
+
+        [JsonPropertyName("userRating")]
+        public double? UserRating { get; set; }
     }
 
     // Rate Game

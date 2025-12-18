@@ -173,6 +173,12 @@ namespace Vivaply.API.Controllers
                 game.UserPlatform = request.UserPlatform;
             }
 
+            if (request.UserRating.HasValue)
+            {
+                if (request.UserRating == 0) game.UserRating = null;
+                else game.UserRating = request.UserRating.Value;
+            }
+
             await _dbContext.SaveChangesAsync();
             return Ok(new { message = "Oyun detayları kaydedildi." });
         }
