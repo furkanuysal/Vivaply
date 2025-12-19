@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Vivaply.API.Data;
-using Vivaply.API.DTOs.Igdb;
+using Vivaply.API.DTOs.Entertainment.Commands.Games;
+using Vivaply.API.DTOs.Entertainment.Igdb;
 using Vivaply.API.Entities.Entertainment.Igdb;
 using Vivaply.API.Services.Igdb;
 

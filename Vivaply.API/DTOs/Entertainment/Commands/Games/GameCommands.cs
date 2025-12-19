@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Vivaply.API.Entities.Entertainment.Igdb;
 
-namespace Vivaply.API.DTOs.Igdb
+namespace Vivaply.API.DTOs.Entertainment.Commands.Games
 {
     // Track Game
     public class TrackGameDto

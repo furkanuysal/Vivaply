@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Vivaply.API.DTOs.Tmdb;
+using Vivaply.API.DTOs.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services
 {

@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Vivaply.API.DTOs.Tmdb
+namespace Vivaply.API.DTOs.Entertainment.Commands.Media
 {
-    public class AddReviewDto
+    public class RateMediaDto
     {
         [JsonPropertyName("tmdbId")]
         public int TmdbId { get; set; }
@@ -10,7 +10,7 @@ namespace Vivaply.API.DTOs.Tmdb
         [JsonPropertyName("type")]
         public string Type { get; set; } = "tv";
 
-        [JsonPropertyName("review")]
-        public string Review { get; set; } = string.Empty;
+        [JsonPropertyName("rating")]
+        public double Rating { get; set; }
     }
 }

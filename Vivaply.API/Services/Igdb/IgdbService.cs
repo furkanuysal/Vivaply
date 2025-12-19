@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Vivaply.API.DTOs.Igdb;
+using Vivaply.API.DTOs.Entertainment.Igdb;
 
 namespace Vivaply.API.Services.Igdb
 {

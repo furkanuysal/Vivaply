@@ -1,4 +1,4 @@
-﻿using Vivaply.API.DTOs.Igdb;
+﻿using Vivaply.API.DTOs.Entertainment.Igdb;
 
 namespace Vivaply.API.Services.Igdb
 {

@@ -1,8 +1,8 @@
 ﻿using Vivaply.API.Entities.Entertainment;
 
-namespace Vivaply.API.DTOs.Tmdb
+namespace Vivaply.API.DTOs.Entertainment.Commands.Media
 {
-    public class AddToLibraryDto
+    public class AddMediaToLibraryDto
     {
         public int TmdbId { get; set; }
         public string Type { get; set; } = "tv";

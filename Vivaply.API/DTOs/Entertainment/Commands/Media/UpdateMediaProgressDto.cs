@@ -1,8 +1,8 @@
 using Vivaply.API.Entities.Entertainment;
 
-namespace Vivaply.API.DTOs.Tmdb
+namespace Vivaply.API.DTOs.Entertainment.Commands.Media
 {
-    public class UpdateEntertainmentDto
+    public class UpdateMediaProgressDto
     {
         public int TmdbId { get; set; }
         public string Type { get; set; } = string.Empty; // "tv" or "movie"

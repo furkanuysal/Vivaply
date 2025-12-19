@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
+using Vivaply.API.Services.Entertainment;
 using Vivaply.API.Services.Igdb;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<VivaplyDbContext>(options =>
 
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddEntertainmentServices();
 
 // HTTP Client Configuration for TMDB Service
 builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>

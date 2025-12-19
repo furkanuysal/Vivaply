@@ -1,9 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 using Vivaply.API.Entities.Entertainment;
 
-namespace Vivaply.API.DTOs.Tmdb
+namespace Vivaply.API.DTOs.Entertainment.Commands.Media
 {
-    public class UpdateStatusDto
+    public class UpdateMediaStatusDto
     {
         [JsonPropertyName("tmdbId")]
         public int TmdbId { get; set; }

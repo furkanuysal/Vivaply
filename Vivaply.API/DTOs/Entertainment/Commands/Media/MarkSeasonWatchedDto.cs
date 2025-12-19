@@ -1,4 +1,4 @@
-﻿namespace Vivaply.API.DTOs.Tmdb
+﻿namespace Vivaply.API.DTOs.Entertainment.Commands.Media
 {
     public class MarkSeasonWatchedDto
     {
