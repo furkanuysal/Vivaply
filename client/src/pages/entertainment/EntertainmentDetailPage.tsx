@@ -50,6 +50,7 @@ export default function EntertainmentDetailPage() {
     viewMode,
     handleDisplayModeChange,
     allSeasonsEpisodes,
+    setAllSeasonsEpisodes,
     loadingAllSeasons,
     handleToggleEpisode,
     handleMarkSeasonWatched,
@@ -85,16 +86,18 @@ export default function EntertainmentDetailPage() {
   const onStatusChangeWrapper = async (newStatus: number) => {
     const success = await handleStatusChange(newStatus as WatchStatus);
     if (success && type === "tv" && newStatus === WatchStatus.Completed) {
+      setAllSeasonsEpisodes({});
       // Re-fetch current season to update checks
-      handleSeasonClick(selectedSeason);
+      await handleSeasonClick(selectedSeason, { forceReload: true });
     }
   };
 
   const onRemoveWrapper = async () => {
     const success = await handleRemoveFromLibrary();
     if (success && type === "tv") {
+      setAllSeasonsEpisodes({});
       // Re-fetch current season
-      handleSeasonClick(selectedSeason);
+      await handleSeasonClick(selectedSeason, { forceReload: true });
     }
   };
 

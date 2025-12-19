@@ -47,26 +47,31 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     [selectedSeason]
   );
 
-  const handleSeasonClick = async (seasonNum: number) => {
+  const handleSeasonClick = async (
+    seasonNum: number,
+    options?: { forceReload?: boolean }
+  ) => {
     if (!tmdbId) return;
-    setSelectedSeason(seasonNum);
 
-    // Check if we already have it in cache (allSeasonsEpisodes)
-    if (allSeasonsEpisodes[seasonNum]) {
+    // Cache hit
+    if (allSeasonsEpisodes[seasonNum] && !options?.forceReload) {
+      setSelectedSeason(seasonNum);
       setSeasonEpisodes(allSeasonsEpisodes[seasonNum]);
       return;
     }
 
-    setSeasonEpisodes([]); // Clear current view
+    setSelectedSeason(seasonNum);
+    setSeasonEpisodes([]);
     setLoadingSeason(true);
+
     try {
       const seasonData = await entertainmentService.getTvSeasonDetail(
         tmdbId,
         seasonNum
       );
+
       setSeasonEpisodes(seasonData.episodes);
 
-      // Also cache it
       setAllSeasonsEpisodes((prev) => ({
         ...prev,
         [seasonNum]: seasonData.episodes,
@@ -192,6 +197,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     viewMode,
     allSeasonsEpisodes,
     loadingAllSeasons,
+    setAllSeasonsEpisodes,
     handleSeasonClick,
     handleDisplayModeChange,
     handleToggleEpisode,

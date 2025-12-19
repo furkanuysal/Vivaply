@@ -181,7 +181,7 @@ export default function EntertainmentLibraryPage() {
           if (tvItem.id === item.id) {
             return {
               ...tvItem,
-              last_watched: `S${result.season} E${result.episode}`,
+              last_watched: `S${result.seasonNumber} E${result.episodeNumber}`,
               user_status: result.newStatus
                 ? result.newStatus
                 : tvItem.user_status,
