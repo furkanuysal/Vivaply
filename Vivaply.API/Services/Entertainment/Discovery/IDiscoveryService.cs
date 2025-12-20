@@ -1,4 +1,5 @@
-﻿using Vivaply.API.DTOs.Entertainment.Tmdb;
+﻿using Vivaply.API.DTOs.Entertainment.Igdb;
+using Vivaply.API.DTOs.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment.Discovery
 {
@@ -11,5 +12,9 @@ namespace Vivaply.API.Services.Entertainment.Discovery
         // Movie
         Task<List<TmdbContentDto>> SearchMovieAsync(string query, string language);
         Task<List<TmdbContentDto>> GetTrendingMovieAsync(string language);
+
+        // Game
+        Task<List<GameContentDto>> SearchGameAsync(string query);
+        Task<List<GameContentDto>> GetTrendingGameAsync();
     }
 }

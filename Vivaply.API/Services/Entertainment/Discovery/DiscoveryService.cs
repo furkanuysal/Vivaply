@@ -1,14 +1,18 @@
-﻿using Vivaply.API.DTOs.Entertainment.Tmdb;
+﻿using Vivaply.API.DTOs.Entertainment.Igdb;
+using Vivaply.API.DTOs.Entertainment.Tmdb;
+using Vivaply.API.Services.Igdb;
 
 namespace Vivaply.API.Services.Entertainment.Discovery
 {
     public class DiscoveryService : IDiscoveryService
     {
         private readonly ITmdbService _tmdbService;
+        private readonly IIgdbService _igdbService;
 
-        public DiscoveryService(ITmdbService tmdbService)
+        public DiscoveryService(ITmdbService tmdbService, IIgdbService igdbService)
         {
             _tmdbService = tmdbService;
+            _igdbService = igdbService;
         }
 
         public Task<List<TmdbContentDto>> SearchTvAsync(string query, string language)
@@ -22,6 +26,12 @@ namespace Vivaply.API.Services.Entertainment.Discovery
 
         public Task<List<TmdbContentDto>> GetTrendingMovieAsync(string language)
             => _tmdbService.GetTrendingMoviesAsync(language);
+
+        public Task<List<GameContentDto>> SearchGameAsync(string query)
+            => _igdbService.SearchGamesAsync(query);
+
+        public Task<List<GameContentDto>> GetTrendingGameAsync()
+            => _igdbService.GetTrendingGamesAsync();
     }
 
 }

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Vivaply.API.DTOs.Entertainment.Commands.Games;
 using Vivaply.API.DTOs.Entertainment.Commands.Media;
 using Vivaply.API.Services;
 using Vivaply.API.Services.Entertainment.Discovery;
+using Vivaply.API.Services.Entertainment.Game;
 using Vivaply.API.Services.Entertainment.Media;
 
 namespace Vivaply.API.Controllers
@@ -13,11 +15,13 @@ namespace Vivaply.API.Controllers
     [ApiController]
     public class EntertainmentController : ControllerBase
     {
+        private readonly IGameService _gameService;
         private readonly IMediaService _mediaService;
         private readonly IDiscoveryService _discoveryService;
 
-        public EntertainmentController(IMediaService mediaService, IDiscoveryService discoveryService)
+        public EntertainmentController(IGameService gameService, IMediaService mediaService, IDiscoveryService discoveryService)
         {
+            _gameService = gameService;
             _mediaService = mediaService;
             _discoveryService = discoveryService;
         }
@@ -56,6 +60,21 @@ namespace Vivaply.API.Controllers
             return Ok(await _discoveryService.GetTrendingMovieAsync(language));
         }
 
+        // Game search
+        [HttpGet("game/search")]
+        public async Task<IActionResult> SearchGames([FromQuery] string query)
+        {
+            var results = await _discoveryService.SearchGameAsync(query);
+            return Ok(results);
+        }
+
+        // Game trending
+        [HttpGet("game/trending")]
+        public async Task<IActionResult> GetTrendingGames()
+        {
+            var results = await _discoveryService.GetTrendingGameAsync();
+            return Ok(results);
+        }
 
         // Getting TMDB TV Show Details
         [HttpGet("tv/{id}")]
@@ -77,6 +96,21 @@ namespace Vivaply.API.Controllers
         {
             var result = await _mediaService.GetMovieDetailAsync(GetUserIdOrNull(), id, language);
             return result == null ? NotFound() : Ok(result);
+        }
+
+        // Getting IGDB Game Details
+        [HttpGet("game/{id:int}")]
+        public async Task<IActionResult> GetGameDetail(int id)
+        {
+            var userId = Guid.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var uid
+            ) ? uid : (Guid?)null;
+
+            var game = await _gameService.GetDetailAsync(userId, id);
+            return game == null
+                ? NotFound("Oyun bulunamadı.")
+                : Ok(game);
         }
 
         // Getting TMDB TV Season Details
@@ -208,6 +242,57 @@ namespace Vivaply.API.Controllers
         {
             var count = await _mediaService.SyncMediaLibraryAsync(GetUserId());
             return Ok(new { updated = count });
+        }
+
+        // Game Library
+        [HttpGet("game/library")]
+        public async Task<IActionResult> GetGameLibrary()
+        {
+            var userId = GetUserId();
+            var library = await _gameService.GetLibraryAsync(userId);
+            return Ok(library);
+        }
+
+        [HttpPost("game/track")]
+        public async Task<IActionResult> TrackGame([FromBody] TrackGameDto request)
+        {
+            await _gameService.AddToLibraryAsync(GetUserId(), request);
+            return Ok(new { message = "Oyun kütüphaneye eklendi." });
+        }
+
+        [HttpPut("game/status")]
+        public async Task<IActionResult> UpdateGameStatus([FromBody] UpdateGameStatusDto request)
+        {
+            await _gameService.UpdateStatusAsync(GetUserId(), request);
+            return Ok(new { message = "Durum güncellendi." });
+        }
+
+        [HttpPut("game/progress")]
+        public async Task<IActionResult> UpdateGameProgress([FromBody] UpdateGameProgressDto request)
+        {
+            await _gameService.UpdateProgressAsync(GetUserId(), request);
+            return Ok(new { message = "Oyun ilerlemesi güncellendi." });
+        }
+
+        [HttpPut("game/rating")]
+        public async Task<IActionResult> RateGame([FromBody] RateGameDto request)
+        {
+            await _gameService.RateAsync(GetUserId(), request);
+            return Ok(new { message = "Puan kaydedildi." });
+        }
+
+        [HttpPut("game/review")]
+        public async Task<IActionResult> AddGameReview([FromBody] AddGameReviewDto request)
+        {
+            await _gameService.AddReviewAsync(GetUserId(), request);
+            return Ok(new { message = "Not kaydedildi." });
+        }
+
+        [HttpDelete("game/remove/{id:int}")]
+        public async Task<IActionResult> RemoveGame(int id)
+        {
+            await _gameService.RemoveAsync(GetUserId(), id);
+            return Ok(new { message = "Oyun kütüphaneden kaldırıldı." });
         }
 
         // --- Private Helpers ---

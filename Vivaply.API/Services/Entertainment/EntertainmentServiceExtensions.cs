@@ -1,4 +1,5 @@
 ﻿using Vivaply.API.Services.Entertainment.Discovery;
+using Vivaply.API.Services.Entertainment.Game;
 using Vivaply.API.Services.Entertainment.Media;
 
 namespace Vivaply.API.Services.Entertainment
@@ -8,6 +9,7 @@ namespace Vivaply.API.Services.Entertainment
         public static IServiceCollection AddEntertainmentServices(this IServiceCollection services)
         {
             services.AddScoped<IMediaService, MediaService>();
+            services.AddScoped<IGameService, GameService>();
             services.AddScoped<IDiscoveryService, DiscoveryService>();
             return services;
         }
