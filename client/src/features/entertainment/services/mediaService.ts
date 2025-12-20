@@ -7,9 +7,9 @@ import type {
   LibraryResponse,
   MarkSeasonWatchedDto,
   UpdateEntertainmentStatusDto,
-} from "../../entertainment/types";
+} from "../types";
 
-export const entertainmentService = {
+export const mediaService = {
   // Dizi Arama
   searchTv: async (query: string, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(

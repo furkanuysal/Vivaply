@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import { entertainmentService } from "../services/entertainmentService";
+import { mediaService } from "../services/mediaService";
 import type { TmdbEpisodeDto } from "../types";
 
 export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
@@ -65,7 +65,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     setLoadingSeason(true);
 
     try {
-      const seasonData = await entertainmentService.getTvSeasonDetail(
+      const seasonData = await mediaService.getTvSeasonDetail(
         tmdbId,
         seasonNum
       );
@@ -98,7 +98,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
       setLoadingAllSeasons(true);
       try {
         const promises = seasonsToFetch.map((s: any) =>
-          entertainmentService.getTvSeasonDetail(tmdbId, s.season_number)
+          mediaService.getTvSeasonDetail(tmdbId, s.season_number)
         );
 
         const results = await Promise.all(promises);
@@ -131,7 +131,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     updateEpisodeInState(seasonNum, episode.id, { is_watched: newStatus });
 
     try {
-      await entertainmentService.toggleEpisode(
+      await mediaService.toggleEpisode(
         tmdbId,
         seasonNum,
         episode.episode_number
@@ -154,7 +154,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
   const handleMarkSeasonWatched = async () => {
     if (!tmdbId) return;
     try {
-      await entertainmentService.markSeasonWatched({
+      await mediaService.markSeasonWatched({
         tmdbShowId: tmdbId,
         seasonNumber: selectedSeason,
       });

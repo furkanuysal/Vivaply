@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
+import { mediaService } from "../../features/entertainment/services/mediaService";
 import MediaCard from "../../features/entertainment/components/shared/MediaCard";
 import type {
   TmdbContentDto,
@@ -34,9 +34,9 @@ export default function EntertainmentPage() {
     try {
       let data;
       if (activeTab === "tv") {
-        data = await entertainmentService.getTrendingTv();
+        data = await mediaService.getTrendingTv();
       } else if (activeTab === "movie") {
-        data = await entertainmentService.getTrendingMovie();
+        data = await mediaService.getTrendingMovie();
       } else {
         data = await gamesService.getTrendingGames();
       }
@@ -57,9 +57,9 @@ export default function EntertainmentPage() {
     try {
       let data;
       if (activeTab === "tv") {
-        data = await entertainmentService.searchTv(query);
+        data = await mediaService.searchTv(query);
       } else if (activeTab === "movie") {
-        data = await entertainmentService.searchMovie(query);
+        data = await mediaService.searchMovie(query);
       } else {
         data = await gamesService.searchGames(query);
       }

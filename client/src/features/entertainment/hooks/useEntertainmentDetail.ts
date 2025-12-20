@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import { entertainmentService } from "../services/entertainmentService";
+import { mediaService } from "../services/mediaService";
 import { gamesService } from "../services/gameService";
 import { WatchStatus, PlayStatus } from "../types";
 
@@ -24,9 +24,9 @@ export function useEntertainmentDetail(
       try {
         let result;
         if (type === "tv") {
-          result = await entertainmentService.getTvDetail(Number(id));
+          result = await mediaService.getTvDetail(Number(id));
         } else if (type === "movie") {
-          result = await entertainmentService.getMovieDetail(Number(id));
+          result = await mediaService.getMovieDetail(Number(id));
         } else {
           const gameResult = await gamesService.getGameDetail(Number(id));
           result = {
@@ -58,11 +58,7 @@ export function useEntertainmentDetail(
       if (type === "game") {
         await gamesService.rateGame(data.id, rating);
       } else {
-        await entertainmentService.rateItem(
-          data.id,
-          type as "tv" | "movie",
-          rating
-        );
+        await mediaService.rateItem(data.id, type as "tv" | "movie", rating);
       }
       toast.success(t("common:messages.rate_success", { rating }));
 
@@ -104,7 +100,7 @@ export function useEntertainmentDetail(
               ? WatchStatus.PlanToWatch
               : newStatus;
 
-          await entertainmentService.trackItem({
+          await mediaService.trackItem({
             tmdbId: data.id,
             type: type as "tv" | "movie",
             title: data.display_name,
@@ -114,7 +110,7 @@ export function useEntertainmentDetail(
           });
 
           if (newStatus === WatchStatus.Completed) {
-            await entertainmentService.updateStatus(
+            await mediaService.updateStatus(
               data.id,
               type as "tv" | "movie",
               WatchStatus.Completed
@@ -126,7 +122,7 @@ export function useEntertainmentDetail(
         if (type === "game") {
           await gamesService.updateStatus(data.id, newStatus as PlayStatus);
         } else {
-          await entertainmentService.updateStatus(
+          await mediaService.updateStatus(
             data.id,
             type as "tv" | "movie",
             newStatus as WatchStatus
@@ -155,10 +151,7 @@ export function useEntertainmentDetail(
       if (type === "game") {
         await gamesService.removeGame(data.id);
       } else {
-        await entertainmentService.removeFromLibrary(
-          data.id,
-          type as "tv" | "movie"
-        );
+        await mediaService.removeFromLibrary(data.id, type as "tv" | "movie");
       }
       toast.info(t("common:messages.remove_from_library_success"));
       setData((prev: any) => ({ ...prev, user_status: undefined }));
@@ -175,7 +168,7 @@ export function useEntertainmentDetail(
       if (type === "game") {
         await gamesService.addReview(data.id, reviewText);
       } else {
-        await entertainmentService.addReview(
+        await mediaService.addReview(
           data.id,
           type as "tv" | "movie",
           reviewText

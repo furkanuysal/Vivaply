@@ -7,7 +7,7 @@ import {
   PencilIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
-import { entertainmentService } from "../../features/entertainment/services/entertainmentService";
+import { mediaService } from "../../features/entertainment/services/mediaService";
 import MediaCard from "../../features/entertainment/components/shared/MediaCard";
 import ProdStatusBadge from "../../features/entertainment/components/shared/ProdStatusBadge";
 import type {
@@ -114,7 +114,7 @@ export default function EntertainmentLibraryPage() {
     data: UpdateEntertainmentStatusDto
   ) => {
     try {
-      await entertainmentService.updateProgress(data);
+      await mediaService.updateProgress(data);
       toast.success(t("common:messages.save_success"));
 
       // Update local state
@@ -145,7 +145,7 @@ export default function EntertainmentLibraryPage() {
       if (activeTab === "game") {
         await gamesService.removeGame(itemToRemove.id); // igdbId or id depending on tracking? Library usually returns id or object with id.
       } else {
-        await entertainmentService.removeFromLibrary(
+        await mediaService.removeFromLibrary(
           itemToRemove.id,
           activeTab as "tv" | "movie"
         );
@@ -171,7 +171,7 @@ export default function EntertainmentLibraryPage() {
   const handleWatchNext = async (item: TmdbContentDto) => {
     setLoadingItems((prev) => new Set(prev).add(item.id));
     try {
-      const result = await entertainmentService.watchNextEpisode(item.id);
+      const result = await mediaService.watchNextEpisode(item.id);
       toast.success(result.message);
 
       // Update local state
@@ -204,11 +204,11 @@ export default function EntertainmentLibraryPage() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await entertainmentService.syncLibrary();
+      await mediaService.syncLibrary();
       toast.success(t("common:messages.library_content_refreshed"));
 
       // Fetch updated library data
-      const data = await entertainmentService.getLibrary();
+      const data = await mediaService.getLibrary();
       const gameData = await gamesService.getLibrary();
       setLibraryData({ ...data, game: gameData });
     } catch (error) {
@@ -222,7 +222,7 @@ export default function EntertainmentLibraryPage() {
     const loadLibrary = async () => {
       setLoading(true);
       try {
-        const data = await entertainmentService.getLibrary();
+        const data = await mediaService.getLibrary();
         const gameData = await gamesService.getLibrary();
         setLibraryData({ ...data, game: gameData });
       } finally {
