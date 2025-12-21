@@ -6,8 +6,7 @@ using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
 using Vivaply.API.Services.Entertainment;
-using Vivaply.API.Services.Entertainment.Igdb;
-using Vivaply.API.Services.Entertainment.Tmdb;
+using Vivaply.API.Services.Knowledge;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,26 +18,7 @@ builder.Services.AddDbContext<VivaplyDbContext>(options =>
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddEntertainmentServices();
-
-// HTTP Client Configuration for TMDB Service
-builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
-{
-    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
-
-// HTTP Client Configuration for Google Books Service
-builder.Services.AddHttpClient<IGoogleBooksService, GoogleBooksService>(client =>
-{
-    client.BaseAddress = new Uri("https://www.googleapis.com/books/v1/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
-
-builder.Services.AddHttpClient<IIgdbService, IgdbService>(client =>
-{
-    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+builder.Services.AddKnowledgeServices();
 
 // Services Configuration
 builder.Services.AddControllers();

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Vivaply.API.Entities.Knowledge;
 
-namespace Vivaply.API.DTOs.GoogleBooks
+namespace Vivaply.API.DTOs.Knowledge.GoogleBooks
 {
     public class GoogleBooksResponse
     {

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
-using Vivaply.API.DTOs.GoogleBooks;
+using Vivaply.API.DTOs.Knowledge.GoogleBooks;
 
-namespace Vivaply.API.Services
+namespace Vivaply.API.Services.Knowledge.GoogleBooks
 {
     public class GoogleBooksService : IGoogleBooksService
     {

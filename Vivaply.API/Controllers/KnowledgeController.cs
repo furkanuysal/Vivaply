@@ -2,11 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Vivaply.API.Data;
-using Vivaply.API.DTOs;
-using Vivaply.API.DTOs.GoogleBooks;
-using Vivaply.API.Entities.Knowledge;
-using Vivaply.API.Services;
+using Vivaply.API.DTOs.Knowledge.Commands.Book;
+using Vivaply.API.Services.Knowledge.Book;
 
 namespace Vivaply.API.Controllers
 {
@@ -15,225 +12,68 @@ namespace Vivaply.API.Controllers
     [ApiController]
     public class KnowledgeController : ControllerBase
     {
-        private readonly IGoogleBooksService _booksService;
-        private readonly VivaplyDbContext _dbContext;
+        private readonly IBookService _bookService;
 
-        public KnowledgeController(IGoogleBooksService booksService, VivaplyDbContext dbContext)
+        public KnowledgeController(IBookService bookService)
         {
-            _booksService = booksService;
-            _dbContext = dbContext;
+            _bookService = bookService;
         }
 
-        // Search Books
-        // URL: /api/Knowledge/books/search
-        [HttpGet("books/search")]
-        public async Task<IActionResult> Search([FromQuery] string query)
+        private Guid UserId =>
+            Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        [HttpGet("book/search")]
+        public async Task<IActionResult> Search(string query)
+            => Ok(await _bookService.SearchAsync(query));
+
+        [HttpGet("book/{id}")]
+        public async Task<IActionResult> Detail(string id)
+            => Ok(await _bookService.GetDetailAsync(UserId, id));
+
+        [HttpGet("book/library")]
+        public async Task<IActionResult> Library()
+            => Ok(await _bookService.GetLibraryAsync(UserId));
+
+        [HttpPost("book/track")]
+        public async Task<IActionResult> Track(AddBookDto dto)
         {
-            var results = await _booksService.SearchBooksAsync(query);
-            return Ok(results);
+            await _bookService.TrackAsync(UserId, dto);
+            return Ok();
         }
 
-        // Book Details
-        // URL: /api/Knowledge/books/{id}
-        [HttpGet("books/{id}")]
-        public async Task<IActionResult> GetDetail(string id)
+        [HttpPut("book/status")]
+        public async Task<IActionResult> Status(UpdateBookStatusDto dto)
         {
-            var book = await _booksService.GetBookDetailsAsync(id);
-            if (book == null) return NotFound("Kitap bulunamadı.");
-
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(userIdString, out var userId))
-            {
-                var userBook = await _dbContext.UserBooks
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == id);
-
-                if (userBook != null)
-                {
-                    book.UserStatus = userBook.Status;
-                    book.CurrentPage = userBook.CurrentPage;
-                    book.UserRating = userBook.UserRating;
-                    book.UserReview = userBook.Review;
-                }
-            }
-            return Ok(book);
+            await _bookService.UpdateStatusAsync(UserId, dto);
+            return Ok();
         }
 
-        // Book Library
-        // URL: /api/Knowledge/books/library
-        [HttpGet("books/library")]
-        public async Task<IActionResult> GetLibrary()
+        [HttpPut("book/progress")]
+        public async Task<IActionResult> Progress(UpdateBookProgressDto dto)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var books = await _dbContext.UserBooks
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.DateAdded)
-                .ToListAsync();
-
-            var dtos = books.Select(b => new BookContentDto
-            {
-                Id = b.GoogleBookId,
-                Title = b.Title,
-                Authors = b.Authors.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim()).ToList(),
-                CoverUrl = b.CoverUrl,
-                PageCount = b.PageCount,
-                UserStatus = b.Status,
-                CurrentPage = b.CurrentPage,
-                UserRating = b.UserRating,
-                UserReview = b.Review
-            });
-
-            return Ok(dtos);
+            await _bookService.UpdateProgressAsync(UserId, dto);
+            return Ok();
         }
 
-        // Add Book to Library
-        [HttpPost("books/track")]
-        public async Task<IActionResult> TrackBook([FromBody] AddBookDto request)
+        [HttpPut("book/rating")]
+        public async Task<IActionResult> Rate(RateBookDto dto)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var existingBook = await _dbContext.UserBooks
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
-
-            if (existingBook != null) return BadRequest("Bu kitap zaten kütüphanenizde.");
-
-            var newBook = new UserBook
-            {
-                UserId = userId,
-                GoogleBookId = request.GoogleBookId,
-                Title = request.Title,
-                Authors = string.Join(", ", request.Authors),
-                CoverUrl = request.CoverUrl,
-                PageCount = request.PageCount,
-                Status = request.Status,
-                DateAdded = DateTime.UtcNow
-            };
-
-            _dbContext.UserBooks.Add(newBook);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { message = "Kitap kütüphaneye eklendi!" });
+            await _bookService.RateAsync(UserId, dto);
+            return Ok();
         }
 
-        // Update Book Status
-        [HttpPut("books/status")]
-        public async Task<IActionResult> UpdateStatus([FromBody] UpdateBookStatusDto request)
+        [HttpPut("book/review")]
+        public async Task<IActionResult> Review(ReviewBookDto dto)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var book = await _dbContext.UserBooks
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
-
-            if (book == null) return NotFound("Kitap kütüphanenizde bulunamadı.");
-
-            book.Status = request.Status;
-
-            if (request.Status == ReadStatus.Completed)
-            {
-                book.CurrentPage = book.PageCount;
-                book.DateFinished = DateTime.UtcNow;
-            }
-
-            await _dbContext.SaveChangesAsync();
-            return Ok(new { message = "Durum güncellendi." });
+            await _bookService.ReviewAsync(UserId, dto);
+            return Ok();
         }
 
-        // Update Book Progress
-        [HttpPut("books/progress")]
-        public async Task<IActionResult> UpdateProgress([FromBody] UpdateBookProgressDto request)
+        [HttpDelete("book/remove/{id}")]
+        public async Task<IActionResult> Remove(string id)
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var book = await _dbContext.UserBooks
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
-
-            if (book == null) return NotFound("Kitap bulunamadı.");
-
-            if (request.CurrentPage > book.PageCount) request.CurrentPage = book.PageCount;
-
-            book.CurrentPage = request.CurrentPage;
-
-            if (book.CurrentPage == book.PageCount && book.Status != ReadStatus.Completed)
-            {
-                book.Status = ReadStatus.Completed;
-                book.DateFinished = DateTime.UtcNow;
-            }
-
-            await _dbContext.SaveChangesAsync();
-            return Ok(new { message = "İlerleme kaydedildi." });
-        }
-
-        // Delete Book from Library
-        [HttpDelete("books/remove/{id}")]
-        public async Task<IActionResult> RemoveBook(string id)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var book = await _dbContext.UserBooks.FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == id);
-            if (book == null) return NotFound();
-
-            _dbContext.UserBooks.Remove(book);
-            await _dbContext.SaveChangesAsync();
-            return Ok(new { message = "Kitap kütüphaneden kaldırıldı." });
-        }
-
-        // Book Review
-        [HttpPut("books/rating")]
-        public async Task<IActionResult> RateBook([FromBody] RateBookDto request)
-        {
-            if (request.Rating < 0 || request.Rating > 10) return BadRequest("Puan 0-10 arasında olmalı.");
-
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var book = await _dbContext.UserBooks.FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
-
-            // If the book is not tracked yet, add it first
-            if (book == null)
-            {
-                var details = await _booksService.GetBookDetailsAsync(request.GoogleBookId);
-                if (details == null) return NotFound("Kitap bulunamadı.");
-
-                book = new UserBook
-                {
-                    UserId = userId,
-                    GoogleBookId = request.GoogleBookId,
-                    Title = details.Title,
-                    Authors = string.Join(", ", details.Authors),
-                    CoverUrl = details.CoverUrl,
-                    PageCount = details.PageCount,
-                    Status = ReadStatus.Reading, // Default status when rating
-                    DateAdded = DateTime.UtcNow
-                };
-                _dbContext.UserBooks.Add(book);
-            }
-
-            book.UserRating = request.Rating;
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { message = $"Puan verildi: {request.Rating}/10 ⭐" });
-        }
-
-        // Review Book
-        [HttpPut("books/review")]
-        public async Task<IActionResult> AddReview([FromBody] ReviewBookDto request)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-            var book = await _dbContext.UserBooks.FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
-
-            if (book == null) return BadRequest("Yorum yapmak için önce kitabı kütüphanenize ekleyin.");
-
-            book.Review = request.Review;
-            await _dbContext.SaveChangesAsync();
-
-            return Ok(new { message = "Notunuz kaydedildi!" });
+            await _bookService.RemoveAsync(UserId, id);
+            return Ok();
         }
     }
 }
