@@ -5,6 +5,7 @@ using Vivaply.API.DTOs.Entertainment.Results.Library;
 using Vivaply.API.DTOs.Entertainment.Results.Media;
 using Vivaply.API.DTOs.Entertainment.Tmdb;
 using Vivaply.API.Entities.Entertainment;
+using Vivaply.API.Services.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment.Media
 {

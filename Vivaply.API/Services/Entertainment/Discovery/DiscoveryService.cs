@@ -1,6 +1,7 @@
 ﻿using Vivaply.API.DTOs.Entertainment.Igdb;
 using Vivaply.API.DTOs.Entertainment.Tmdb;
-using Vivaply.API.Services.Igdb;
+using Vivaply.API.Services.Entertainment.Igdb;
+using Vivaply.API.Services.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment.Discovery
 {

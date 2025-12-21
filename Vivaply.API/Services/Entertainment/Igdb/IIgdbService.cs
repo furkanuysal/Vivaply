@@ -1,6 +1,6 @@
 ﻿using Vivaply.API.DTOs.Entertainment.Igdb;
 
-namespace Vivaply.API.Services.Igdb
+namespace Vivaply.API.Services.Entertainment.Igdb
 {
     public interface IIgdbService
     {

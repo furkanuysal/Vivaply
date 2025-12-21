@@ -6,7 +6,8 @@ using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
 using Vivaply.API.Services.Entertainment;
-using Vivaply.API.Services.Igdb;
+using Vivaply.API.Services.Entertainment.Igdb;
+using Vivaply.API.Services.Entertainment.Tmdb;
 
 var builder = WebApplication.CreateBuilder(args);
 

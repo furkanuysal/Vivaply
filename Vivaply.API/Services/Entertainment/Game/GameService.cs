@@ -3,7 +3,7 @@ using Vivaply.API.Data;
 using Vivaply.API.DTOs.Entertainment.Commands.Games;
 using Vivaply.API.DTOs.Entertainment.Igdb;
 using Vivaply.API.Entities.Entertainment.Igdb;
-using Vivaply.API.Services.Igdb;
+using Vivaply.API.Services.Entertainment.Igdb;
 
 namespace Vivaply.API.Services.Entertainment.Game
 {

@@ -1,6 +1,6 @@
 ﻿using Vivaply.API.DTOs.Entertainment.Tmdb;
 
-namespace Vivaply.API.Services
+namespace Vivaply.API.Services.Entertainment.Tmdb
 {
     public interface ITmdbService
     {
