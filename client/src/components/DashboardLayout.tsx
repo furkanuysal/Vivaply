@@ -82,11 +82,11 @@ export default function DashboardLayout() {
       children: [
         {
           name: t("menu.discover_books"),
-          path: "/knowledge/books",
+          path: "/knowledge",
         },
         {
           name: t("menu.books_library"),
-          path: "/knowledge/books/library",
+          path: "/knowledge/library/book",
         },
       ],
     },

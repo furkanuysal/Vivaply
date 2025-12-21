@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { booksService } from "../../features/knowledge/services/booksService";
+import { bookService } from "../../features/knowledge/services/bookService";
 import BookCard from "../../features/knowledge/components/BookCard";
 import type { BookContentDto } from "../../features/knowledge/types";
 import { useTranslation } from "react-i18next";
 
-export default function BooksPage() {
+export default function KnowledgePage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BookContentDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function BooksPage() {
     abortControllerRef.current = controller;
 
     try {
-      const data = await booksService.searchBooks(searchQuery, {
+      const data = await bookService.searchBooks(searchQuery, {
         signal: controller.signal,
       });
       setResults(data);

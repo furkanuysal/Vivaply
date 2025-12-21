@@ -39,12 +39,9 @@ function App() {
             path="/entertainment/library"
             element={<EntertainmentLibraryPage />}
           />
-          <Route path="/knowledge/books" element={<KnowledgePage />} />
-          <Route
-            path="/knowledge/books/library"
-            element={<BookLibraryPage />}
-          />
-          <Route path="/knowledge/books/:id" element={<BookDetailPage />} />
+          <Route path="/knowledge" element={<KnowledgePage />} />
+          <Route path="/knowledge/library/book" element={<BookLibraryPage />} />
+          <Route path="/knowledge/book/:id" element={<BookDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

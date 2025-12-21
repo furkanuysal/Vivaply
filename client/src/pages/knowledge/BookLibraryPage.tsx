@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { booksService } from "../../features/knowledge/services/booksService";
+import { bookService } from "../../features/knowledge/services/bookService";
 import BookCard from "../../features/knowledge/components/BookCard";
 import {
   type BookContentDto,
@@ -31,7 +31,7 @@ export default function BookLibraryPage() {
   const loadLibrary = async () => {
     setLoading(true);
     try {
-      const data = await booksService.getLibrary();
+      const data = await bookService.getLibrary();
       setBooks(data);
     } catch (error) {
       toast.error(t("common:messages.library_couldnt_load"));
@@ -48,7 +48,7 @@ export default function BookLibraryPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const data = await booksService.getLibrary();
+      const data = await bookService.getLibrary();
       setBooks(data);
       toast.success(t("common:messages.library_content_refreshed"));
     } finally {
@@ -220,9 +220,7 @@ export default function BookLibraryPage() {
                         <tr
                           key={book.id}
                           className="hover:bg-skin-base/50 transition cursor-pointer group"
-                          onClick={() =>
-                            navigate(`/knowledge/books/${book.id}`)
-                          }
+                          onClick={() => navigate(`/knowledge/book/${book.id}`)}
                         >
                           {/* Cover */}
                           <td className="px-4 py-3">

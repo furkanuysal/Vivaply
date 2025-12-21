@@ -23,7 +23,7 @@ export default function BookCard({ book }: Props) {
 
   return (
     <div
-      onClick={() => navigate(`/knowledge/books/${book.id}`)}
+      onClick={() => navigate(`/knowledge/book/${book.id}`)}
       className="bg-skin-surface/60 backdrop-blur-md rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-skin-border group cursor-pointer flex flex-col h-full"
     >
       {/* Cover */}

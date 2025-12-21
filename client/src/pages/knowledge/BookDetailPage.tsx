@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { booksService } from "../../features/knowledge/services/booksService";
+import { bookService } from "../../features/knowledge/services/bookService";
 import { ReadStatus } from "../../features/knowledge/types";
 import { toast } from "react-toastify";
 import StarRating from "../../components/common/StarRating";
@@ -251,7 +251,7 @@ export default function BookDetailPage() {
   const handleRate = async (rating: number) => {
     if (!data) return;
     try {
-      await booksService.rateBook({
+      await bookService.rateBook({
         googleBookId: data.id,
         rating,
       });
@@ -266,7 +266,7 @@ export default function BookDetailPage() {
   const handleUpdateProgress = async () => {
     if (!data) return;
     try {
-      await booksService.updateProgress({
+      await bookService.updateProgress({
         googleBookId: data.id,
         currentPage: Number(currentPageInput),
       });
@@ -301,7 +301,7 @@ export default function BookDetailPage() {
   const executeRemove = async () => {
     if (!data || !id) return;
     try {
-      await booksService.removeBook(id);
+      await bookService.removeBook(id);
       toast.info(t("common:messages.remove_from_library_success"));
 
       // UI Update
@@ -326,7 +326,7 @@ export default function BookDetailPage() {
     try {
       if (!data.userStatus || data.userStatus === 0) {
         // If not added before -> TRACK (Add)
-        await booksService.trackBook({
+        await bookService.trackBook({
           googleBookId: data.id,
           title: data.title,
           authors: data.authors,
@@ -337,7 +337,7 @@ export default function BookDetailPage() {
         toast.success(t("common:messages.track_success"));
       } else {
         // If already added -> UPDATE (Update)
-        await booksService.updateStatus(data.id, newStatus);
+        await bookService.updateStatus(data.id, newStatus);
         toast.info(t("common:messages.track_success"));
       }
 
@@ -352,7 +352,7 @@ export default function BookDetailPage() {
   const handleSaveReview = async () => {
     if (!data) return;
     try {
-      await booksService.reviewBook({
+      await bookService.reviewBook({
         googleBookId: data.id,
         review: reviewText,
       });
@@ -369,7 +369,7 @@ export default function BookDetailPage() {
       if (!id) return;
       setLoading(true);
       try {
-        const result = await booksService.getBookDetail(id);
+        const result = await bookService.getBookDetail(id);
         setData(result);
         setReviewText(result.userReview || "");
         setCurrentPageInput(result.currentPage || 0);
