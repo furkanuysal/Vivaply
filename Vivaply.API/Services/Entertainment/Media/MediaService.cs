@@ -125,7 +125,8 @@ namespace Vivaply.API.Services.Entertainment.Media
                     ReleaseDate = request.Date,
                     Status = request.Status,
                     VoteAverage = details.VoteAverage,
-                    ProductionStatus = details.Status
+                    ProductionStatus = details.Status,
+                    WatchedAt = request.Status == WatchStatus.Completed ? DateTime.UtcNow : null
                 };
 
                 _dbContext.UserMovies.Add(movie);
@@ -734,6 +735,15 @@ namespace Vivaply.API.Services.Entertainment.Media
 
                 movie.Status = request.Status;
 
+                if (request.Status == WatchStatus.Completed)
+                {
+                    if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    movie.WatchedAt = null;
+                }
+
                 movie.UserRating = ApplyRating(movie.UserRating, request.Rating);
 
                 if (request.Review != null)
@@ -778,6 +788,15 @@ namespace Vivaply.API.Services.Entertainment.Media
                     throw new KeyNotFoundException("Movie not found in user's library.");
 
                 movie.Status = request.Status;
+
+                if (request.Status == WatchStatus.Completed)
+                {
+                    if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    movie.WatchedAt = null;
+                }
             }
 
             await _dbContext.SaveChangesAsync();

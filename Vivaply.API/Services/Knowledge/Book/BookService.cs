@@ -81,7 +81,8 @@ namespace Vivaply.API.Services.Knowledge.Book
                 CoverUrl = request.CoverUrl,
                 PageCount = request.PageCount,
                 Status = request.Status,
-                DateAdded = DateTime.UtcNow
+                DateAdded = DateTime.UtcNow,
+                DateFinished = request.Status == ReadStatus.Completed ? DateTime.UtcNow : null
             });
 
             await _db.SaveChangesAsync();
@@ -109,7 +110,11 @@ namespace Vivaply.API.Services.Knowledge.Book
             if (request.Status == ReadStatus.Completed)
             {
                 book.CurrentPage = book.PageCount;
-                book.DateFinished = DateTime.UtcNow;
+                if (book.DateFinished == null) book.DateFinished = DateTime.UtcNow;
+            }
+            else
+            {
+                book.DateFinished = null;
             }
 
             await _db.SaveChangesAsync();
@@ -124,7 +129,16 @@ namespace Vivaply.API.Services.Knowledge.Book
             if (book.CurrentPage == book.PageCount)
             {
                 book.Status = ReadStatus.Completed;
-                book.DateFinished = DateTime.UtcNow;
+                if (book.DateFinished == null)
+                    book.DateFinished = DateTime.UtcNow;
+            }
+            else
+            {
+                if (book.Status == ReadStatus.Completed)
+                {
+                    book.Status = ReadStatus.Reading;
+                    book.DateFinished = null;
+                }
             }
 
             await _db.SaveChangesAsync();

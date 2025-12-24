@@ -98,7 +98,8 @@ namespace Vivaply.API.Services.Entertainment.Game
                 Developers = details.Developers,
                 Genres = details.Genres,
                 DateAdded = DateTime.UtcNow,
-                UserPlatform = request.UserPlatform
+                UserPlatform = request.UserPlatform,
+                DateFinished = request.Status == PlayStatus.Completed ? DateTime.UtcNow : null
             };
 
             _dbContext.UserGames.Add(game);
@@ -116,7 +117,13 @@ namespace Vivaply.API.Services.Entertainment.Game
             game.Status = request.Status;
 
             if (request.Status == PlayStatus.Completed)
-                game.DateFinished = DateTime.UtcNow;
+            {
+                if (game.DateFinished == null) game.DateFinished = DateTime.UtcNow;
+            }
+            else
+            {
+                game.DateFinished = null;
+            }
 
             await _dbContext.SaveChangesAsync();
         }
