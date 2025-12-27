@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
+using Vivaply.API.Services.Dashboard;
 using Vivaply.API.Services.Entertainment;
 using Vivaply.API.Services.Knowledge;
 
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<VivaplyDbContext>(options =>
 
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
 
