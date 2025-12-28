@@ -20,6 +20,7 @@ namespace Vivaply.API.Data
         public DbSet<UserPreferences> UserPreferences { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
 
         // Entertainment Tables
         public DbSet<UserShow> UserShows { get; set; }
@@ -47,6 +48,13 @@ namespace Vivaply.API.Data
                 .HasOne(u => u.Preferences)
                 .WithOne(p => p.User)
                 .HasForeignKey<UserPreferences>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User -> UserRefreshTokens Relationship (1-to-Many)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.RefreshTokens)
+                .WithOne(t => t.User)
+                .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User -> Wallet Relationship (1-to-1)

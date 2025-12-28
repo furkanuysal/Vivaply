@@ -4,6 +4,7 @@ namespace Vivaply.API.Services
 {
     public interface ITokenService
     {
-        string CreateToken(User user);
+        string CreateAccessToken(User user);
+        string CreateRefreshToken();
     }
 }

@@ -26,5 +26,7 @@ namespace Vivaply.API.Entities.Identity
         public UserPreferences? Preferences { get; set; }  // Theme, Notifications, Privacy
         public Wallet? Wallet { get; set; }            // VivaCoin
 
+        public ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
+
     }
 }

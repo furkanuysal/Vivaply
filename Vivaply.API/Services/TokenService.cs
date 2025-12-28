@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Vivaply.API.Entities.Identity;
 
@@ -16,7 +17,7 @@ namespace Vivaply.API.Services
             _config = config;
         }
 
-        public string CreateToken(User user)
+        public string CreateAccessToken(User user)
         {
             // Claims embedded into the token
             var claims = new List<Claim>
@@ -34,7 +35,7 @@ namespace Vivaply.API.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7), // Token valid for 7 days
+                Expires = DateTime.UtcNow.AddMinutes(15), // Token valid for 15 minutes
                 SigningCredentials = creds,
                 Issuer = _config["JwtSettings:Issuer"],
                 Audience = _config["JwtSettings:Audience"]
@@ -45,6 +46,14 @@ namespace Vivaply.API.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             return tokenHandler.WriteToken(token);
+        }
+
+        public string CreateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
         }
     }
 }
