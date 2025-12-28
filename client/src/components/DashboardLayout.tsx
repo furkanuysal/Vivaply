@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { authService } from "../features/auth/services/authService";
+import { useAuth } from "../features/auth/context/AuthContext";
 import {
   HomeIcon,
   FilmIcon,
@@ -18,6 +18,7 @@ import LanguageSelector from "./LanguageSelector";
 
 export default function DashboardLayout() {
   const location = useLocation();
+  const { logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([
@@ -93,8 +94,7 @@ export default function DashboardLayout() {
   ];
 
   const handleLogout = () => {
-    authService.logout();
-    window.location.href = "/";
+    logout();
   };
 
   const sidebarVariants = {
