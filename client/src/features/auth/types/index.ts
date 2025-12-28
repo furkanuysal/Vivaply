@@ -1,5 +1,5 @@
 export interface LoginDto {
-  identifier: string; 
+  identifier: string;
   password: string;
 }
 
@@ -10,7 +10,7 @@ export interface RegisterDto {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   username: string;
   userId: string;
   message: string;

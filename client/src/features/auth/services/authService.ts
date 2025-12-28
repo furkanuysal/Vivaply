@@ -1,4 +1,5 @@
-import api from "../../../lib/api";
+// src/features/auth/services/authService.ts
+import api, { setAccessToken } from "../../../lib/api";
 import type {
   LoginDto,
   RegisterDto,
@@ -9,8 +10,10 @@ import type {
 export const authService = {
   login: async (data: LoginDto) => {
     const response = await api.post<AuthResponse>("/Auth/login", data);
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+
+    // If login successful, store access token in memory
+    if (response.data.accessToken) {
+      setAccessToken(response.data.accessToken);
     }
     return response.data;
   },
@@ -25,9 +28,27 @@ export const authService = {
     return response.data;
   },
 
-  logout: () => {
-    localStorage.removeItem("token");
-    // Redirect to login page after logout
-    window.location.href = "/";
+  logout: async () => {
+    try {
+      await api.post("/Auth/logout");
+    } catch (error) {
+      console.error("Logout failed", error);
+    } finally {
+      setAccessToken(null);
+    }
+  },
+
+  // App first opens, "Silent Login"
+  refreshToken: async () => {
+    try {
+      const response = await api.post("/Auth/refresh-token");
+      if (response.data.accessToken) {
+        setAccessToken(response.data.accessToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   },
 };

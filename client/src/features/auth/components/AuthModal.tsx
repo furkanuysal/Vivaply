@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
@@ -18,6 +18,7 @@ export default function AuthModal({
   initialMode = "login",
 }: AuthModalProps) {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,7 +33,6 @@ export default function AuthModal({
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset form on close
       setEmail("");
       setUsername("");
       setPassword("");
@@ -47,15 +47,16 @@ export default function AuthModal({
 
     try {
       if (mode === "login") {
-        await authService.login({ identifier: email, password });
+        await login({ identifier: email, password });
+
         toast.success("Welcome back! 🚀");
         onClose();
-        navigate("/profile");
+        navigate("/dashboard");
       } else {
-        await authService.register({ username, email, password });
+        await register({ username, email, password });
+
         toast.success("Account created! Please login. 🎉");
         setMode("login");
-        // Maintain email/password for easy login
       }
     } catch (error: any) {
       const message = error.response?.data || "Authentication failed";
