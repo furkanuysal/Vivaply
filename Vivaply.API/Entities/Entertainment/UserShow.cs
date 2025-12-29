@@ -46,6 +46,11 @@ namespace Vivaply.API.Entities.Entertainment
         [MaxLength(20)]
         public string? NextAirDate { get; set; }
 
+        // Dashboard Optimization
+        public DateTime? LastWatchedAt { get; set; }
+        public int? LastWatchedSeason { get; set; }
+        public int? LastWatchedEpisode { get; set; }
+
         // Watched Episodes
         public List<WatchedEpisode> WatchedEpisodes { get; set; } = new();
     }

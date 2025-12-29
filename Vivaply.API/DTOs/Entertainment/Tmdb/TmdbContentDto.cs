@@ -40,8 +40,14 @@ namespace Vivaply.API.DTOs.Entertainment.Tmdb
         public string DisplayDate =>
             !string.IsNullOrEmpty(ReleaseDate) ? ReleaseDate : FirstAirDate ?? "";
 
-        [JsonPropertyName("last_watched")]
-        public string? LastWatched { get; set; }
+        [JsonPropertyName("last_watched_at")]
+        public DateTime? LastWatchedAt { get; set; }
+
+        [JsonPropertyName("last_watched_season")]
+        public int? LastWatchedSeason { get; set; }
+
+        [JsonPropertyName("last_watched_episode")]
+        public int? LastWatchedEpisode { get; set; }
 
         [JsonPropertyName("latest_episode")]
         public string? LatestEpisode { get; set; }
