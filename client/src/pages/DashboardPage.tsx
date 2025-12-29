@@ -1,14 +1,32 @@
+// React - Routing - i18n
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { dashboardService } from "../features/dashboard/services/dashboardService";
-import type {
-  DashboardSummaryDto,
-  DashboardItemDto,
-} from "../features/dashboard/types";
+import { useTranslation } from "react-i18next";
+
+// Services - Types
+import { dashboardService } from "@/features/dashboard/services/dashboardService";
+import type { DashboardSummaryDto } from "@/features/dashboard/types";
+
+// UI - Utils
 import { toast } from "react-toastify";
+import {
+  TvIcon,
+  FilmIcon,
+  BookOpenIcon,
+  PuzzlePieceIcon,
+} from "@heroicons/react/24/outline";
+
+// Components
+import {
+  ActionButton,
+  DashboardCard,
+  DashboardSection,
+  StatCard,
+} from "@/features/dashboard/components";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation(["dashboard", "common"]);
   const [data, setData] = useState<DashboardSummaryDto | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,8 +36,8 @@ export default function DashboardPage() {
         const result = await dashboardService.getDashboard();
         setData(result);
       } catch (error) {
-        console.error("Dashboard yüklenemedi", error);
-        toast.error("Veriler alınamadı.");
+        console.error("Dashboard couldn't be loaded", error);
+        toast.error(t("common:errors.content_not_found"));
       } finally {
         setLoading(false);
       }
@@ -28,7 +46,13 @@ export default function DashboardPage() {
   }, []);
 
   if (loading)
-    return <div className="text-white text-center mt-20">Yükleniyor...</div>;
+    return (
+      <div className="flex h-[50vh] items-center justify-center text-skin-text">
+        <div className="animate-pulse text-xl font-medium">
+          {t("common:loading")}
+        </div>
+      </div>
+    );
   if (!data) return null;
 
   const hasData =
@@ -37,183 +61,126 @@ export default function DashboardPage() {
     data.continuePlaying.length > 0;
 
   return (
-    <div className="space-y-10 animate-fade-in text-white pb-20">
-      {/* 1. İSTATİSTİK KARTLARI (HEADER) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          label="İzlenen Bölüm"
-          value={data.stats.totalEpisodes}
-          icon="📺"
-          color="text-blue-400"
-        />
-        <StatCard
-          label="Bitirilen Film"
-          value={data.stats.totalMovies}
-          icon="🎬"
-          color="text-green-400"
-        />
-        <StatCard
-          label="Okunan Kitap"
-          value={data.stats.totalBooks}
-          icon="📚"
-          color="text-yellow-400"
-        />
-        <StatCard
-          label="Bitirilen Oyun"
-          value={data.stats.totalGames}
-          icon="🎮"
-          color="text-purple-400"
-        />
+    <div className="animate-fade-in text-skin-text pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* HERO & STATS HEADER */}
+      <div className="py-10">
+        <h1 className="text-4xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-skin-primary to-skin-secondary bg-clip-text text-transparent">
+          {t("dashboard:titles.welcome")}
+        </h1>
+        <p className="text-skin-muted text-lg mb-10">
+          {t("dashboard:titles.welcome_subtitle")}
+        </p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <StatCard
+            label={t("dashboard:stats.total_episodes")}
+            value={data.stats.totalEpisodes}
+            icon={<TvIcon className="w-8 h-8" />}
+            color="text-skin-secondary"
+            bg="bg-skin-secondary/20"
+            borderColor="border-skin-secondary/50"
+          />
+          <StatCard
+            label={t("dashboard:stats.total_movies")}
+            value={data.stats.totalMovies}
+            icon={<FilmIcon className="w-8 h-8" />}
+            color="text-skin-primary"
+            bg="bg-skin-primary/20"
+            borderColor="border-skin-primary/50"
+          />
+          <StatCard
+            label={t("dashboard:stats.total_books")}
+            value={data.stats.totalBooks}
+            icon={<BookOpenIcon className="w-8 h-8" />}
+            color="text-skin-accent"
+            bg="bg-skin-accent/20"
+            borderColor="border-skin-accent/50"
+          />
+          <StatCard
+            label={t("dashboard:stats.total_games")}
+            value={data.stats.totalGames}
+            icon={<PuzzlePieceIcon className="w-8 h-8" />}
+            color="text-skin-rating-90"
+            bg="bg-skin-rating-90/20"
+            borderColor="border-skin-rating-90/50"
+          />
+        </div>
       </div>
 
+      {/* EMPTY STATE */}
       {!hasData && (
-        <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-700/50">
-          <p className="text-gray-400 text-lg mb-4">
-            Henüz aktif bir içeriğin yok. Keşfetmeye başla!
+        <div className="flex flex-col items-center justify-center py-20 bg-skin-surface/30 rounded-3xl border border-dashed border-skin-border/50">
+          <p className="text-skin-muted text-xl mb-6 font-medium">
+            {t("dashboard:empty_state.message")}
           </p>
-          <div className="flex justify-center gap-4 text-sm font-bold">
-            <button
+          <div className="flex flex-wrap justify-center gap-6">
+            <ActionButton
+              label={t("dashboard:empty_state.add_tv_show")}
               onClick={() => navigate("/entertainment")}
-              className="text-blue-400 hover:underline"
-            >
-              Dizi/Film Ekle
-            </button>
-            <button
+              color="text-skin-secondary border-skin-secondary/30 hover:bg-skin-secondary/10"
+            />
+            <ActionButton
+              label={t("dashboard:empty_state.add_book")}
               onClick={() => navigate("/books")}
-              className="text-yellow-400 hover:underline"
-            >
-              Kitap Ekle
-            </button>
-            <button
+              color="text-skin-accent border-skin-accent/30 hover:bg-skin-accent/10"
+            />
+            <ActionButton
+              label={t("dashboard:empty_state.add_game")}
               onClick={() => navigate("/games")}
-              className="text-purple-400 hover:underline"
-            >
-              Oyun Ekle
-            </button>
+              color="text-skin-rating-90 border-skin-rating-90/30 hover:bg-skin-rating-90/10"
+            />
           </div>
         </div>
       )}
 
-      {/* 2. İZLEMEYE DEVAM ET (TV) */}
-      {data.continueWatching.length > 0 && (
-        <Section title="İzlemeye Devam Et" icon="📺">
-          {data.continueWatching.map((item) => (
-            <DashboardCard key={item.id} item={item} navigate={navigate} />
-          ))}
-        </Section>
-      )}
+      {/* CONTENT SECTIONS */}
+      <div className="space-y-12">
+        {data.continueWatching.length > 0 && (
+          <DashboardSection
+            title={t("dashboard:titles.last_watched")}
+            icon={<TvIcon className="w-6 h-6" />}
+          >
+            {data.continueWatching.map((item) => (
+              <DashboardCard
+                key={item.id}
+                item={item}
+                navigate={navigate}
+                t={t}
+              />
+            ))}
+          </DashboardSection>
+        )}
 
-      {/* 3. OKUMAYA DEVAM ET (BOOK) */}
-      {data.continueReading.length > 0 && (
-        <Section title="Okumaya Devam Et" icon="📖">
-          {data.continueReading.map((item) => (
-            <DashboardCard key={item.id} item={item} navigate={navigate} />
-          ))}
-        </Section>
-      )}
+        {data.continueReading.length > 0 && (
+          <DashboardSection
+            title={t("dashboard:titles.last_read")}
+            icon={<BookOpenIcon className="w-6 h-6" />}
+          >
+            {data.continueReading.map((item) => (
+              <DashboardCard
+                key={item.id}
+                item={item}
+                navigate={navigate}
+                t={t}
+              />
+            ))}
+          </DashboardSection>
+        )}
 
-      {/* 4. OYNAMAYA DEVAM ET (GAME) */}
-      {data.continuePlaying.length > 0 && (
-        <Section title="Oynamaya Devam Et" icon="🎮">
-          {data.continuePlaying.map((item) => (
-            <DashboardCard key={item.id} item={item} navigate={navigate} />
-          ))}
-        </Section>
-      )}
-    </div>
-  );
-}
-
-// --- ALT BİLEŞENLER ---
-
-function StatCard({ label, value, icon, color }: any) {
-  return (
-    <div className="bg-gray-800 p-5 rounded-2xl border border-gray-700/50 flex flex-col items-center justify-center hover:bg-gray-750 transition hover:scale-105 duration-200 shadow-lg">
-      <div className="text-3xl mb-2 filter drop-shadow-md">{icon}</div>
-      <div className={`text-3xl font-bold ${color}`}>{value}</div>
-      <div className="text-gray-500 text-xs uppercase font-bold tracking-wider mt-1">
-        {label}
-      </div>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <h2 className="text-xl font-bold mb-5 flex items-center gap-2 text-gray-200 border-b border-gray-700 pb-2">
-        <span>{icon}</span> {title}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function DashboardCard({
-  item,
-  navigate,
-}: {
-  item: DashboardItemDto;
-  navigate: any;
-}) {
-  // Dinamik Bilgi Metni Oluşturma (Backend'den gelen ham verileri kullanarak)
-  let infoDisplay = "";
-
-  if (item.type === "tv" && item.season && item.episode) {
-    infoDisplay = `${item.season}. Sezon ${item.episode}. Bölüm`;
-  } else if (item.type === "book" && item.currentValue && item.maxValue) {
-    infoDisplay = `${item.currentValue} / ${item.maxValue} Sayfa`;
-  } else if (item.type === "game" && item.currentValue) {
-    infoDisplay = `${item.currentValue} Saat`;
-  }
-
-  return (
-    <div
-      onClick={() => navigate(item.routePath)}
-      className="bg-gray-800 p-4 rounded-xl border border-gray-700 flex gap-4 cursor-pointer hover:bg-gray-750 hover:border-gray-500 transition group shadow-md"
-    >
-      {/* Resim */}
-      <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-900 shadow-inner">
-        <img
-          src={
-            item.imageUrl?.replace("http:", "https:") ||
-            "https://via.placeholder.com/200x300"
-          }
-          className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-          alt={item.title}
-        />
-      </div>
-
-      {/* Bilgi */}
-      <div className="flex flex-col justify-center flex-1 min-w-0">
-        <h4 className="font-bold text-gray-100 truncate mb-1 text-lg group-hover:text-blue-400 transition">
-          {item.title}
-        </h4>
-
-        {/* Alt Metin (S3 E4 veya 120 Sayfa) */}
-        <p className="text-sm text-gray-400 font-medium mb-3 flex items-center gap-2">
-          {item.type === "tv" && <span className="text-green-500">▶</span>}
-          {infoDisplay}
-        </p>
-
-        {/* Progress Bar (Kitaplar için) */}
-        {item.type === "book" && item.progressPercent !== undefined && (
-          <div className="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-yellow-500 h-1.5 rounded-full"
-              style={{ width: `${item.progressPercent}%` }}
-            ></div>
-          </div>
+        {data.continuePlaying.length > 0 && (
+          <DashboardSection
+            title={t("dashboard:titles.last_played")}
+            icon={<PuzzlePieceIcon className="w-6 h-6" />}
+          >
+            {data.continuePlaying.map((item) => (
+              <DashboardCard
+                key={item.id}
+                item={item}
+                navigate={navigate}
+                t={t}
+              />
+            ))}
+          </DashboardSection>
         )}
       </div>
     </div>
