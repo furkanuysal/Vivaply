@@ -14,7 +14,9 @@ export interface TmdbContentDto {
   user_rating?: number;
   user_review?: string;
   tagline?: string;
-  last_watched?: string;
+  last_watched_season?: number;
+  last_watched_episode?: number;
+  last_watched_at?: string;
   latest_episode?: string;
 }
 

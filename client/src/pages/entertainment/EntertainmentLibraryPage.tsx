@@ -84,6 +84,21 @@ export default function EntertainmentLibraryPage() {
     setIsStatusDialogOpen(true);
   };
 
+  const isUpToDate = (item: TmdbContentDto) => {
+    if (
+      !item.latest_episode ||
+      item.last_watched_season == null ||
+      item.last_watched_episode == null
+    ) {
+      return false;
+    }
+
+    return (
+      item.latest_episode ===
+      `S${item.last_watched_season} E${item.last_watched_episode}`
+    );
+  };
+
   const handleSaveProgress = async (data: UpdateGameProgressDto) => {
     try {
       await gamesService.updateProgress(data);
@@ -181,10 +196,10 @@ export default function EntertainmentLibraryPage() {
           if (tvItem.id === item.id) {
             return {
               ...tvItem,
-              last_watched: `S${result.seasonNumber} E${result.episodeNumber}`,
-              user_status: result.newStatus
-                ? result.newStatus
-                : tvItem.user_status,
+              last_watched_season: result.seasonNumber,
+              last_watched_episode: result.episodeNumber,
+              last_watched_at: new Date().toISOString(),
+              user_status: result.newStatus ?? tvItem.user_status,
             };
           }
           return tvItem;
@@ -296,23 +311,35 @@ export default function EntertainmentLibraryPage() {
     return orderA - orderB;
   });
 
-  // Helper: Episode String Formatter
-  const formatEpisodeString = (epString?: string, isShort = false) => {
-    if (!epString) return "-";
+  const formatLatestEpisode = (latestEpisode?: string, isShort = false) => {
+    if (!latestEpisode) return "-";
 
-    const match = epString.match(/S(\d+)\s*E(\d+)/i);
-    if (match) {
-      // If isShort is true, use the short format, otherwise use the long format
-      const key = isShort
-        ? "entertainment:format.season_episode_short"
-        : "entertainment:format.season_episode";
+    const match = latestEpisode.match(/S\s*(\d+)\s*E\s*(\d+)/i);
+    if (!match) return latestEpisode;
 
-      return t(key, {
-        season: match[1],
-        episode: match[2],
-      });
+    const key = isShort
+      ? "entertainment:format.season_episode_short"
+      : "entertainment:format.season_episode";
+
+    return t(key, {
+      season: Number(match[1]),
+      episode: Number(match[2]),
+    });
+  };
+
+  const formatLastWatched = (item: TmdbContentDto, isShort = false) => {
+    if (item.last_watched_season == null || item.last_watched_episode == null) {
+      return "-";
     }
-    return epString;
+
+    const key = isShort
+      ? "entertainment:format.season_episode_short"
+      : "entertainment:format.season_episode";
+
+    return t(key, {
+      season: item.last_watched_season,
+      episode: item.last_watched_episode,
+    });
   };
 
   const getCompletionLabel = (type?: GameCompletionType) => {
@@ -657,21 +684,13 @@ export default function EntertainmentLibraryPage() {
                             <div className="flex items-center gap-2">
                               <span>
                                 <span className="md:hidden">
-                                  {formatEpisodeString(
-                                    item.last_watched,
-                                    true
-                                  ) || "-"}
+                                  {formatLastWatched(item, true) || "-"}
                                 </span>
                                 <span className="hidden md:inline">
-                                  {formatEpisodeString(
-                                    item.last_watched,
-                                    false
-                                  )}
+                                  {formatLastWatched(item, false)}
                                 </span>
                               </span>
-                              {item.latest_episode &&
-                              item.last_watched &&
-                              item.latest_episode === item.last_watched ? (
+                              {isUpToDate(item) ? (
                                 <CheckCircleIcon
                                   className="w-6 h-6 text-skin-secondary flex-shrink-0"
                                   title={t(
@@ -707,11 +726,14 @@ export default function EntertainmentLibraryPage() {
                             }`}
                           >
                             <span className="md:hidden">
-                              {formatEpisodeString(item.latest_episode, true) ||
+                              {formatLatestEpisode(item.latest_episode, true) ||
                                 "-"}
                             </span>
                             <span className="hidden md:inline">
-                              {formatEpisodeString(item.latest_episode, false)}
+                              {formatLatestEpisode(
+                                item.latest_episode,
+                                false
+                              ) || "-"}
                             </span>
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
