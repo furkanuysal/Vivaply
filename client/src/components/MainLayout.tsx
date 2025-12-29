@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   Bars3Icon,
   XMarkIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import ThemeToggle from "./ThemeToggle";
 import { useState, useEffect } from "react";
@@ -16,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSelector from "./LanguageSelector";
 
-export default function DashboardLayout() {
+export default function MainLayout() {
   const location = useLocation();
   const { logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -55,6 +56,12 @@ export default function DashboardLayout() {
   };
 
   const menuItems = [
+    {
+      key: "dashboard",
+      name: t("menu.dashboard") || "Dashboard",
+      path: "/dashboard",
+      icon: <Squares2X2Icon className="w-5 h-5 shrink-0" />,
+    },
     {
       key: "profile",
       name: t("menu.profile"),

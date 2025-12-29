@@ -1,6 +1,7 @@
 {
   "brand": "Vivaply",
   "menu": {
+    "dashboard": "Dashboard",
     "profile": "Profile",
     "discover": "Discover",
     "entertainment": "Entertainment",

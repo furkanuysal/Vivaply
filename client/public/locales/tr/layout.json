@@ -1,6 +1,7 @@
 {
   "brand": "Vivaply",
   "menu": {
+    "dashboard": "Genel Bakış",
     "profile": "Profil",
     "discover": "Keşfet",
     "entertainment": "Eğlence",

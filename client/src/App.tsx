@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import LandingPage from "./pages/LandingPage";
 import ProfilePage from "./pages/ProfilePage";
 import DashboardPage from "./pages/DashboardPage";
-import DashboardLayout from "./components/DashboardLayout";
+import MainLayout from "./components/MainLayout";
 
 // Entertainment
 import EntertainmentPage from "./pages/entertainment/EntertainmentPage";
@@ -54,11 +54,11 @@ function AppRoutes() {
       />
 
       {/* Protected Routes (Only for logged in users) */}
-      {/* Using DashboardLayout as a security barrier */}
+      {/* Using MainLayout as a security barrier */}
       <Route
         element={
           isAuthenticated ? (
-            <DashboardLayout />
+            <MainLayout />
           ) : (
             <Navigate to="/" replace /> // Can't access protected routes
           )
