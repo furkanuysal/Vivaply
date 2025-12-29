@@ -5,14 +5,14 @@ export default {
     extend: {
       colors: {
         skin: {
-          base: "var(--color-bg-base)",
-          surface: "var(--color-bg-surface)",
-          border: "var(--color-border)",
-          text: "var(--color-text-main)",
-          muted: "var(--color-text-muted)",
-          primary: "var(--color-primary-base)",
-          secondary: "var(--color-secondary-base)",
-          accent: "var(--color-accent)",
+          base: "rgb(var(--color-bg-base-rgb) / <alpha-value>)",
+          surface: "rgb(var(--color-bg-surface-rgb) / <alpha-value>)",
+          border: "rgb(var(--color-border-rgb) / <alpha-value>)",
+          text: "rgb(var(--color-text-main-rgb) / <alpha-value>)",
+          muted: "rgb(var(--color-text-muted-rgb) / <alpha-value>)",
+          primary: "rgb(var(--color-primary-rgb) / <alpha-value>)",
+          secondary: "rgb(var(--color-secondary-rgb) / <alpha-value>)",
+          accent: "rgb(var(--color-accent-rgb) / <alpha-value>)",
 
           rating: {
             95: "rgb(var(--rating-95) / <alpha-value>)",

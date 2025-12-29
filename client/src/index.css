@@ -14,6 +14,16 @@
     --color-secondary-base: #2a9d8f;
     --color-accent: #d97706;
 
+    /* RGB Variants for Opacity Support */
+    --color-bg-base-rgb: 247 247 255;
+    --color-bg-surface-rgb: 189 213 234;
+    --color-border-rgb: 87 115 153;
+    --color-text-main-rgb: 73 88 103;
+    --color-text-muted-rgb: 107 114 128;
+    --color-primary-rgb: 254 95 85;
+    --color-secondary-rgb: 42 157 143;
+    --color-accent-rgb: 217 119 6;
+
     /* Rating Colors */
     --rating-95: 37 99 235; /* Blue-600 */
     --rating-90: 5 150 105; /* Emerald-600 */
@@ -35,6 +45,16 @@
     --color-primary-base: #84dccf;
     --color-secondary-base: #a6d9f7;
     --color-accent: #facc15;
+
+    /* RGB Variants for Opacity Support */
+    --color-bg-base-rgb: 49 47 47;
+    --color-bg-surface-rgb: 62 60 60;
+    --color-border-rgb: 69 67 67;
+    --color-text-main-rgb: 188 204 224;
+    --color-text-muted-rgb: 191 152 160;
+    --color-primary-rgb: 132 220 207;
+    --color-secondary-rgb: 166 217 247;
+    --color-accent-rgb: 250 204 21;
 
     /* Rating Colors */
     --rating-95: 96 165 250; /* Blue-400 */
