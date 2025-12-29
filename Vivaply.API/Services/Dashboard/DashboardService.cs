@@ -22,52 +22,34 @@ namespace Vivaply.API.Services.Dashboard
         {
             var response = new DashboardSummaryDto();
 
-            // Tv shows (Watching)
-            var activeShows = await _dbContext.UserShows
-                .Where(x => x.UserId == userId && x.Status == WatchStatus.Watching)
-                .OrderByDescending(x => x.StartedAt) // En son eklenen/güncellenen en üstte
+            // Tv shows (Continue Watching)
+            var continueWatchingShows = await _dbContext.UserShows
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.Status == WatchStatus.Watching &&
+                    x.LastWatchedAt != null
+                )
+                .OrderByDescending(x => x.LastWatchedAt)
                 .Take(5)
-                .ToListAsync();
-
-            // 5 latest watched tv shows
-            var activeShowIds = activeShows.Select(s => s.Id).ToList();
-
-            var lastWatchedEpisodes = await _dbContext.WatchedEpisodes
-                .Where(w => activeShowIds.Contains(w.UserShowId))
-                .Select(w => new { w.UserShowId, w.SeasonNumber, w.EpisodeNumber })
-                .ToListAsync();
-
-            foreach (var show in activeShows)
-            {
-                // Find the last watched episode for this show
-                var lastWatched = lastWatchedEpisodes
-                    .Where(w => w.UserShowId == show.Id)
-                    .OrderByDescending(w => w.SeasonNumber)
-                    .ThenByDescending(w => w.EpisodeNumber)
-                    .FirstOrDefault();
-
-                int? season = null;
-                int? episode = null;
-
-                if (lastWatched != null)
-                {
-                    season = lastWatched.SeasonNumber;
-                    episode = lastWatched.EpisodeNumber;
-                }
-
-                response.ContinueWatching.Add(new DashboardItemDto
+                .Select(show => new DashboardItemDto
                 {
                     Id = show.TmdbShowId.ToString(),
                     Type = "tv",
                     Title = show.ShowName,
-                    ImageUrl = !string.IsNullOrEmpty(show.PosterPath) ? TMDB_IMAGE_BASE + show.PosterPath : null,
-                    Season = season,
-                    Episode = episode,
+                    ImageUrl = !string.IsNullOrEmpty(show.PosterPath)
+                        ? TMDB_IMAGE_BASE + show.PosterPath
+                        : null,
+
+                    Season = show.LastWatchedSeason,
+                    Episode = show.LastWatchedEpisode,
 
                     UserStatus = (int)show.Status,
-                    LastUpdated = show.StartedAt
-                });
-            }
+                    LastUpdated = show.LastWatchedAt!.Value
+                })
+                .ToListAsync();
+
+            response.ContinueWatching.AddRange(continueWatchingShows);
+
 
             // Games (Playing)
             var activeGames = await _dbContext.UserGames

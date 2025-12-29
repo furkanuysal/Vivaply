@@ -351,41 +351,21 @@ namespace Vivaply.API.Services.Entertainment.Media
                 .Where(x => x.UserId == userId)
                 .ToListAsync();
 
-            // All watched episodes (single query – for performance)
-            var allWatchedEpisodes = await _dbContext.WatchedEpisodes
-                .Where(w => w.UserShow!.UserId == userId)
-                .Select(w => new
-                {
-                    w.UserShowId,
-                    w.SeasonNumber,
-                    w.EpisodeNumber
-                })
-                .ToListAsync();
-
-            var tvList = userShows.Select(show =>
+            var tvList = userShows.Select(show => new TmdbContentDto
             {
-                var lastWatched = allWatchedEpisodes
-                    .Where(w => w.UserShowId == show.Id)
-                    .OrderByDescending(w => w.SeasonNumber)
-                    .ThenByDescending(w => w.EpisodeNumber)
-                    .FirstOrDefault();
-
-                return new TmdbContentDto
-                {
-                    Id = show.TmdbShowId,
-                    Name = show.ShowName,
-                    PosterPath = show.PosterPath,
-                    UserStatus = show.Status,
-                    VoteAverage = show.VoteAverage,
-                    UserRating = show.UserRating,
-                    FirstAirDate = show.FirstAirDate,
-                    LatestEpisode = show.LatestEpisodeInfo,
-                    LastWatched = lastWatched != null
-                        ? $"S{lastWatched.SeasonNumber} E{lastWatched.EpisodeNumber}"
-                        : null,
-                    Status = show.ProductionStatus,
-                    UserReview = show.Review
-                };
+                Id = show.TmdbShowId,
+                Name = show.ShowName,
+                PosterPath = show.PosterPath,
+                UserStatus = show.Status,
+                VoteAverage = show.VoteAverage,
+                UserRating = show.UserRating,
+                FirstAirDate = show.FirstAirDate,
+                LatestEpisode = show.LatestEpisodeInfo,
+                Status = show.ProductionStatus,
+                UserReview = show.Review,
+                LastWatchedSeason = show.LastWatchedSeason,
+                LastWatchedEpisode = show.LastWatchedEpisode,
+                LastWatchedAt = show.LastWatchedAt
             }).ToList();
 
             // User movies
@@ -479,6 +459,12 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (episodesToAdd.Count > 0)
             {
                 _dbContext.WatchedEpisodes.AddRange(episodesToAdd);
+
+                var lastEpisodeNumber = episodesToAdd.Max(e => e.EpisodeNumber);
+                var now = DateTime.UtcNow;
+
+                UpdateLastWatched(userShow, seasonNumber, lastEpisodeNumber, now);
+
                 await _dbContext.SaveChangesAsync();
 
                 return new MarkSeasonResultDto
@@ -660,6 +646,9 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (existingEpisode != null)
             {
                 _dbContext.WatchedEpisodes.Remove(existingEpisode);
+                userShow.WatchedEpisodes.Remove(existingEpisode);
+                RecalculateLastWatched(userShow);
+
                 await _dbContext.SaveChangesAsync();
 
                 return new ToggleEpisodeResultDto
@@ -671,13 +660,17 @@ namespace Vivaply.API.Services.Entertainment.Media
                 };
             }
 
+            var now = DateTime.UtcNow;
+
             _dbContext.WatchedEpisodes.Add(new WatchedEpisode
             {
                 UserShowId = userShow.Id,
                 SeasonNumber = seasonNumber,
                 EpisodeNumber = episodeNumber,
-                WatchedAt = DateTime.UtcNow
+                WatchedAt = now
             });
+
+            UpdateLastWatched(userShow, seasonNumber, episodeNumber, now);
 
             await _dbContext.SaveChangesAsync();
 
@@ -688,6 +681,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                 IsWatched = true,
                 Message = "Bölüm izlendi!"
             };
+
         }
 
 
@@ -814,6 +808,8 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (userShow == null)
                 throw new InvalidOperationException("Dizi listenizde değil.");
 
+            var now = DateTime.UtcNow;
+
             // Find last watched episode
             var lastWatched = userShow.WatchedEpisodes
                 .OrderByDescending(e => e.SeasonNumber)
@@ -845,8 +841,10 @@ namespace Vivaply.API.Services.Entertainment.Media
                         UserShowId = userShow.Id,
                         SeasonNumber = targetSeason,
                         EpisodeNumber = nextEpisode.EpisodeNumber,
-                        WatchedAt = DateTime.UtcNow
+                        WatchedAt = now
                     });
+
+                    UpdateLastWatched(userShow, targetSeason, nextEpisode.EpisodeNumber, now);
 
                     string currentEpisodeInfo = $"S{targetSeason} E{nextEpisode.EpisodeNumber}";
 
@@ -883,8 +881,10 @@ namespace Vivaply.API.Services.Entertainment.Media
                     UserShowId = userShow.Id,
                     SeasonNumber = nextSeasonNumber,
                     EpisodeNumber = firstEpisode.EpisodeNumber,
-                    WatchedAt = DateTime.UtcNow
+                    WatchedAt = now
                 });
+
+                UpdateLastWatched(userShow, nextSeasonNumber, firstEpisode.EpisodeNumber, now);
 
                 string currentEpisodeInfo = $"S{nextSeasonNumber} E{firstEpisode.EpisodeNumber}";
 
@@ -1070,7 +1070,16 @@ namespace Vivaply.API.Services.Entertainment.Media
             }
 
             if (episodesToAdd.Count > 0)
+            {
                 _dbContext.WatchedEpisodes.AddRange(episodesToAdd);
+
+                var last = episodesToAdd
+                    .OrderByDescending(e => e.SeasonNumber)
+                    .ThenByDescending(e => e.EpisodeNumber)
+                    .First();
+
+                UpdateLastWatched(show, last.SeasonNumber, last.EpisodeNumber, DateTime.UtcNow);
+            }
         }
 
 
@@ -1087,5 +1096,44 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (tmdbId <= 0)
                 throw new ArgumentException("Invalid tmdbId.", nameof(tmdbId));
         }
+
+        private void UpdateLastWatched(UserShow show, int season, int episode, DateTime watchedAt)
+        {
+            if (
+                show.LastWatchedSeason == null ||
+                season > show.LastWatchedSeason ||
+                (season == show.LastWatchedSeason && episode > show.LastWatchedEpisode)
+            )
+            {
+                show.LastWatchedSeason = season;
+                show.LastWatchedEpisode = episode;
+                show.LastWatchedAt = watchedAt; // metadata only
+            }
+        }
+
+        private void RecalculateLastWatched(UserShow show)
+        {
+            var last = show.WatchedEpisodes
+                .OrderByDescending(e => e.SeasonNumber)
+                .ThenByDescending(e => e.EpisodeNumber)
+                .FirstOrDefault();
+
+            if (last == null)
+            {
+                show.LastWatchedAt = null;
+                show.LastWatchedSeason = null;
+                show.LastWatchedEpisode = null;
+                return;
+            }
+
+            show.LastWatchedSeason = last.SeasonNumber;
+            show.LastWatchedEpisode = last.EpisodeNumber;
+
+            // Optional: Only for UI / analytics
+            show.LastWatchedAt = last.WatchedAt;
+        }
+
+
+
     }
 }
