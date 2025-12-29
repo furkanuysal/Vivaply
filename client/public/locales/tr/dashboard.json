@@ -1,0 +1,28 @@
+{
+  "titles": {
+    "welcome": "Hoş Geldin!",
+    "welcome_subtitle": "Kaldığın yerden devam etmeye hazır mısın?",
+    "last_watched": "En Son İzlenen",
+    "last_read": "En Son Okunan Kitaplar",
+    "last_played": "En Son Oynanan"
+  },
+  "stats": {
+    "total_episodes": "İzlenen Bölüm",
+    "total_movies": "Bitirilen Film",
+    "total_books": "Okunan Kitap",
+    "total_games": "Bitirilen Oyun"
+  },
+  "empty_state": {
+    "message": "Henüz aktif bir içeriğin yok. Keşfetmeye başla!",
+    "add_tv_show": "Dizi Ekle",
+    "add_movie": "Film Ekle",
+    "add_book": "Kitap Ekle",
+    "add_game": "Oyun Ekle"
+  },
+  "units": {
+    "page": "Sayfa",
+    "hour": "Saat",
+    "season": "Sezon",
+    "episode": "Bölüm"
+  }
+}

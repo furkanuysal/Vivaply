@@ -1,0 +1,28 @@
+{
+  "titles": {
+    "welcome": "Welcome!",
+    "welcome_subtitle": "Ready to pick up where you left off?",
+    "last_watched": "Last Watched",
+    "last_read": "Last Read Books",
+    "last_played": "Last Played"
+  },
+  "stats": {
+    "total_episodes": "Episodes Watched",
+    "total_movies": "Movies Finished",
+    "total_books": "Books Read",
+    "total_games": "Games Finished"
+  },
+  "empty_state": {
+    "message": "No active content yet. Start exploring!",
+    "add_tv_show": "Add TV Show",
+    "add_movie": "Add Movie",
+    "add_book": "Add Book",
+    "add_game": "Add Game"
+  },
+  "units": {
+    "page": "Page",
+    "hour": "Hour",
+    "season": "Season",
+    "episode": "Episode"
+  }
+}

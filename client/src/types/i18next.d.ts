@@ -11,6 +11,7 @@ declare module "i18next" {
       layout: typeof layout;
       knowledge: typeof knowledge;
       entertainment: typeof entertainment;
+      dashboard: typeof dashboard;
     };
   }
 }
