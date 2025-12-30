@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { bookService } from "../../features/knowledge/services/bookService";
 import BookCard from "../../features/knowledge/components/BookCard";
 import {
@@ -24,6 +27,7 @@ export default function BookLibraryPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { STATUS_CONFIG, FILTER_OPTIONS } = useReadStatusConfig();
 
@@ -57,10 +61,14 @@ export default function BookLibraryPage() {
   };
 
   // Filter Logic
-  const filteredItems =
+  const filteredItems = (
     filterStatus === 0
       ? books
-      : books.filter((item) => item.userStatus === filterStatus);
+      : books.filter((item) => item.userStatus === filterStatus)
+  ).filter((item) => {
+    if (!searchQuery) return true;
+    return item.title?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="space-y-8 animate-fade-in text-skin-text">
@@ -75,6 +83,44 @@ export default function BookLibraryPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Search Input */}
+          <div className="relative group">
+            <input
+              type="text"
+              placeholder={t("common:buttons.search") || "Search..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`py-2 rounded-full bg-skin-surface border border-skin-border focus:border-skin-primary focus:outline-none text-sm transition-all duration-300 peer hover:bg-skin-surface/90 ${
+                searchQuery
+                  ? "w-64 pl-9 pr-4"
+                  : "w-9 px-0 focus:w-64 focus:pl-9 focus:pr-4 placeholder-transparent focus:placeholder-skin-muted cursor-pointer text-center focus:text-left"
+              }`}
+            />
+            <MagnifyingGlassIcon
+              className={`w-5 h-5 text-skin-text absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 group-hover:text-skin-primary ${
+                searchQuery
+                  ? "left-3"
+                  : "left-1/2 -translate-x-1/2 peer-focus:left-3 peer-focus:translate-x-0"
+              }`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-skin-muted hover:text-skin-text"
+              >
+                <span className="sr-only">Clear</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
@@ -310,7 +356,7 @@ export default function BookLibraryPage() {
                 {t("knowledge:books.library.no_content")}
               </p>
               <button
-                onClick={() => navigate("/books")}
+                onClick={() => navigate("/knowledge")}
                 className="mt-4 text-skin-primary hover:underline"
               >
                 {t("knowledge:books.discover_books")}

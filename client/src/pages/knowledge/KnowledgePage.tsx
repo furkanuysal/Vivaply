@@ -8,15 +8,11 @@ import { useTranslation } from "react-i18next";
 export default function KnowledgePage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BookContentDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { t } = useTranslation(["common", "knowledge"]);
 
   // AbortController Ref (previous request cancel)
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    performSearch("subject:fiction&orderBy=newest");
-  }, []);
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
@@ -37,7 +33,9 @@ export default function KnowledgePage() {
         console.error("Search error:", err);
       }
     } finally {
-      setLoading(false);
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   };
 
@@ -46,7 +44,7 @@ export default function KnowledgePage() {
     const trimmed = query.trim();
 
     if (!trimmed) {
-      performSearch("subject:fiction");
+      performSearch("subject:fiction&orderBy=newest");
       return;
     }
 

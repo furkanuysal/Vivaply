@@ -5,6 +5,7 @@ import {
   ArrowPathIcon,
   TrashIcon,
   PencilIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { mediaService } from "../../features/entertainment/services/mediaService";
@@ -47,6 +48,7 @@ export default function EntertainmentLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loadingItems, setLoadingItems] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Confirm Dialog State
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -303,13 +305,24 @@ export default function EntertainmentLibraryPage() {
           }
           return item.user_status === filterStatus;
         })
-  ).sort((a, b) => {
-    const statusA = activeTab === "game" ? a.userStatus : a.user_status;
-    const statusB = activeTab === "game" ? b.userStatus : b.user_status;
-    const orderA = STATUS_ORDER[statusA] || 99;
-    const orderB = STATUS_ORDER[statusB] || 99;
-    return orderA - orderB;
-  });
+  )
+    .filter((item) => {
+      if (!searchQuery) return true;
+      const title =
+        activeTab === "game"
+          ? (item as GameContentDto).title
+          : (item as TmdbContentDto).display_name ||
+            (item as TmdbContentDto).title ||
+            (item as TmdbContentDto).name;
+      return title?.toLowerCase().includes(searchQuery.toLowerCase());
+    })
+    .sort((a, b) => {
+      const statusA = activeTab === "game" ? a.userStatus : a.user_status;
+      const statusB = activeTab === "game" ? b.userStatus : b.user_status;
+      const orderA = STATUS_ORDER[statusA] || 99;
+      const orderB = STATUS_ORDER[statusB] || 99;
+      return orderA - orderB;
+    });
 
   const formatLatestEpisode = (latestEpisode?: string, isShort = false) => {
     if (!latestEpisode) return "-";
@@ -365,6 +378,44 @@ export default function EntertainmentLibraryPage() {
         </h1>
 
         <div className="flex items-center gap-4">
+          {/* Search Input */}
+          <div className="relative group">
+            <input
+              type="text"
+              placeholder={t("common:buttons.search") || "Search..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`py-2 rounded-full bg-skin-surface border border-skin-border focus:border-skin-primary focus:outline-none text-sm transition-all duration-300 peer hover:bg-skin-surface/90 ${
+                searchQuery
+                  ? "w-64 pl-9 pr-4"
+                  : "w-9 px-0 focus:w-64 focus:pl-9 focus:pr-4 placeholder-transparent focus:placeholder-skin-muted cursor-pointer text-center focus:text-left"
+              }`}
+            />
+            <MagnifyingGlassIcon
+              className={`w-5 h-5 text-skin-text absolute top-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 group-hover:text-skin-primary ${
+                searchQuery
+                  ? "left-3"
+                  : "left-1/2 -translate-x-1/2 peer-focus:left-3 peer-focus:translate-x-0"
+              }`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-skin-muted hover:text-skin-text"
+              >
+                <span className="sr-only">Clear</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           {/* Sync Button */}
           <button
             onClick={handleSync}
