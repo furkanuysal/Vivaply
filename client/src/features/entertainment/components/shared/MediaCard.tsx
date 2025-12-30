@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import type { TmdbContentDto } from "../../types";
 import { useTranslation } from "react-i18next";
 
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+
 interface Props {
   content: TmdbContentDto;
   type: "movie" | "tv";
@@ -12,7 +14,7 @@ export default function MediaCard({ content, type }: Props) {
   const { t } = useTranslation(["common", "entertainment"]);
   const imageUrl = content.poster_path
     ? `https://image.tmdb.org/t/p/w500${content.poster_path}`
-    : "https://via.placeholder.com/500x750?text=No+Image";
+    : undefined;
 
   return (
     <div
@@ -21,11 +23,15 @@ export default function MediaCard({ content, type }: Props) {
     >
       {/* Poster */}
       <div className="relative aspect-[2/3]">
-        <img
-          src={imageUrl}
-          alt={content.display_name}
-          className="w-full h-full object-cover"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={content.display_name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <UniversalCoverFallback title={content.display_name} type={type} />
+        )}
 
         {/* Hover */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

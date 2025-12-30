@@ -3,6 +3,8 @@ import { ReadStatus, type BookContentDto } from "../types";
 import { useReadStatusConfig } from "../hooks/useReadStatusConfig";
 import { useTranslation } from "react-i18next";
 
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+
 interface Props {
   book: BookContentDto;
 }
@@ -12,9 +14,7 @@ export default function BookCard({ book }: Props) {
   const { STATUS_CONFIG } = useReadStatusConfig();
   const { t } = useTranslation(["common", "knowledge"]);
 
-  const imageUrl =
-    book.coverUrl?.replace("http:", "https:") ||
-    "https://via.placeholder.com/128x192?text=No+Cover";
+  const imageUrl = book.coverUrl?.replace("http:", "https:") || undefined;
 
   // Progress Percentage
   const pageCount = book.pageCount ?? 0;
@@ -28,11 +28,15 @@ export default function BookCard({ book }: Props) {
     >
       {/* Cover */}
       <div className="relative aspect-[2/3] overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={book.title}
-          className="w-full h-full object-cover"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={book.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <UniversalCoverFallback title={book.title} type="book" />
+        )}
         {/* Hover Button */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <button className="bg-skin-primary text-skin-base px-4 py-2 rounded-full font-bold hover:bg-skin-primary/90">

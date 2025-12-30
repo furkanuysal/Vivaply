@@ -7,6 +7,7 @@ import StarRating from "../../components/common/StarRating";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 const BookProgressWidget = ({
   progressPercent,
@@ -421,14 +422,17 @@ export default function BookDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Book Cover */}
           <div className="order-1 md:col-span-4 md:row-start-1 flex justify-center md:justify-start">
-            <img
-              src={
-                data.coverUrl?.replace("http:", "https:") ||
-                "https://via.placeholder.com/300x450"
-              }
-              alt={data.title}
-              className="w-48 md:w-full rounded-xl shadow-lg border border-skin-border object-cover"
-            />
+            {data.coverUrl ? (
+              <img
+                src={data.coverUrl.replace("http:", "https:")}
+                alt={data.title}
+                className="w-48 md:w-full rounded-xl shadow-lg border border-skin-border object-cover"
+              />
+            ) : (
+              <div className="w-48 md:w-full aspect-[2/3] rounded-xl shadow-lg border border-skin-border overflow-hidden">
+                <UniversalCoverFallback title={data.title} type="book" />
+              </div>
+            )}
           </div>
 
           {/* Book Details & Buttons */}

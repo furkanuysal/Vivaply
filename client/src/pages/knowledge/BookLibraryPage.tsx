@@ -13,6 +13,7 @@ import {
 } from "../../features/knowledge/types";
 import { useTranslation } from "react-i18next";
 import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 export default function BookLibraryPage() {
   const navigate = useNavigate();
@@ -270,14 +271,21 @@ export default function BookLibraryPage() {
                         >
                           {/* Cover */}
                           <td className="px-4 py-3">
-                            <img
-                              src={
-                                book.coverUrl?.replace("http:", "https:") ||
-                                "https://via.placeholder.com/128x192"
-                              }
-                              alt={book.title}
-                              className="w-12 h-18 rounded shadow-md object-cover group-hover:scale-105 transition"
-                            />
+                            {book.coverUrl ? (
+                              <img
+                                src={book.coverUrl.replace("http:", "https:")}
+                                alt={book.title}
+                                className="w-12 h-18 rounded shadow-md object-cover group-hover:scale-105 transition"
+                              />
+                            ) : (
+                              <div className="w-12 aspect-[2/3] rounded shadow-md overflow-hidden group-hover:scale-105 transition">
+                                <UniversalCoverFallback
+                                  title={book.title}
+                                  type="book"
+                                  variant="compact"
+                                />
+                              </div>
+                            )}
                           </td>
 
                           {/* Title */}

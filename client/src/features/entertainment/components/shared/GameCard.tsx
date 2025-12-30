@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { type GameContentDto } from "../../types";
 import { useTranslation } from "react-i18next";
 
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+
 interface Props {
   game: GameContentDto;
 }
@@ -13,7 +15,7 @@ export default function GameCard({ game }: Props) {
   // Use coverUrl if available, otherwise placeholder
   const imageUrl = game.coverUrl
     ? game.coverUrl.replace("http:", "https:") // Ensure HTTPS
-    : "https://via.placeholder.com/135x190?text=No+Cover";
+    : undefined;
 
   return (
     <div
@@ -22,11 +24,15 @@ export default function GameCard({ game }: Props) {
     >
       {/* Cover */}
       <div className="relative aspect-[2/3]">
-        <img
-          src={imageUrl}
-          alt={game.title}
-          className="w-full h-full object-cover"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={game.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <UniversalCoverFallback title={game.title} type="game" />
+        )}
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

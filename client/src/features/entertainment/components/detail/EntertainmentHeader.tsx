@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import StarRating from "../../../../components/common/StarRating";
 import ProdStatusBadge from "../shared/ProdStatusBadge";
 import ConfirmDialog from "../../../../components/common/ConfirmDialog";
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 interface EntertainmentHeaderProps {
   data: any;
@@ -54,17 +55,24 @@ export default function EntertainmentHeader({
       <div className="flex flex-col md:flex-row gap-8">
         {/* Poster */}
         <div className="w-full md:w-1/3 shrink-0">
-          <img
-            src={
-              data.poster_path
-                ? data.poster_path.startsWith("http")
+          {data.poster_path ? (
+            <img
+              src={
+                data.poster_path.startsWith("http")
                   ? data.poster_path
                   : `https://image.tmdb.org/t/p/w500${data.poster_path}`
-                : "https://via.placeholder.com/500x750"
-            }
-            alt={data.display_name}
-            className="w-full rounded-xl shadow-lg border border-skin-border"
-          />
+              }
+              alt={data.display_name}
+              className="w-full rounded-xl shadow-lg border border-skin-border"
+            />
+          ) : (
+            <div className="w-full aspect-[2/3] rounded-xl shadow-lg border border-skin-border overflow-hidden">
+              <UniversalCoverFallback
+                title={data.display_name}
+                type={type as any}
+              />
+            </div>
+          )}
         </div>
 
         {/* Details */}

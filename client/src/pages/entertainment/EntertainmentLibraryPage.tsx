@@ -30,6 +30,7 @@ import ConfirmDialog from "../../components/common/ConfirmDialog";
 import GameProgressDialog from "../../features/entertainment/components/library/GameProgressDialog";
 import EntertainmentStatusDialog from "../../features/entertainment/components/library/EntertainmentStatusDialog";
 import { useTranslation } from "react-i18next";
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 export default function EntertainmentLibraryPage() {
   const navigate = useNavigate();
@@ -685,17 +686,25 @@ export default function EntertainmentLibraryPage() {
                           }
                         >
                           <td className="px-4 py-3 w-20">
-                            <img
-                              src={
-                                posterPath
-                                  ? posterPath.startsWith("http")
+                            {posterPath ? (
+                              <img
+                                src={
+                                  posterPath.startsWith("http")
                                     ? posterPath
                                     : `https://image.tmdb.org/t/p/w92${posterPath}`
-                                  : "https://via.placeholder.com/92x138"
-                              }
-                              alt={title}
-                              className="w-12 h-18 rounded-md shadow-md object-cover group-hover:scale-105 transition"
-                            />
+                                }
+                                alt={title}
+                                className="w-12 h-18 rounded-md shadow-md object-cover group-hover:scale-105 transition"
+                              />
+                            ) : (
+                              <div className="w-12 aspect-[2/3] rounded-md shadow-md overflow-hidden group-hover:scale-105 transition">
+                                <UniversalCoverFallback
+                                  title={title}
+                                  type={activeTab}
+                                  variant="compact"
+                                />
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 font-medium text-skin-text text-base">
                             {title}
