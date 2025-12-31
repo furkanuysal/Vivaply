@@ -17,11 +17,23 @@ export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
+const AUTH_EXCLUDED_PATHS = [
+  "/Auth/login",
+  "/Auth/register",
+  "/Auth/refresh-token",
+  "/Auth/logout",
+];
+
 // Request Interceptor
 api.interceptors.request.use(
   (config) => {
-    // If access token exists, add it to the request headers
-    if (accessToken) {
+    const url = config.url ?? "";
+
+    // Not attaching Authorization header for auth endpoints
+    if (
+      accessToken &&
+      !AUTH_EXCLUDED_PATHS.some((path) => url.includes(path))
+    ) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
@@ -39,13 +51,8 @@ let failedQueue: FailedRequest[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    error ? prom.reject(error) : prom.resolve(token);
   });
-
   failedQueue = [];
 };
 
@@ -57,27 +64,30 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If error is 401 and not already retried
+    const url = originalRequest.url ?? "";
+
+    // Auth endpoints should never try refresh
+    if (AUTH_EXCLUDED_PATHS.some((path) => url.includes(path))) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // If refresh is already in progress, add to queue
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // Wait for refresh token
+        // Refresh access token using HttpOnly cookie
         const response = await axios.post(
           `${BASE_URL}/Auth/refresh-token`,
           {},
@@ -86,25 +96,16 @@ api.interceptors.response.use(
 
         const { accessToken: newAccessToken } = response.data;
 
-        // Save new access token
         setAccessToken(newAccessToken);
 
-        // Update header
-        api.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${newAccessToken}`;
+        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-        // Resolve queue
         processQueue(null, newAccessToken);
-
-        // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh token failed (expired or invalid)
         processQueue(refreshError, null);
         setAccessToken(null);
-        // Logout user
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

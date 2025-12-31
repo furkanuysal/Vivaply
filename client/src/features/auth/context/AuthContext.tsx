@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -6,9 +5,11 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { authService } from "../services/authService";
-import type { UserProfileDto, LoginDto, RegisterDto } from "../types";
+import { authService } from "@/features/auth/services/authService";
+import type { UserProfileDto, LoginDto, RegisterDto } from "@/features/auth/types";
 import { toast } from "react-toastify";
+
+const AUTH_MARKER_KEY = "vivaply_is_logged_in";
 
 interface AuthContextType {
   user: UserProfileDto | null;
@@ -25,19 +26,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // App start (F5)
   useEffect(() => {
     const initAuth = async () => {
+      const hasAuthMarker = localStorage.getItem(AUTH_MARKER_KEY);
+
+      if (!hasAuthMarker) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Page refresh when Cookie's refresh token with new access token try
         const success = await authService.refreshToken();
         if (success) {
-          // Access token success, get profile
           const userData = await authService.getProfile();
           setUser(userData);
+        } else {
+          localStorage.removeItem(AUTH_MARKER_KEY);
         }
       } catch (error) {
-        // Session fail, user login page
+        localStorage.removeItem(AUTH_MARKER_KEY);
         setUser(null);
       } finally {
         setLoading(false);
@@ -53,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (res.accessToken) {
         const userData = await authService.getProfile();
         setUser(userData);
+        localStorage.setItem(AUTH_MARKER_KEY, "true");
       }
     } catch (error) {
       throw error;
@@ -64,9 +72,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await authService.logout();
-    setUser(null);
-    toast.info("Logged out successfully");
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error", error);
+    } finally {
+      localStorage.removeItem(AUTH_MARKER_KEY);
+      setUser(null);
+      toast.info("Logged out successfully");
+    }
   };
 
   return (
