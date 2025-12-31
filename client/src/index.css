@@ -5,16 +5,6 @@
 @layer base {
   :root {
     /* Light Mode */
-    --color-bg-base: #f7f7ff;
-    --color-bg-surface: #bdd5ea;
-    --color-border: #577399;
-    --color-text-main: #495867;
-    --color-text-muted: #6b7280;
-    --color-primary-base: #fe5f55;
-    --color-secondary-base: #2a9d8f;
-    --color-accent: #d97706;
-
-    /* RGB Variants for Opacity Support */
     --color-bg-base-rgb: 247 247 255;
     --color-bg-surface-rgb: 189 213 234;
     --color-border-rgb: 87 115 153;
@@ -24,29 +14,32 @@
     --color-secondary-rgb: 42 157 143;
     --color-accent-rgb: 217 119 6;
 
-    /* Rating Colors */
-    --rating-95: 37 99 235; /* Blue-600 */
-    --rating-90: 5 150 105; /* Emerald-600 */
-    --rating-80: 22 163 74; /* Green-600 */
-    --rating-70: 202 138 4; /* Yellow-600 */
-    --rating-60: 234 88 12; /* Orange-600 */
-    --rating-45: 220 38 38; /* Red-600 */
-    --rating-bad: 127 29 29; /* Red-900 */
-    --rating-none: 107 114 128; /* Gray-500 */
+    /* Rating Colors - Light Mode */
+    --rating-95-rgb: 29 78 216;
+    --rating-90-rgb: 15 118 110;
+    --rating-80-rgb: 21 128 61;
+    --rating-70-rgb: 77 124 15;
+    --rating-60-rgb: 234 88 12;
+    --rating-45-rgb: 220 38 38;
+    --rating-bad-rgb: 127 29 29;
+    --rating-none-rgb: 75 85 99;
+    /* Badge Colors - Light Mode */
+    --badge-green-bg-rgb: 34 197 94;
+    --badge-green-text-rgb: 21 128 61;
+    --badge-blue-bg-rgb: 59 130 246;
+    --badge-blue-text-rgb: 29 78 216;
+    --badge-red-bg-rgb: 239 68 68;
+    --badge-red-text-rgb: 185 28 28;
+    --badge-yellow-bg-rgb: 234 179 8;
+    --badge-yellow-text-rgb: 161 98 7;
+    --badge-purple-bg-rgb: 168 85 247;
+    --badge-purple-text-rgb: 126 34 206;
+    --badge-gray-bg-rgb: 107 114 128;
+    --badge-gray-text-rgb: 55 65 81;
   }
 
   .dark {
     /* Dark Mode */
-    --color-bg-base: #312f2f;
-    --color-bg-surface: #3e3c3c;
-    --color-border: #454343;
-    --color-text-main: #bccce0;
-    --color-text-muted: #bf98a0;
-    --color-primary-base: #84dccf;
-    --color-secondary-base: #a6d9f7;
-    --color-accent: #facc15;
-
-    /* RGB Variants for Opacity Support */
     --color-bg-base-rgb: 49 47 47;
     --color-bg-surface-rgb: 62 60 60;
     --color-border-rgb: 69 67 67;
@@ -56,15 +49,23 @@
     --color-secondary-rgb: 166 217 247;
     --color-accent-rgb: 250 204 21;
 
-    /* Rating Colors */
-    --rating-95: 96 165 250; /* Blue-400 */
-    --rating-90: 52 211 153; /* Emerald-400 */
-    --rating-80: 74 222 128; /* Green-400 */
-    --rating-70: 250 204 21; /* Yellow-400 */
-    --rating-60: 251 146 60; /* Orange-400 */
-    --rating-45: 248 113 113; /* Red-400 */
-    --rating-bad: 252 165 165; /* Red-300 */
-    --rating-none: 156 163 175; /* Gray-400 */
+    /* Rating Colors - Dark Mode */
+    --rating-95-rgb: 147 197 253;
+    --rating-90-rgb: 94 234 212;
+    --rating-80-rgb: 134 239 172;
+    --rating-70-rgb: 163 230 53;
+    --rating-60-rgb: 251 146 60;
+    --rating-45-rgb: 248 113 113;
+    --rating-bad-rgb: 252 165 165;
+    --rating-none-rgb: 156 163 175;
+
+    /* Badge Colors - Dark Mode */
+    --badge-green-text-rgb: 134 239 172;
+    --badge-blue-text-rgb: 147 197 253;
+    --badge-red-text-rgb: 252 165 165;
+    --badge-yellow-text-rgb: 253 224 71;
+    --badge-purple-text-rgb: 216 180 254;
+    --badge-gray-text-rgb: 209 213 219;
   }
 
   ::-webkit-scrollbar {
@@ -75,11 +76,11 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-border);
+    background: rgb(var(--color-border-rgb));
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-muted);
+    background: rgb(var(--color-text-muted-rgb));
   }
 
   body {

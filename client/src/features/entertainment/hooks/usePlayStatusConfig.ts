@@ -10,27 +10,32 @@ export function usePlayStatusConfig() {
   > = {
     [PlayStatus.PlanToPlay]: {
       label: t("entertainment:games.status.plan_to_play"),
-      badge: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+      badge:
+        "text-skin-badge-blue-text bg-skin-badge-blue-bg/20 border-skin-badge-blue-bg/30",
       button: "bg-blue-600 text-white border-blue-500",
     },
     [PlayStatus.Playing]: {
       label: t("entertainment:games.status.playing"),
-      badge: "text-green-400 bg-green-400/10 border-green-400/20",
+      badge:
+        "text-skin-badge-green-text bg-skin-badge-green-bg/20 border-skin-badge-green-bg/30",
       button: "bg-green-600 text-white border-green-500",
     },
     [PlayStatus.Completed]: {
       label: t("entertainment:games.status.completed"),
-      badge: "text-purple-400 bg-purple-400/10 border-purple-400/20",
+      badge:
+        "text-skin-badge-purple-text bg-skin-badge-purple-bg/20 border-skin-badge-purple-bg/30",
       button: "bg-purple-600 text-white border-purple-500",
     },
     [PlayStatus.OnHold]: {
       label: t("entertainment:games.status.on_hold"),
-      badge: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
+      badge:
+        "text-skin-badge-yellow-text bg-skin-badge-yellow-bg/20 border-skin-badge-yellow-bg/30",
       button: "bg-yellow-600 text-white border-yellow-500",
     },
     [PlayStatus.Dropped]: {
       label: t("entertainment:games.status.dropped"),
-      badge: "text-red-400 bg-red-400/10 border-red-400/20",
+      badge:
+        "text-skin-badge-red-text bg-skin-badge-red-bg/20 border-skin-badge-red-bg/30",
       button: "bg-red-600 text-white border-red-500",
     },
   };
