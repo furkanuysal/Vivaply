@@ -26,11 +26,12 @@ builder.Services.AddKnowledgeServices();
 builder.Services.AddControllers();
 
 // CORS Configuration
+var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? string.Empty;
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         b => b
-            .WithOrigins("http://localhost:5173") // React URl
+            .WithOrigins(allowedOrigins.Split(';', StringSplitOptions.RemoveEmptyEntries)) // React URl
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()); // to allow cookies/auth headers
