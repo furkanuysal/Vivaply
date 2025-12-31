@@ -5,7 +5,8 @@ import {
   BookOpenIcon,
   PuzzlePieceIcon,
 } from "@heroicons/react/24/outline";
-import type { DashboardItemDto } from "../types";
+import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import type { DashboardItemDto } from "@/features/dashboard/types";
 
 interface DashboardCardProps {
   item: DashboardItemDto;
@@ -39,14 +40,31 @@ export default function DashboardCard({
       {/* Background/Image Area */}
       <div className="relative h-48 overflow-hidden bg-skin-base">
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 opacity-60 group-hover:opacity-80 transition-opacity" />
-        <img
-          src={
-            item.imageUrl?.replace("http:", "https:") ||
-            "https://via.placeholder.com/400x300"
-          }
-          className="w-full h-full object-cover transform group-hover:scale-110 transition duration-700 ease-out"
-          alt={item.title}
-        />
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl.replace("http:", "https:")}
+            className="w-full h-full object-cover transform group-hover:scale-110 transition duration-700 ease-out"
+            alt={item.title}
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+              e.currentTarget.nextElementSibling?.classList.remove("hidden");
+            }}
+          />
+        ) : (
+          <UniversalCoverFallback
+            title={item.title}
+            type={item.type || "other"}
+            className="w-full h-full transform group-hover:scale-110 transition duration-700 ease-out"
+          />
+        )}
+        {/* Hidden fallback for when image load fails */}
+        <div className="hidden w-full h-full absolute inset-0">
+          <UniversalCoverFallback
+            title={item.title}
+            type={item.type || "other"}
+            className="w-full h-full transform group-hover:scale-110 transition duration-700 ease-out"
+          />
+        </div>
 
         {/* Type Icon Badge */}
         <div className="absolute top-3 right-3 z-20 bg-skin-surface/90 backdrop-blur text-skin-text p-2 rounded-full shadow-lg">
