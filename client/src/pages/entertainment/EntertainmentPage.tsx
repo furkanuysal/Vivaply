@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
-import { mediaService } from "../../features/entertainment/services/mediaService";
-import MediaCard from "../../features/entertainment/components/shared/MediaCard";
+import { mediaService } from "@/features/entertainment/services/mediaService";
+import MediaCard from "@/features/entertainment/components/shared/MediaCard";
 import type {
   TmdbContentDto,
   GameContentDto,
-} from "../../features/entertainment/types";
+} from "@/features/entertainment/types";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import { gamesService } from "../../features/entertainment/services/gameService";
-import GameCard from "../../features/entertainment/components/shared/GameCard";
+import { gamesService } from "@/features/entertainment/services/gameService";
+import GameCard from "@/features/entertainment/components/shared/GameCard";
+import SearchResultsSection from "@/components/common/SearchResultsSection";
 
 export default function EntertainmentPage() {
   const [query, setQuery] = useState("");
+  const [displayedQuery, setDisplayedQuery] = useState("");
   const [results, setResults] = useState<(TmdbContentDto | GameContentDto)[]>(
     []
   );
@@ -50,10 +52,12 @@ export default function EntertainmentPage() {
     e.preventDefault();
     if (!query.trim()) {
       loadTrending();
+      setDisplayedQuery("");
       return;
     }
 
     setLoading(true);
+    setDisplayedQuery(query);
     try {
       let data;
       if (activeTab === "tv") {
@@ -136,12 +140,11 @@ export default function EntertainmentPage() {
         </button>
       </form>
 
-      {/* Results Grid */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
-        </div>
-      ) : (
+      <SearchResultsSection
+        loading={loading}
+        displayedQuery={displayedQuery}
+        hasResults={results.length > 0}
+      >
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {results.map((item) =>
             activeTab === "game" ? (
@@ -155,13 +158,7 @@ export default function EntertainmentPage() {
             )
           )}
         </div>
-      )}
-
-      {!loading && results.length === 0 && (
-        <div className="text-center text-skin-muted py-10">
-          {t("common:messages.search_no_results")}
-        </div>
-      )}
+      </SearchResultsSection>
     </div>
   );
 }

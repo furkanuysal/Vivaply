@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { bookService } from "../../features/knowledge/services/bookService";
-import BookCard from "../../features/knowledge/components/BookCard";
-import type { BookContentDto } from "../../features/knowledge/types";
+import SearchResultsSection from "@/components/common/SearchResultsSection";
+import { bookService } from "@/features/knowledge/services/bookService";
+import BookCard from "@/features/knowledge/components/BookCard";
+import type { BookContentDto } from "@/features/knowledge/types";
 import { useTranslation } from "react-i18next";
 
 export default function KnowledgePage() {
   const [query, setQuery] = useState("");
+  const [displayedQuery, setDisplayedQuery] = useState("");
   const [results, setResults] = useState<BookContentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation(["common", "knowledge"]);
@@ -39,29 +41,22 @@ export default function KnowledgePage() {
     }
   };
 
-  // Dynamic search: debounce + min 3 chars
+  // Initial load only
   useEffect(() => {
-    const trimmed = query.trim();
-
-    if (!trimmed) {
-      performSearch("subject:fiction&orderBy=newest");
-      return;
-    }
-
-    if (trimmed.length < 3) return;
-
-    const debounceTimer = setTimeout(() => {
-      performSearch(trimmed);
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [query]);
+    performSearch("subject:fiction&orderBy=newest");
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim().length >= 3) {
-      performSearch(query.trim());
+
+    if (!query.trim()) {
+      performSearch("subject:fiction&orderBy=newest");
+      setDisplayedQuery("");
+      return;
     }
+
+    performSearch(query);
+    setDisplayedQuery(query);
   };
 
   return (
@@ -89,31 +84,17 @@ export default function KnowledgePage() {
         </form>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skin-primary"></div>
+      <SearchResultsSection
+        loading={loading}
+        displayedQuery={displayedQuery}
+        hasResults={results.length > 0}
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          {results.map((book) => (
+            <BookCard key={book.id} book={book} />
+          ))}
         </div>
-      ) : (
-        <>
-          <h2 className="text-xl font-semibold text-skin-text border-l-4 border-skin-primary pl-3">
-            {query
-              ? t("common:search.search_results", { query })
-              : t("common:search.recommended_for_you")}
-          </h2>
-
-          {results.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {results.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-skin-muted py-10 bg-skin-surface/30 rounded-xl border border-skin-border/50">
-              {t("common:messages.search_no_results")}
-            </div>
-          )}
-        </>
-      )}
+      </SearchResultsSection>
     </div>
   );
 }
