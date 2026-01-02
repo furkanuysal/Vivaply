@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { ReadStatus } from "../types";
+import { ReadStatus } from "@/features/knowledge/types";
 
 export function useReadStatusConfig() {
   const { t } = useTranslation(["knowledge", "common"]);

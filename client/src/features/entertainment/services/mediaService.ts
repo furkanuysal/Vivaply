@@ -1,4 +1,4 @@
-import api from "../../../lib/api";
+import api from "@/lib/api";
 import type {
   TmdbContentDto,
   AddToLibraryDto,
@@ -7,10 +7,10 @@ import type {
   LibraryResponse,
   MarkSeasonWatchedDto,
   UpdateEntertainmentStatusDto,
-} from "../types";
+} from "@/features/entertainment/types";
 
 export const mediaService = {
-  // Dizi Arama
+  // Series Search
   searchTv: async (query: string, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
       `/Entertainment/tv/search?query=${query}&language=${language}`
@@ -18,7 +18,7 @@ export const mediaService = {
     return response.data;
   },
 
-  // Film Arama
+  // Movie Search
   searchMovie: async (query: string, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
       `/Entertainment/movie/search?query=${query}&language=${language}`
@@ -26,7 +26,7 @@ export const mediaService = {
     return response.data;
   },
 
-  // Trend Diziler
+  // Trend Series
   getTrendingTv: async (language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
       `/Entertainment/tv/trending?language=${language}`
@@ -34,7 +34,7 @@ export const mediaService = {
     return response.data;
   },
 
-  // Trend Filmler
+  // Trend Movies
   getTrendingMovie: async (language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
       `/Entertainment/movie/trending?language=${language}`

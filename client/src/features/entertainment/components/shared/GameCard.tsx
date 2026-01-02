@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { type GameContentDto } from "../../types";
+import { type GameContentDto } from "@/features/entertainment/types";
 import { useTranslation } from "react-i18next";
 
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";

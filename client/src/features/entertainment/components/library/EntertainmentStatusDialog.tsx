@@ -5,9 +5,9 @@ import {
   type TmdbContentDto,
   WatchStatus,
   type UpdateEntertainmentStatusDto,
-} from "../../types";
-import { useWatchStatusConfig } from "../../hooks/useWatchStatusConfig";
-import StarRating from "../../../../components/common/StarRating";
+} from "@/features/entertainment/types";
+import { useWatchStatusConfig } from "@/features/entertainment/hooks/useWatchStatusConfig";
+import StarRating from "@/components/common/StarRating";
 
 interface EntertainmentStatusDialogProps {
   isOpen: boolean;

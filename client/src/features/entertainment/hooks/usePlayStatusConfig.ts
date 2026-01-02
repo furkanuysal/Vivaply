@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { PlayStatus } from "../types";
+import { PlayStatus } from "@/features/entertainment/types";
 
 export function usePlayStatusConfig() {
   const { t } = useTranslation(["entertainment", "common"]);

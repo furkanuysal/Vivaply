@@ -3,14 +3,14 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutline } from "@heroicons/react/24/outline";
 
 interface Props {
-  currentRating?: number; // Örn: 6.5
+  currentRating?: number;
   onRate: (rating: number) => void;
 }
 
 export default function StarRating({ currentRating = 0, onRate }: Props) {
   const [hover, setHover] = useState(0);
 
-  // Görüntülenecek puan (Hover varsa o, yoksa kayıtlı puan)
+  // Rating to show
   const displayRating = hover || currentRating || 0;
 
   return (
@@ -21,17 +21,12 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
 
           return (
             <div key={index} className="relative w-6 h-6 cursor-pointer group">
-              {/* Yıldızın Görseli (Alt Katman) 
-                 - Tam dolu mu?
-                 - Yarım mı?
-                 - Boş mu?
-              */}
               <div className="absolute inset-0 pointer-events-none">
                 {displayRating >= starValue ? (
-                  // Tam Dolu Yıldız
+                  // Full Star
                   <StarIcon className="w-6 h-6 text-skin-primary" />
                 ) : displayRating >= starValue - 0.5 ? (
-                  // Yarım Dolu Yıldız (Maskeleme ile)
+                  // Half Star (Masking)
                   <div className="relative w-6 h-6">
                     <StarOutline className="absolute w-6 h-6 text-skin-muted" />
                     <div className="absolute inset-0 overflow-hidden w-[50%]">
@@ -39,16 +34,16 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
                     </div>
                   </div>
                 ) : (
-                  // Boş Yıldız
+                  // Empty Star
                   <StarOutline className="w-6 h-6 text-skin-muted" />
                 )}
               </div>
 
-              {/* Tıklama Alanları (Üst Katman - Görünmez)
-                 Her yıldızın üzerinde görünmez iki buton vardır.
+              {/* Click Areas (Upper Layer - Hidden)
+                 There are two buttons hidden on top of each star.
               */}
 
-              {/* Sol Yarım (Buçuklu Puan: X.5) */}
+              {/* Left Half (Half Point: X.5) */}
               <div
                 className="absolute left-0 top-0 w-1/2 h-full z-20"
                 onMouseEnter={() => setHover(starValue - 0.5)}
@@ -56,7 +51,7 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
                 onClick={() => onRate(starValue - 0.5)}
               />
 
-              {/* Sağ Yarım (Tam Puan: X.0) */}
+              {/* Right Half (Full Point: X.0) */}
               <div
                 className="absolute right-0 top-0 w-1/2 h-full z-20"
                 onMouseEnter={() => setHover(starValue)}
@@ -68,7 +63,7 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
         })}
       </div>
 
-      {/* Puan Yazısı */}
+      {/* Rating Text */}
       <span className="ml-3 text-lg font-bold text-skin-primary w-10 text-center">
         {displayRating.toFixed(1)}
       </span>

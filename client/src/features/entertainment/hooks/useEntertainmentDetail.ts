@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import { mediaService } from "../services/mediaService";
-import { gamesService } from "../services/gameService";
-import { WatchStatus, PlayStatus } from "../types";
+import { mediaService } from "@/features/entertainment/services/mediaService";
+import { gamesService } from "@/features/entertainment/services/gameService";
+import { WatchStatus, PlayStatus } from "@/features/entertainment/types";
 
 export function useEntertainmentDetail(
   type: string | undefined,

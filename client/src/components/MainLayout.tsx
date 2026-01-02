@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useAuth } from "../features/auth/context/AuthContext";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   HomeIcon,
   FilmIcon,
@@ -11,11 +11,11 @@ import {
   XMarkIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import LanguageSelector from "./LanguageSelector";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -123,7 +123,7 @@ export default function MainLayout() {
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-skin-secondary/10 rounded-full blur-[128px]" />
       </div>
 
-      {/* 🟢 SIDEBAR (Desktop) */}
+      {/* SIDEBAR (Desktop) */}
       <motion.aside
         initial={false}
         animate={isCollapsed ? "collapsed" : "expanded"}

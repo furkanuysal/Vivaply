@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import type { TmdbContentDto } from "../../types";
+import type { TmdbContentDto } from "@/features/entertainment/types";
 import { useTranslation } from "react-i18next";
 
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";

@@ -1,5 +1,5 @@
-import api from "../../../lib/api";
-import type { DashboardSummaryDto } from "../types";
+import api from "@/lib/api";
+import type { DashboardSummaryDto } from "@/features/dashboard/types";
 
 export const dashboardService = {
   getDashboard: async () => {

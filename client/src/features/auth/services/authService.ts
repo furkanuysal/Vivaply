@@ -1,11 +1,10 @@
-// src/features/auth/services/authService.ts
-import api, { setAccessToken } from "../../../lib/api";
+import api, { setAccessToken } from "@/lib/api";
 import type {
   LoginDto,
   RegisterDto,
   AuthResponse,
   UserProfileDto,
-} from "../types";
+} from "@/features/auth/types";
 
 export const authService = {
   login: async (data: LoginDto) => {

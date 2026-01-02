@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TmdbEpisodeDto } from "../../types";
-import { getRatingClasses } from "../../utils/ratingUtils";
+import type { TmdbEpisodeDto } from "@/features/entertainment/types";
+import { getRatingClasses } from "@/features/entertainment/utils/ratingUtils";
 
 interface EntertainmentGraphProps {
   seasons: any[];

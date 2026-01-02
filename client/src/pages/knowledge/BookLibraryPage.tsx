@@ -5,14 +5,11 @@ import {
   ArrowPathIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { bookService } from "../../features/knowledge/services/bookService";
-import BookCard from "../../features/knowledge/components/BookCard";
-import {
-  type BookContentDto,
-  ReadStatus,
-} from "../../features/knowledge/types";
+import { bookService } from "@/features/knowledge/services/bookService";
+import BookCard from "@/features/knowledge/components/BookCard";
+import { type BookContentDto, ReadStatus } from "@/features/knowledge/types";
 import { useTranslation } from "react-i18next";
-import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
+import { useReadStatusConfig } from "@/features/knowledge/hooks/useReadStatusConfig";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 export default function BookLibraryPage() {

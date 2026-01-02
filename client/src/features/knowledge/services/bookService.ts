@@ -1,4 +1,4 @@
-import api from "../../../lib/api";
+import api from "@/lib/api";
 import type {
   BookContentDto,
   AddBookDto,
@@ -6,7 +6,7 @@ import type {
   UpdateBookProgressDto,
   ReviewBookDto,
   RateBookDto,
-} from "../types";
+} from "@/features/knowledge/types";
 
 export const bookService = {
   // Search books

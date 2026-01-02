@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import StarRating from "../../../../components/common/StarRating";
-import ProdStatusBadge from "../shared/ProdStatusBadge";
-import ConfirmDialog from "../../../../components/common/ConfirmDialog";
+import StarRating from "@/components/common/StarRating";
+import ProdStatusBadge from "@/features/entertainment/components/shared/ProdStatusBadge";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 interface EntertainmentHeaderProps {

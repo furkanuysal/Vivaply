@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { WatchStatus } from "../types";
+import { WatchStatus } from "@/features/entertainment/types";
 
 export function useWatchStatusConfig(type?: "tv" | "movie") {
   const { t } = useTranslation(["entertainment", "common"]);

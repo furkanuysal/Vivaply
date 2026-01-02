@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { bookService } from "../../features/knowledge/services/bookService";
-import { ReadStatus } from "../../features/knowledge/types";
+import { bookService } from "@/features/knowledge/services/bookService";
+import { ReadStatus } from "@/features/knowledge/types";
 import { toast } from "react-toastify";
-import StarRating from "../../components/common/StarRating";
-import ConfirmDialog from "../../components/common/ConfirmDialog";
+import StarRating from "@/components/common/StarRating";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
-import { useReadStatusConfig } from "../../features/knowledge/hooks/useReadStatusConfig";
+import { useReadStatusConfig } from "@/features/knowledge/hooks/useReadStatusConfig";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 const BookProgressWidget = ({

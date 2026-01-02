@@ -1,13 +1,13 @@
 import { useState } from "react";
-import AuthModal from "../features/auth/components/AuthModal";
-import landingHero from "../assets/landing-hero.png";
+import AuthModal from "@/features/auth/components/AuthModal";
+import landingHero from "@/assets/landing-hero.png";
 import {
   BookOpenIcon,
   FilmIcon,
   SparklesIcon,
   GlobeAltIcon,
 } from "@heroicons/react/24/outline";
-import ThemeToggle from "../components/ThemeToggle";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LandingPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { authService } from "../features/auth/services/authService";
-import type { UserProfileDto } from "../features/auth/types";
+import { authService } from "@/features/auth/services/authService";
+import type { UserProfileDto } from "@/features/auth/types";
 import { toast } from "react-toastify";
 
 export default function ProfilePage() {
-  // const navigate = useNavigate(); <-- Artık buna gerek kalmadı, Layout hallediyor
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +14,6 @@ export default function ProfilePage() {
         setUser(data);
       } catch (error) {
         toast.error("Oturum süresi doldu.");
-        // Hata yönetimi authService içinde de yapılabilir ama burası kalsın şimdilik
       } finally {
         setLoading(false);
       }

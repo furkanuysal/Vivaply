@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { WatchStatus } from "../../features/entertainment/types";
-import { useWatchStatusConfig } from "../../features/entertainment/hooks/useWatchStatusConfig";
-import { usePlayStatusConfig } from "../../features/entertainment/hooks/usePlayStatusConfig";
-import { useEntertainmentDetail } from "../../features/entertainment/hooks/useEntertainmentDetail";
-import { useTvProgress } from "../../features/entertainment/hooks/useTvProgress";
+import { WatchStatus } from "@/features/entertainment/types";
+import { useWatchStatusConfig } from "@/features/entertainment/hooks/useWatchStatusConfig";
+import { usePlayStatusConfig } from "@/features/entertainment/hooks/usePlayStatusConfig";
+import { useEntertainmentDetail } from "@/features/entertainment/hooks/useEntertainmentDetail";
+import { useTvProgress } from "@/features/entertainment/hooks/useTvProgress";
 import {
   EntertainmentHeader,
   EntertainmentGraph,

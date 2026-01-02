@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import { mediaService } from "../services/mediaService";
-import type { TmdbEpisodeDto } from "../types";
+import { mediaService } from "@/features/entertainment/services/mediaService";
+import type { TmdbEpisodeDto } from "@/features/entertainment/types";
 
 export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
   const { t } = useTranslation(["common", "entertainment"]);

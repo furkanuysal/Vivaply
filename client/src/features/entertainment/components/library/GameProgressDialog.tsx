@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import StarRating from "../../../../components/common/StarRating";
+import StarRating from "@/components/common/StarRating";
 import {
   type GameContentDto,
   GameCompletionType,
   type UpdateGameProgressDto,
-} from "../../types";
+} from "@/features/entertainment/types";
 
 interface GameProgressDialogProps {
   isOpen: boolean;

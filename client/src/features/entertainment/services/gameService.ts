@@ -1,10 +1,10 @@
-import api from "../../../lib/api";
+import api from "@/lib/api";
 import type {
   GameContentDto,
   TrackGameDto,
   PlayStatus,
   UpdateGameProgressDto,
-} from "../types";
+} from "@/features/entertainment/types";
 
 export const gamesService = {
   // Search

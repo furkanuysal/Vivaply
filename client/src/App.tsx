@@ -5,23 +5,23 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Pages and Components
-import LandingPage from "./pages/LandingPage";
-import ProfilePage from "./pages/ProfilePage";
-import DashboardPage from "./pages/DashboardPage";
-import MainLayout from "./components/MainLayout";
+import LandingPage from "@/pages/LandingPage";
+import ProfilePage from "@/pages/ProfilePage";
+import DashboardPage from "@/pages/DashboardPage";
+import MainLayout from "@/components/MainLayout";
 
 // Entertainment
-import EntertainmentPage from "./pages/entertainment/EntertainmentPage";
-import EntertainmentDetailPage from "./pages/entertainment/EntertainmentDetailPage";
-import EntertainmentLibraryPage from "./pages/entertainment/EntertainmentLibraryPage";
+import EntertainmentPage from "@/pages/entertainment/EntertainmentPage";
+import EntertainmentDetailPage from "@/pages/entertainment/EntertainmentDetailPage";
+import EntertainmentLibraryPage from "@/pages/entertainment/EntertainmentLibraryPage";
 
 // Knowledge
-import BookLibraryPage from "./pages/knowledge/BookLibraryPage";
-import BookDetailPage from "./pages/knowledge/BookDetailPage";
-import KnowledgePage from "./pages/knowledge/KnowledgePage";
+import BookLibraryPage from "@/pages/knowledge/BookLibraryPage";
+import BookDetailPage from "@/pages/knowledge/BookDetailPage";
+import KnowledgePage from "@/pages/knowledge/KnowledgePage";
 
 // Context
-import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
+import { AuthProvider, useAuth } from "@/features/auth/context/AuthContext";
 
 // Simple Loading Screen (Shown while checking token)
 const LoadingScreen = () => (

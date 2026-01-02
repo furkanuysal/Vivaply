@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { ReadStatus, type BookContentDto } from "../types";
-import { useReadStatusConfig } from "../hooks/useReadStatusConfig";
+import { ReadStatus, type BookContentDto } from "@/features/knowledge/types";
+import { useReadStatusConfig } from "@/features/knowledge/hooks/useReadStatusConfig";
 import { useTranslation } from "react-i18next";
 
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
