@@ -82,12 +82,26 @@ export default function EntertainmentPage() {
         </h1>
 
         {/* Tab Switcher */}
-        <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
+        <div className="relative bg-skin-surface p-1 rounded-lg flex border border-skin-border">
+          {/* Sliding Indicator */}
+          <div className="absolute inset-0 p-1 pointer-events-none">
+            <div
+              className="h-full w-1/3 rounded-md bg-skin-primary transition-transform duration-300 ease-out"
+              style={{
+                transform:
+                  activeTab === "tv"
+                    ? "translateX(0%)"
+                    : activeTab === "movie"
+                    ? "translateX(100%)"
+                    : "translateX(200%)",
+              }}
+            />
+          </div>
           <button
             onClick={() => setActiveTab("tv")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
               activeTab === "tv"
-                ? "bg-skin-primary text-skin-base"
+                ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
             }`}
           >
@@ -95,9 +109,9 @@ export default function EntertainmentPage() {
           </button>
           <button
             onClick={() => setActiveTab("movie")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
               activeTab === "movie"
-                ? "bg-skin-primary text-skin-base"
+                ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
             }`}
           >
@@ -105,9 +119,9 @@ export default function EntertainmentPage() {
           </button>
           <button
             onClick={() => setActiveTab("game")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
               activeTab === "game"
-                ? "bg-skin-primary text-skin-base"
+                ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
             }`}
           >

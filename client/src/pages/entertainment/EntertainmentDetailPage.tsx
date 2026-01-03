@@ -127,7 +127,7 @@ export default function EntertainmentDetailPage() {
         ></div>
       )}
 
-      <div className="max-w-6xl mx-auto bg-skin-surface/80 p-8 rounded-2xl shadow-2xl backdrop-blur-md border border-skin-border mt-6">
+      <div className="relative max-w-6xl mx-auto glass p-8 rounded-2xl mt-6">
         <EntertainmentHeader
           data={data}
           type={type as string}
@@ -155,14 +155,26 @@ export default function EntertainmentDetailPage() {
               </h3>
 
               {/* View Toggle Buttons */}
-              <div className="bg-skin-surface border border-skin-border rounded-lg p-1 flex gap-1">
+              <div className="relative bg-skin-surface border border-skin-border rounded-lg p-1 flex">
+                {/* Sliding Indicator */}
+                <div className="absolute inset-0 p-1 pointer-events-none">
+                  <div
+                    className="h-full w-1/2 rounded-md bg-skin-primary transition-transform duration-300 ease-out"
+                    style={{
+                      transform:
+                        viewMode === "list"
+                          ? "translateX(0%)"
+                          : "translateX(100%)",
+                    }}
+                  />
+                </div>
                 <button
                   onClick={() => handleDisplayModeChange("list")}
                   title={t("common:buttons.list_view")}
-                  className={`p-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${
+                  className={`relative z-10 flex-1 p-2 rounded-md transition flex items-center justify-center ${
                     viewMode === "list"
-                      ? "bg-skin-primary text-skin-base shadow-md"
-                      : "text-skin-muted hover:text-skin-text hover:bg-skin-base/50"
+                      ? "text-skin-base"
+                      : "text-skin-muted hover:text-skin-text"
                   }`}
                 >
                   <svg
@@ -187,10 +199,10 @@ export default function EntertainmentDetailPage() {
                 <button
                   onClick={() => handleDisplayModeChange("graph")}
                   title={t("common:buttons.grid_view")}
-                  className={`p-2 rounded-md text-sm font-bold transition flex items-center gap-2 ${
+                  className={`relative z-10 flex-1 p-2 rounded-md transition flex items-center justify-center ${
                     viewMode === "graph"
-                      ? "bg-skin-primary text-skin-base shadow-md"
-                      : "text-skin-muted hover:text-skin-text hover:bg-skin-base/50"
+                      ? "text-skin-base"
+                      : "text-skin-muted hover:text-skin-text"
                   }`}
                 >
                   <svg

@@ -418,7 +418,7 @@ export default function BookDetailPage() {
         ></div>
       )}
 
-      <div className="max-w-5xl mx-auto bg-skin-surface/80 p-8 rounded-2xl shadow-2xl backdrop-blur-md border border-skin-border mt-6">
+      <div className="relative max-w-5xl mx-auto glass p-8 rounded-2xl mt-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Book Cover */}
           <div className="order-1 md:col-span-4 md:row-start-1 flex justify-center md:justify-start">
@@ -545,7 +545,7 @@ export default function BookDetailPage() {
 
           {/* Personal Notes */}
           <div className="order-4 md:col-span-8 md:row-start-2">
-            <div className="bg-skin-surface/50 p-4 rounded-xl border border-skin-border w-full h-full flex flex-col">
+            <div className="bg-skin-surface/30 backdrop-blur-sm p-4 rounded-xl border border-skin-border/40 shadow-sm w-full h-full flex flex-col">
               <div className="flex justify-between items-center mb-2 shrink-0">
                 <p className="text-skin-muted text-xs uppercase font-bold tracking-wider">
                   {t("knowledge:books.detail.personal_notes")}

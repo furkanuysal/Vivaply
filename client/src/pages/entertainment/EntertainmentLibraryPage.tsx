@@ -359,15 +359,15 @@ export default function EntertainmentLibraryPage() {
   const getCompletionLabel = (type?: GameCompletionType) => {
     switch (type) {
       case GameCompletionType.MainStory:
-        return "Main Story";
+        return t("entertainment:games.completionType.mainStory");
       case GameCompletionType.MainPlusExtras:
-        return "Main + Extras";
+        return t("entertainment:games.completionType.mainPlusExtras");
       case GameCompletionType.Completionist:
-        return "100% / Platinum";
+        return t("entertainment:games.completionType.completionist");
       case GameCompletionType.Speedrun:
-        return "Speedrun";
+        return t("entertainment:games.completionType.speedrun");
       default:
-        return "-";
+        return t("entertainment:games.completionType.none");
     }
   };
 
@@ -431,12 +431,26 @@ export default function EntertainmentLibraryPage() {
             <ArrowPathIcon className="w-5 h-5" />
           </button>
           {/* View Toggle Buttons */}
-          <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
+          <div className="relative bg-skin-surface p-1 rounded-lg flex border border-skin-border">
+            {/* Sliding Indicator */}
+            <div
+              className="absolute inset-0 p-1 pointer-events-none"
+              aria-hidden
+            >
+              <div
+                className="h-full w-1/2 rounded-md bg-skin-primary transition-transform duration-300 ease-out"
+                style={{
+                  transform:
+                    viewMode === "grid" ? "translateX(0%)" : "translateX(100%)",
+                }}
+              />
+            </div>
+
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md transition ${
+              className={`relative z-10 flex-1 p-2 rounded-md transition ${
                 viewMode === "grid"
-                  ? "bg-skin-primary text-skin-base"
+                  ? "text-skin-base"
                   : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.grid_view")}
@@ -458,11 +472,12 @@ export default function EntertainmentLibraryPage() {
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
             </button>
+
             <button
               onClick={() => setViewMode("table")}
-              className={`p-2 rounded-md transition ${
+              className={`relative z-10 flex-1 p-2 rounded-md transition ${
                 viewMode === "table"
-                  ? "bg-skin-primary text-skin-base"
+                  ? "text-skin-base"
                   : "text-skin-muted hover:text-skin-text"
               }`}
               title={t("common:buttons.table_view")}
@@ -488,42 +503,59 @@ export default function EntertainmentLibraryPage() {
             </button>
           </div>
 
-          <div className="bg-skin-surface p-1 rounded-lg flex gap-1 border border-skin-border">
+          <div className="relative bg-skin-surface p-1 rounded-lg flex border border-skin-border">
+            {/* Sliding Indicator */}
+            <div className="absolute inset-0 p-1 pointer-events-none">
+              <div
+                className="h-full w-1/3 rounded-md bg-skin-primary transition-transform duration-300 ease-out"
+                style={{
+                  transform:
+                    activeTab === "tv"
+                      ? "translateX(0%)"
+                      : activeTab === "movie"
+                      ? "translateX(100%)"
+                      : "translateX(200%)",
+                }}
+              />
+            </div>
+
             <button
               onClick={() => setActiveTab("tv")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === "tv"
-                  ? "bg-skin-primary text-skin-base"
+                  ? "text-skin-base"
                   : "text-skin-muted hover:text-skin-text"
               }`}
             >
-              {t("entertainment:common.tv_shows")}{" "}
+              {t("entertainment:common.tv_shows")}
               <span className="ml-2 bg-skin-text/20 px-2 rounded-full text-xs">
                 {libraryData.tv.length}
               </span>
             </button>
+
             <button
               onClick={() => setActiveTab("movie")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === "movie"
-                  ? "bg-skin-primary text-skin-base"
+                  ? "text-skin-base"
                   : "text-skin-muted hover:text-skin-text"
               }`}
             >
-              {t("entertainment:common.movies")}{" "}
+              {t("entertainment:common.movies")}
               <span className="ml-2 bg-skin-text/20 px-2 rounded-full text-xs">
                 {libraryData.movie.length}
               </span>
             </button>
+
             <button
               onClick={() => setActiveTab("game")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === "game"
-                  ? "bg-skin-primary text-skin-base"
+                  ? "text-skin-base"
                   : "text-skin-muted hover:text-skin-text"
               }`}
             >
-              {t("entertainment:common.games")}{" "}
+              {t("entertainment:common.games")}
               <span className="ml-2 bg-skin-text/20 px-2 rounded-full text-xs">
                 {libraryData.game.length}
               </span>
@@ -673,9 +705,7 @@ export default function EntertainmentLibraryPage() {
                           ? item.releaseDate
                           : item.display_date;
                       const tagline =
-                        activeTab === "game"
-                          ? null // User requested to remove tagline/platforms for games
-                          : item.tagline;
+                        activeTab === "game" ? null : item.tagline;
 
                       return (
                         <tr
@@ -764,15 +794,15 @@ export default function EntertainmentLibraryPage() {
                                     handleWatchNext(item);
                                   }}
                                   disabled={loadingItems.has(item.id)}
-                                  className="text-skin-primary hover:text-skin-primary/80 transition disabled:opacity-50"
+                                  className="text-skin-accent hover:text-skin-accent/80 transition disabled:opacity-50"
                                   title={t(
                                     "entertainment:library.table.watch_next"
                                   )}
                                 >
                                   {loadingItems.has(item.id) ? (
-                                    <div className="w-5 h-5 border-2 border-skin-primary border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-5 h-5 border-2 border-skin-accent border-t-transparent rounded-full animate-spin"></div>
                                   ) : (
-                                    <PlusCircleIcon className="w-6 h-6" />
+                                    <PlusCircleIcon className="w-6 h-6 hover:scale-105" />
                                   )}
                                 </button>
                               )}
@@ -825,7 +855,7 @@ export default function EntertainmentLibraryPage() {
                             }`}
                           >
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                              className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center whitespace-nowrap ${
                                 STATUS_CONFIG[userStatus]?.badge ?? ""
                               }`}
                             >

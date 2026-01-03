@@ -129,7 +129,7 @@ export default function MainLayout() {
         animate={isCollapsed ? "collapsed" : "expanded"}
         variants={sidebarVariants}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed h-full z-20 hidden md:flex flex-col border-r border-skin-border/20 bg-skin-surface/80 backdrop-blur-xl"
+        className="fixed h-full z-20 hidden md:flex flex-col glass-sidebar"
       >
         <div
           className={`h-20 flex items-center ${

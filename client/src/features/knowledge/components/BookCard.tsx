@@ -24,7 +24,13 @@ export default function BookCard({ book }: Props) {
   return (
     <div
       onClick={() => navigate(`/knowledge/book/${book.id}`)}
-      className="bg-skin-surface rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-skin-border group cursor-pointer flex flex-col h-full"
+      className="
+        bg-skin-surface rounded-xl overflow-hidden shadow-lg
+        border border-skin-border/40
+        hover:scale-105 hover:border-skin-primary/50
+        transition-all duration-300
+        group cursor-pointer relative
+      "
     >
       {/* Cover */}
       <div className="relative aspect-[2/3] overflow-hidden">
@@ -38,7 +44,13 @@ export default function BookCard({ book }: Props) {
           <UniversalCoverFallback title={book.title} type="book" />
         )}
         {/* Hover Button */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div
+          className="absolute inset-0
+             bg-black/40 backdrop-blur-sm
+             opacity-0 group-hover:opacity-100
+             transition-all duration-300
+             flex items-center justify-center"
+        >
           <button className="bg-skin-primary text-skin-base px-4 py-2 rounded-full font-bold hover:bg-skin-primary/90">
             {t("buttons.view")}
           </button>

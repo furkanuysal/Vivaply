@@ -20,7 +20,13 @@ export default function GameCard({ game }: Props) {
   return (
     <div
       onClick={() => navigate(`/entertainment/game/${game.id}`)}
-      className="bg-skin-surface rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 border border-skin-border group cursor-pointer relative"
+      className="
+        bg-skin-surface rounded-xl overflow-hidden shadow-lg
+        border border-skin-border/40
+        hover:scale-105 hover:border-skin-primary/50
+        transition-all duration-300
+        group cursor-pointer relative
+      "
     >
       {/* Cover */}
       <div className="relative aspect-[2/3]">
@@ -35,7 +41,13 @@ export default function GameCard({ game }: Props) {
         )}
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div
+          className="absolute inset-0
+             bg-black/40 backdrop-blur-sm
+             opacity-0 group-hover:opacity-100
+             transition-all duration-300
+             flex items-center justify-center"
+        >
           <button className="bg-skin-primary text-skin-base px-4 py-2 rounded-full font-bold hover:bg-skin-primary/90">
             {t("common:buttons.view")}
           </button>
@@ -43,7 +55,7 @@ export default function GameCard({ game }: Props) {
 
         {/* Rating Badge */}
         {game.voteAverage > 0 && (
-          <div className="absolute top-2 right-2 bg-skin-surface/70 backdrop-blur-sm text-skin-accent text-xs font-bold px-2 py-1 rounded-md border border-skin-accent/30 shadow-md">
+          <div className="absolute top-2 right-2 bg-skin-surface text-skin-accent text-xs font-bold px-2 py-1 rounded-md border border-skin-border shadow-sm">
             ⭐ {game.voteAverage.toFixed(1)}
           </div>
         )}
