@@ -10,6 +10,12 @@
 *.sln.docstates
 
 ## ---------------------------------------
+## .NET Static Uploads (Runtime Files)
+## ---------------------------------------
+Vivaply.API/wwwroot/uploads/
+Vivaply.API/wwwroot/uploads/**
+
+## ---------------------------------------
 ## Node / React (client/) Build Files
 ## ---------------------------------------
 client/node_modules/
