@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Services;
+using Vivaply.API.Services.Account;
 using Vivaply.API.Services.Dashboard;
 using Vivaply.API.Services.Entertainment;
 using Vivaply.API.Services.Knowledge;
@@ -19,6 +20,7 @@ builder.Services.AddDbContext<VivaplyDbContext>(options =>
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
 
@@ -92,6 +94,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 // Activate CORS Middleware
 app.UseCors("AllowReactApp");
