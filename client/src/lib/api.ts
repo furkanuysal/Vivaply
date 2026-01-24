@@ -3,6 +3,9 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 // Swagger port
 export const BASE_URL = import.meta.env.VITE_API_URL;
 
+// Server URL
+export const SERVER_URL = BASE_URL.replace(/\/api\/?$/, "");
+
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
@@ -38,7 +41,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 interface FailedRequest {
@@ -91,7 +94,7 @@ api.interceptors.response.use(
         const response = await axios.post(
           `${BASE_URL}/Auth/refresh-token`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const { accessToken: newAccessToken } = response.data;
@@ -113,7 +116,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

@@ -10,6 +10,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   Squares2X2Icon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useState, useEffect } from "react";
@@ -50,7 +51,7 @@ export default function MainLayout() {
       setExpandedMenus((prev) =>
         prev.includes(key)
           ? prev.filter((item) => item !== key)
-          : [...prev, key]
+          : [...prev, key],
       );
     }
   };
@@ -180,7 +181,7 @@ export default function MainLayout() {
             if (hasChildren) {
               const isExpanded = expandedMenus.includes(item.key);
               const isActiveGroup = item.children?.some(
-                (child) => location.pathname === child.path
+                (child) => location.pathname === child.path,
               );
 
               return (
@@ -303,6 +304,26 @@ export default function MainLayout() {
               <ThemeToggle />
               <LanguageSelector isCollapsed={isCollapsed} />
             </div>
+            <Link
+              to="/settings"
+              className={`flex items-center w-full transition-all duration-200 ${
+                isCollapsed ? "justify-center px-2 py-3" : "px-3 py-3 gap-3"
+              } rounded-xl text-skin-muted hover:text-skin-text hover:bg-skin-text/5`}
+            >
+              <Cog6ToothIcon className="w-5 h-5 shrink-0" />
+              <AnimatePresence>
+                {!isCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                  >
+                    {t("buttons.settings") || "Settings"}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
             <button
               onClick={handleLogout}
               className={`flex items-center w-full transition-all duration-200 ${
@@ -395,7 +416,7 @@ export default function MainLayout() {
                     if (item.children) {
                       const isExpanded = expandedMenus.includes(item.key);
                       const isActiveGroup = item.children.some(
-                        (child) => location.pathname === child.path
+                        (child) => location.pathname === child.path,
                       );
 
                       return (
@@ -470,6 +491,16 @@ export default function MainLayout() {
 
                 <div className="p-4 border-t border-skin-border/5 space-y-2">
                   <LanguageSelector isCollapsed={false} />
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 w-full py-3 text-skin-muted rounded-xl hover:text-skin-text hover:bg-skin-text/5 transition-colors"
+                  >
+                    <Cog6ToothIcon className="w-6 h-6 shrink-0" />
+                    <span className="font-medium">
+                      {t("buttons.settings") || "Settings"}
+                    </span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-4 w-full py-3 text-red-400 rounded-xl hover:bg-red-500/10 transition-colors"

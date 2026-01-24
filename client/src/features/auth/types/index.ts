@@ -15,13 +15,3 @@ export interface AuthResponse {
   userId: string;
   message: string;
 }
-
-export interface UserProfileDto {
-  username: string;
-  email: string;
-  level: number;
-  xp: number;
-  totalXp: number;
-  money: number;
-  currentStreak: number;
-}

@@ -11,7 +11,8 @@
     "books_library": "Kitap Kütüphanesi"
   },
   "buttons": {
-    "logout": "Çıkış Yap"
+    "logout": "Çıkış Yap",
+    "settings": "Ayarlar"
   },
   "languageSelection": {
     "language": "Dil",

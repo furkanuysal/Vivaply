@@ -11,7 +11,8 @@
     "books_library": "Books Library"
   },
   "buttons": {
-    "logout": "Logout"
+    "logout": "Logout",
+    "settings": "Settings"
   },
   "languageSelection": {
     "language": "Language",

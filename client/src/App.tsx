@@ -9,6 +9,7 @@ import LandingPage from "@/pages/LandingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DashboardPage from "@/pages/DashboardPage";
 import MainLayout from "@/components/MainLayout";
+import SettingsPage from "@/pages/SettingsPage";
 
 // Entertainment
 import EntertainmentPage from "@/pages/entertainment/EntertainmentPage";
@@ -82,6 +83,8 @@ function AppRoutes() {
         <Route path="/knowledge" element={<KnowledgePage />} />
         <Route path="/knowledge/library/book" element={<BookLibraryPage />} />
         <Route path="/knowledge/book/:id" element={<BookDetailPage />} />
+        {/* Settings */}
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   );

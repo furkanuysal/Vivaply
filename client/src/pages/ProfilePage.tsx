@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { authService } from "@/features/auth/services/authService";
-import type { UserProfileDto } from "@/features/auth/types";
+import { accountService } from "@/features/account/services/accountService";
+import type { UserProfileDto } from "@/features/account/types";
 import { toast } from "react-toastify";
+import { MapPinIcon } from "@heroicons/react/24/outline";
+import { SERVER_URL } from "@/lib/api";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfileDto | null>(null);
@@ -10,7 +12,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await authService.getProfile();
+        const data = await accountService.getProfile();
         setUser(data);
       } catch (error) {
         toast.error("Oturum süresi doldu.");
@@ -21,6 +23,12 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, []);
+
+  const getFullAvatarUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${SERVER_URL}${path}`;
+  };
 
   if (loading) {
     return (
@@ -35,15 +43,40 @@ export default function ProfilePage() {
       {/* Başlık yerine Avatar Kartı */}
       <div className="bg-skin-surface rounded-2xl shadow-xl p-8 border border-skin-border">
         <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="flex flex-col items-center">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-skin-primary to-skin-secondary flex items-center justify-center text-4xl font-bold shadow-lg mb-4 text-white">
-              {user?.username.charAt(0).toUpperCase()}
+          <div className="flex flex-col items-center text-center">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-skin-primary to-skin-secondary flex items-center justify-center text-4xl font-bold shadow-lg mb-4 text-white overflow-hidden p-1">
+              <div className="w-full h-full rounded-full bg-skin-surface flex items-center justify-center overflow-hidden">
+                {user?.avatarUrl ? (
+                  <img
+                    src={getFullAvatarUrl(user.avatarUrl) || ""}
+                    alt={user.username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-skin-primary">
+                    {user?.username.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
             <h2 className="text-2xl font-bold text-skin-text">
               {user?.username}
             </h2>
-            <p className="text-skin-muted">{user?.email}</p>
-            <div className="mt-2 px-3 py-1 bg-skin-primary/20 text-skin-primary rounded-full text-xs font-bold border border-skin-primary/30">
+
+            {user?.location && (
+              <div className="flex items-center gap-1 text-sm text-skin-muted mt-1">
+                <MapPinIcon className="w-4 h-4" />
+                <span>{user.location}</span>
+              </div>
+            )}
+
+            {user?.bio && (
+              <p className="text-sm text-skin-muted mt-2 max-w-xs italic">
+                "{user.bio}"
+              </p>
+            )}
+
+            <div className="mt-3 px-3 py-1 bg-skin-primary/20 text-skin-primary rounded-full text-xs font-bold border border-skin-primary/30">
               Level {user?.level}
             </div>
           </div>

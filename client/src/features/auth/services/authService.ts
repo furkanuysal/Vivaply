@@ -3,7 +3,6 @@ import type {
   LoginDto,
   RegisterDto,
   AuthResponse,
-  UserProfileDto,
 } from "@/features/auth/types";
 
 export const authService = {
@@ -19,11 +18,6 @@ export const authService = {
 
   register: async (data: RegisterDto) => {
     const response = await api.post("/Auth/register", data);
-    return response.data;
-  },
-
-  getProfile: async () => {
-    const response = await api.get<UserProfileDto>("/Profile");
     return response.data;
   },
 
