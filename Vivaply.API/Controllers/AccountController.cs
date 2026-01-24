@@ -19,6 +19,13 @@ namespace Vivaply.API.Controllers
             _accountService = accountService;
         }
 
+        [HttpGet] // URL: /api/Account
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var profile = await _accountService.GetProfileAsync(GetUserId());
+            return Ok(profile);
+        }
+
         // Update Profile
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)

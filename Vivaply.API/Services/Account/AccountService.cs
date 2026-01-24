@@ -17,6 +17,32 @@ namespace Vivaply.API.Services.Account
             _imageService = imageService;
         }
 
+        public async Task<UserProfileDto> GetProfileAsync(Guid userId)
+        {
+            var user = await _dbContext.Users
+                .Include(u => u.Profile) // Gamification profile
+                .Include(u => u.Wallet)  // Wallet
+                .AsNoTracking()          // For fast reading
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                throw new KeyNotFoundException("User not found.");
+
+            return new UserProfileDto
+            {
+                Username = user.Username,
+                Email = user.Email,
+                AvatarUrl = user.AvatarUrl,
+                Bio = user.Profile?.Bio,
+                Location = user.Profile?.Location,
+                Level = user.Profile?.Level ?? 1,
+                CurrentXp = user.Profile?.CurrentXp ?? 0,
+                TotalXp = user.Profile?.TotalXp ?? 0,
+                CurrentStreak = user.Profile?.CurrentStreak ?? 0,
+                Money = user.Wallet?.Balance ?? 0
+            };
+        }
+
         // Update Profile
         public async Task UpdateProfileAsync(Guid userId, UpdateProfileDto request)
         {
