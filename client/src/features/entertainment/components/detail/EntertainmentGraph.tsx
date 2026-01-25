@@ -73,14 +73,14 @@ export default function EntertainmentGraph({
           <div className="inline-block min-w-max pl-4">
             {(() => {
               const validSeasons = seasons.filter(
-                (s: any) => s.season_number > 0
+                (s: any) => s.season_number >= 0,
               );
 
               const maxEpisodesCount = Math.max(
                 0,
                 ...validSeasons.map(
-                  (s: any) => allSeasonsEpisodes[s.season_number]?.length || 0
-                )
+                  (s: any) => allSeasonsEpisodes[s.season_number]?.length || 0,
+                ),
               );
 
               if (maxEpisodesCount === 0)
@@ -104,9 +104,11 @@ export default function EntertainmentGraph({
                       key={`header-s${season.season_number}`}
                       className="font-bold text-skin-muted text-xs text-center px-2 py-1 bg-skin-surface/50 rounded border border-skin-border/50 whitespace-nowrap"
                     >
-                      {t("entertainment:format.season_short", {
-                        season: season.season_number,
-                      })}
+                      {season.season_number === 0
+                        ? t("entertainment:detail.special")
+                        : t("entertainment:format.season_short", {
+                            season: season.season_number,
+                          })}
                     </div>
                   ))}
 
@@ -146,7 +148,7 @@ export default function EntertainmentGraph({
 
                             // Rating Color Logic
                             const ratingClass = getRatingClasses(
-                              ep.vote_average
+                              ep.vote_average,
                             );
 
                             return (
@@ -158,7 +160,7 @@ export default function EntertainmentGraph({
                                   onClick={() =>
                                     onToggleGraphEpisode(
                                       season.season_number,
-                                      ep
+                                      ep,
                                     )
                                   }
                                   className={`
@@ -202,7 +204,7 @@ export default function EntertainmentGraph({
                           })}
                         </>
                       );
-                    }
+                    },
                   )}
                 </div>
               );

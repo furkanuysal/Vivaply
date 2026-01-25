@@ -32,7 +32,9 @@
     "overview": "Özet",
     "overview_not_available": "Özet bilgisi bulunmuyor.",
     "show_all_scores": "Tüm Puanları Göster",
-    "show_watched_episodes": "İzlediğim Bölümleri Göster"
+    "show_watched_episodes": "İzlediğim Bölümleri Göster",
+    "no_episodes_found": "Hiçbir bölüm bulunamadı.",
+    "special": "Özel"
   },
   "format": {
     "season_episode": "Sezon {{season}} Bölüm {{episode}}",

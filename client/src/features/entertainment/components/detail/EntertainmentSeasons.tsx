@@ -28,7 +28,7 @@ export default function EntertainmentSeasons({
       <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-thin scrollbar-thumb-gray-700">
         {seasons.map(
           (season: any) =>
-            season.season_number > 0 && (
+            season.season_number >= 0 && (
               <button
                 key={season.id}
                 onClick={() => onSeasonSelect(season.season_number)}
@@ -38,16 +38,26 @@ export default function EntertainmentSeasons({
                     : "bg-skin-surface text-skin-muted hover:bg-skin-surface/70 hover:text-skin-text"
                 }`}
               >
-                {t("entertainment:detail.season_short")}
-                {season.season_number}
+                {season.season_number === 0 ? (
+                  t("entertainment:detail.special")
+                ) : (
+                  <>
+                    {t("entertainment:detail.season_short")}
+                    {season.season_number}
+                  </>
+                )}
               </button>
-            )
+            ),
         )}
       </div>
 
       {loadingSeason ? (
         <div className="text-center py-10 text-skin-muted">
           {t("common:loading")}
+        </div>
+      ) : seasonEpisodes.length === 0 ? (
+        <div className="text-center py-10 text-skin-muted italic">
+          {t("entertainment:detail.no_episodes_found")}
         </div>
       ) : (
         <>
@@ -114,7 +124,7 @@ export default function EntertainmentSeasons({
                   <div className="flex flex-col items-end gap-1">
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded border min-w-[32px] text-center ${getRatingClasses(
-                        ep.vote_average
+                        ep.vote_average,
                       )}`}
                     >
                       {ep.vote_average.toFixed(1)}

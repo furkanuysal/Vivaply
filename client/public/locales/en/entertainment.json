@@ -32,7 +32,9 @@
     "overview": "Overview",
     "overview_not_available": "Overview not available",
     "show_all_scores": "Show All Scores",
-    "show_watched_episodes": "Show Watched Episodes"
+    "show_watched_episodes": "Show Watched Episodes",
+    "no_episodes_found": "No episodes found",
+    "special": "Special"
   },
   "format": {
     "season_episode": "Season {{season}} Episode {{episode}}",
