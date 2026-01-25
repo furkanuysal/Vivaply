@@ -6,7 +6,9 @@ import {
   type ReactNode,
 } from "react";
 import { authService } from "@/features/auth/services/authService";
-import type { UserProfileDto, LoginDto, RegisterDto } from "@/features/auth/types";
+import { accountService } from "@/features/account/services/accountService";
+import type { LoginDto, RegisterDto } from "@/features/auth/types";
+import type { UserProfileDto } from "@/features/account/types";
 import { toast } from "react-toastify";
 
 const AUTH_MARKER_KEY = "vivaply_is_logged_in";
@@ -38,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const success = await authService.refreshToken();
         if (success) {
-          const userData = await authService.getProfile();
+          const userData = await accountService.getProfile();
           setUser(userData);
         } else {
           localStorage.removeItem(AUTH_MARKER_KEY);
@@ -58,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await authService.login(data);
       if (res.accessToken) {
-        const userData = await authService.getProfile();
+        const userData = await accountService.getProfile();
         setUser(userData);
         localStorage.setItem(AUTH_MARKER_KEY, "true");
       }
