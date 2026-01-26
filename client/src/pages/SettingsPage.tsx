@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { SERVER_URL } from "@/lib/api";
+import LocationPicker from "../features/location/components/LocationPicker";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<UserProfileDto | null>(null);
@@ -230,13 +231,7 @@ export default function SettingsPage() {
                     <label className="text-sm font-medium text-skin-text ml-1">
                       Konum
                     </label>
-                    <input
-                      type="text"
-                      className="w-full bg-skin-base/50 border border-skin-border/50 rounded-xl px-4 py-3 text-skin-text placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50 outline-none transition-all"
-                      placeholder="Örn: İstanbul, Türkiye"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
+                    <LocationPicker value={location} onChange={setLocation} />
                   </div>
 
                   <div className="space-y-2">
