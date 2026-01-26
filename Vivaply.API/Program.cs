@@ -8,7 +8,9 @@ using Vivaply.API.Services;
 using Vivaply.API.Services.Account;
 using Vivaply.API.Services.Dashboard;
 using Vivaply.API.Services.Entertainment;
+using Vivaply.API.Services.Infrastructure.RateLimiting;
 using Vivaply.API.Services.Knowledge;
+using Vivaply.API.Services.Location;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +19,16 @@ var connectionString = builder.Configuration.GetConnectionString("VivaplyDb");
 builder.Services.AddDbContext<VivaplyDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+// In-Memory Caching Configuration
+builder.Services.AddMemoryCache();
+
+// Rate Limiting Configuration
+builder.Services.AddVivaplyRateLimiting();
+
 // Dependency Injection
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddLocationServices();
 builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
@@ -61,7 +70,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Örnek: \"Bearer {token}\"",
+        Description = "JWT Authorization header using the Bearer scheme. Ex: \"Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -99,6 +108,9 @@ app.UseStaticFiles();
 
 // Activate CORS Middleware
 app.UseCors("AllowReactApp");
+
+// Activate Rate Limiting Middleware
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
