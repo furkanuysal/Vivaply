@@ -1,0 +1,36 @@
+{
+  "title": "Account Settings",
+  "description": "Manage your profile information and account security.",
+  "tabs": {
+    "general": "General Info",
+    "security": "Security"
+  },
+  "general": {
+    "change": "Change",
+    "level": "Level {{level}}",
+    "avatar_hint": "Click on the image to change your profile photo. You can use JPG, PNG, or GIF formats.",
+    "location": "Location",
+    "about": "About Me",
+    "about_placeholder": "Briefly describe yourself...",
+    "about_hint": "A short description to be displayed on your profile.",
+    "save_button": "Save Changes"
+  },
+  "security": {
+    "title": "Change Password",
+    "description": "We recommend using a strong password for your account security.",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "new_password_placeholder": "At least 6 characters",
+    "update_button": "Update Password",
+    "hint": "You will need to log in again after changing your password."
+  },
+  "toasts": {
+    "profile_updated": "Profile successfully updated!",
+    "update_failed": "Update failed.",
+    "avatar_updated": "Avatar successfully refreshed!",
+    "avatar_error": "An error occurred while uploading the image.",
+    "password_updated": "Password successfully changed! Please log in again.",
+    "password_error": "Password could not be changed. Please check your information."
+  },
+  "loading": "Loading..."
+}

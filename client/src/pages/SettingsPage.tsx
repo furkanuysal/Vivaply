@@ -10,9 +10,11 @@ import {
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { SERVER_URL } from "@/lib/api";
-import LocationPicker from "../features/location/components/LocationPicker";
+import LocationPicker from "@/features/location/components/LocationPicker";
+import { useTranslation } from "react-i18next";
 
 export default function SettingsPage() {
+  const { t } = useTranslation("settings");
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"general" | "security">("general");
@@ -53,9 +55,9 @@ export default function SettingsPage() {
         bio,
         location,
       });
-      toast.success("Profil başarıyla güncellendi!");
+      toast.success(t("toasts.profile_updated"));
     } catch (error) {
-      toast.error("Güncelleme başarısız oldu.");
+      toast.error(t("toasts.update_failed"));
     }
   };
 
@@ -65,10 +67,10 @@ export default function SettingsPage() {
       setUploading(true);
       try {
         await accountService.uploadAvatar(file);
-        toast.success("Avatar başarıyla yenilendi!");
+        toast.success(t("toasts.avatar_updated"));
         loadProfile();
       } catch (error) {
-        toast.error("Resim yüklenirken bir hata oluştu.");
+        toast.error(t("toasts.avatar_error"));
       } finally {
         setUploading(false);
       }
@@ -82,10 +84,10 @@ export default function SettingsPage() {
         currentPassword: passwords.current,
         newPassword: passwords.new,
       });
-      toast.success("Şifre başarıyla değiştirildi! Lütfen tekrar giriş yapın.");
+      toast.success(t("toasts.password_updated"));
       authService.logout();
     } catch (error) {
-      toast.error("Şifre değiştirilemedi. Lütfen bilgilerinizi kontrol edin.");
+      toast.error(t("toasts.password_error"));
     }
   };
 
@@ -99,12 +101,12 @@ export default function SettingsPage() {
   const tabs = [
     {
       id: "general",
-      label: "Genel Bilgiler",
+      label: t("tabs.general"),
       icon: <UserCircleIcon className="w-5 h-5" />,
     },
     {
       id: "security",
-      label: "Güvenlik",
+      label: t("tabs.security"),
       icon: <ShieldCheckIcon className="w-5 h-5" />,
     },
   ] as const;
@@ -117,11 +119,9 @@ export default function SettingsPage() {
         className="flex flex-col gap-2"
       >
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-skin-primary to-skin-secondary w-fit">
-          Hesap Ayarları
+          {t("title")}
         </h1>
-        <p className="text-skin-muted">
-          Profil bilgilerinizi ve hesap güvenliğinizi buradan yönetebilirsiniz.
-        </p>
+        <p className="text-skin-muted">{t("description")}</p>
       </motion.div>
 
       {/* Tabs */}
@@ -186,7 +186,9 @@ export default function SettingsPage() {
                   <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full cursor-pointer backdrop-blur-[2px]">
                     <div className="flex flex-col items-center gap-1 transform translate-y-2 group-hover:translate-y-0 transition-transform">
                       <CameraIcon className="w-8 h-8" />
-                      <span className="text-xs font-medium">Değiştir</span>
+                      <span className="text-xs font-medium">
+                        {t("general.change")}
+                      </span>
                     </div>
                     <input
                       type="file"
@@ -210,13 +212,12 @@ export default function SettingsPage() {
                   </h3>
                   <div className="flex flex-col sm:flex-row items-center gap-3 text-sm text-skin-muted">
                     <span className="px-3 py-1 rounded-full bg-skin-primary/10 text-skin-primary border border-skin-primary/20 font-medium">
-                      Level {user?.level || 1}
+                      {t("general.level", { level: user?.level || 1 })}
                     </span>
                     <span>{user?.email}</span>
                   </div>
                   <p className="text-sm text-skin-muted max-w-md">
-                    Profil fotoğrafınızı değiştirmek için resmin üzerine
-                    tıklayın. JPG, PNG veya GIF formatlarını kullanabilirsiniz.
+                    {t("general.avatar_hint")}
                   </p>
                 </div>
               </div>
@@ -229,30 +230,30 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-skin-text ml-1">
-                      Konum
+                      {t("general.location")}
                     </label>
                     <LocationPicker value={location} onChange={setLocation} />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-skin-text ml-1">
-                      Hakkımda
+                      {t("general.about")}
                     </label>
                     <textarea
                       className="w-full bg-skin-base/50 border border-skin-border/50 rounded-xl px-4 py-3 text-skin-text placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50 outline-none transition-all resize-none min-h-[120px]"
-                      placeholder="Kendinden kısaca bahset..."
+                      placeholder={t("general.about_placeholder")}
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                     />
                     <p className="text-xs text-skin-muted text-right pr-1">
-                      Profilinde görüntülenecek kısa bir açıklama.
+                      {t("general.about_hint")}
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-4">
                   <button className="bg-skin-primary hover:bg-skin-primary/90 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-skin-primary/25 active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
-                    Değişiklikleri Kaydet
+                    {t("general.save_button")}
                   </button>
                 </div>
               </form>
@@ -268,17 +269,17 @@ export default function SettingsPage() {
             >
               <div className="space-y-1 pb-4 border-b border-skin-border/20">
                 <h3 className="text-lg font-bold text-skin-text">
-                  Şifre Değiştir
+                  {t("security.title")}
                 </h3>
                 <p className="text-sm text-skin-muted">
-                  Hesap güvenliğiniz için güçlü bir şifre kullanmanızı öneririz.
+                  {t("security.description")}
                 </p>
               </div>
 
               <form onSubmit={handleChangePassword} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-skin-text ml-1">
-                    Mevcut Şifre
+                    {t("security.current_password")}
                   </label>
                   <input
                     type="password"
@@ -294,14 +295,14 @@ export default function SettingsPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-skin-text ml-1">
-                    Yeni Şifre
+                    {t("security.new_password")}
                   </label>
                   <input
                     type="password"
                     required
                     minLength={6}
                     className="w-full bg-skin-base/50 border border-skin-border/50 rounded-xl px-4 py-3 text-skin-text placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50 outline-none transition-all"
-                    placeholder="En az 6 karakter"
+                    placeholder={t("security.new_password_placeholder")}
                     value={passwords.new}
                     onChange={(e) =>
                       setPasswords({ ...passwords, new: e.target.value })
@@ -311,11 +312,10 @@ export default function SettingsPage() {
 
                 <div className="pt-4 flex items-center gap-4">
                   <button className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-8 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
-                    Şifreyi Güncelle
+                    {t("security.update_button")}
                   </button>
                   <p className="text-xs text-skin-muted flex-1">
-                    Şifrenizi değiştirdikten sonra tekrar giriş yapmanız
-                    gerekecektir.
+                    {t("security.hint")}
                   </p>
                 </div>
               </form>

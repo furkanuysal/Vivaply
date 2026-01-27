@@ -9,7 +9,14 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: "en",
-    ns: ["common", "layout", "knowledge", "entertainment", "dashboard"], // Namespaces
+    ns: [
+      "common",
+      "layout",
+      "knowledge",
+      "entertainment",
+      "dashboard",
+      "settings",
+    ], // Namespaces
     defaultNS: "common", // Default namespace
 
     // Backend settings

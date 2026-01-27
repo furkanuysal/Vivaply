@@ -4,6 +4,7 @@ import layout from "@public/locales/en/layout.json";
 import knowledge from "@public/locales/en/knowledge.json";
 import entertainment from "@public/locales/en/entertainment.json";
 import dashboard from "@public/locales/en/dashboard.json";
+import settings from "@public/locales/en/settings.json";
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -14,6 +15,7 @@ declare module "i18next" {
       knowledge: typeof knowledge;
       entertainment: typeof entertainment;
       dashboard: typeof dashboard;
+      settings: typeof settings;
     };
   }
 }

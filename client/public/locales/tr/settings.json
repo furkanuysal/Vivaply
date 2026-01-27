@@ -1,0 +1,36 @@
+{
+  "title": "Hesap Ayarları",
+  "description": "Profil bilgilerinizi ve hesap güvenliğinizi buradan yönetebilirsiniz.",
+  "tabs": {
+    "general": "Genel Bilgiler",
+    "security": "Güvenlik"
+  },
+  "general": {
+    "change": "Değiştir",
+    "level": "Level {{level}}",
+    "avatar_hint": "Profil fotoğrafınızı değiştirmek için resmin üzerine tıklayın. JPG, PNG veya GIF formatlarını kullanabilirsiniz.",
+    "location": "Konum",
+    "about": "Hakkımda",
+    "about_placeholder": "Kendinden kısaca bahset...",
+    "about_hint": "Profilinde görüntülenecek kısa bir açıklama.",
+    "save_button": "Değişiklikleri Kaydet"
+  },
+  "security": {
+    "title": "Şifre Değiştir",
+    "description": "Hesap güvenliğiniz için güçlü bir şifre kullanmanızı öneririz.",
+    "current_password": "Mevcut Şifre",
+    "new_password": "Yeni Şifre",
+    "new_password_placeholder": "En az 6 karakter",
+    "update_button": "Şifreyi Güncelle",
+    "hint": "Şifrenizi değiştirdikten sonra tekrar giriş yapmanız gerekecektir."
+  },
+  "toasts": {
+    "profile_updated": "Profil başarıyla güncellendi!",
+    "update_failed": "Güncelleme başarısız oldu.",
+    "avatar_updated": "Avatar başarıyla yenilendi!",
+    "avatar_error": "Resim yüklenirken bir hata oluştu.",
+    "password_updated": "Şifre başarıyla değiştirildi! Lütfen tekrar giriş yapın.",
+    "password_error": "Şifre değiştirilemedi. Lütfen bilgilerinizi kontrol edin."
+  },
+  "loading": "Yükleniyor..."
+}
