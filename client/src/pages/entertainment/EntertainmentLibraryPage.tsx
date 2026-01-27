@@ -6,6 +6,10 @@ import {
   TrashIcon,
   PencilIcon,
   MagnifyingGlassIcon,
+  EyeSlashIcon,
+  EyeIcon,
+  BarsArrowUpIcon,
+  BarsArrowDownIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { mediaService } from "@/features/entertainment/services/mediaService";
@@ -18,7 +22,6 @@ import type {
 } from "@/features/entertainment/types";
 import {
   WatchStatus,
-  PlayStatus,
   GameCompletionType,
   type UpdateEntertainmentStatusDto,
 } from "@/features/entertainment/types";
@@ -43,17 +46,21 @@ export default function EntertainmentLibraryPage() {
   const { t } = useTranslation(["entertainment", "common"]);
 
   const [filterStatus, setFilterStatus] = useState<WatchStatus | 0>(
-    WatchStatus.Watching
+    WatchStatus.Watching,
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [loadingItems, setLoadingItems] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [showUnwatchedOnly, setShowUnwatchedOnly] = useState(false);
 
   // Confirm Dialog State
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<any | null>(null);
+
+  // Sort Dropdown State
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 
   const handleRemoveClick = (item: any) => {
     setItemToRemove(item);
@@ -72,15 +79,55 @@ export default function EntertainmentLibraryPage() {
   // Entertainment Status Dialog State (TV/Movie)
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [contentToEdit, setContentToEdit] = useState<TmdbContentDto | null>(
-    null
+    null,
   );
   const [contentTypeToEdit, setContentTypeToEdit] = useState<"tv" | "movie">(
-    "tv"
+    "tv",
   );
+
+  // Sorting State
+  type SortOption = "title" | "date" | "rating";
+  type SortDirection = "asc" | "desc";
+
+  const [sortConfig, setSortConfig] = useState<{
+    key: SortOption;
+    direction: SortDirection;
+  }>(() => {
+    try {
+      const saved = localStorage.getItem("entertainment_library_sort");
+      return saved ? JSON.parse(saved) : { key: "title", direction: "asc" };
+    } catch {
+      return { key: "title", direction: "asc" };
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      "entertainment_library_sort",
+      JSON.stringify(sortConfig),
+    );
+  }, [sortConfig]);
+
+  const toggleSortDirection = () => {
+    setSortConfig((prev) => ({
+      ...prev,
+      direction: prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const handleSortChange = (key: SortOption) => {
+    setSortConfig((prev) => ({
+      ...prev,
+      key,
+      // If clicking same key, toggle direction. If new key, default to asc (or desc for date/rating? usually desc for date/rating)
+      // User request said remembering the selection.
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
 
   const handleStatusEditClick = (
     item: TmdbContentDto,
-    type: "tv" | "movie"
+    type: "tv" | "movie",
   ) => {
     setContentToEdit(item);
     setContentTypeToEdit(type);
@@ -119,7 +166,7 @@ export default function EntertainmentLibraryPage() {
                 userPlaytime: data.userPlaytime,
                 userRating: data.userRating,
               }
-            : g
+            : g,
         ),
       }));
     } catch (error) {
@@ -129,7 +176,7 @@ export default function EntertainmentLibraryPage() {
   };
 
   const handleSaveEntertainmentStatus = async (
-    data: UpdateEntertainmentStatusDto
+    data: UpdateEntertainmentStatusDto,
   ) => {
     try {
       await mediaService.updateProgress(data);
@@ -165,7 +212,7 @@ export default function EntertainmentLibraryPage() {
       } else {
         await mediaService.removeFromLibrary(
           itemToRemove.id,
-          activeTab as "tv" | "movie"
+          activeTab as "tv" | "movie",
         );
       }
 
@@ -175,7 +222,7 @@ export default function EntertainmentLibraryPage() {
       setLibraryData((prev) => ({
         ...prev,
         [activeTab]: prev[activeTab].filter(
-          (i: any) => i.id !== itemToRemove.id
+          (i: any) => i.id !== itemToRemove.id,
         ),
       }));
     } catch (error) {
@@ -263,14 +310,13 @@ export default function EntertainmentLibraryPage() {
     activeTab === "tv"
       ? libraryData.tv
       : activeTab === "movie"
-      ? libraryData.movie
-      : libraryData.game;
+        ? libraryData.movie
+        : libraryData.game;
 
   // Watch Status Config (TV/Movie)
   const {
     STATUS_CONFIG: WATCH_STATUS_CONFIG,
     FILTER_OPTIONS: WATCH_FILTER_OPTIONS,
-    STATUS_ORDER: WATCH_STATUS_ORDER,
   } = useWatchStatusConfig(activeTab !== "game" ? activeTab : "tv");
 
   // Play Status Config (Game)
@@ -284,18 +330,6 @@ export default function EntertainmentLibraryPage() {
     activeTab === "game" ? PLAY_STATUS_CONFIG : WATCH_STATUS_CONFIG;
   const FILTER_OPTIONS =
     activeTab === "game" ? PLAY_FILTER_OPTIONS : WATCH_FILTER_OPTIONS;
-
-  // Status Order for games (custom or reuse)
-  const STATUS_ORDER: any =
-    activeTab === "game"
-      ? {
-          [PlayStatus.Playing]: 1,
-          [PlayStatus.PlanToPlay]: 2,
-          [PlayStatus.OnHold]: 3,
-          [PlayStatus.Completed]: 4,
-          [PlayStatus.Dropped]: 5,
-        }
-      : WATCH_STATUS_ORDER;
 
   const filteredItems = (
     filterStatus === 0
@@ -317,12 +351,41 @@ export default function EntertainmentLibraryPage() {
             (item as TmdbContentDto).name;
       return title?.toLowerCase().includes(searchQuery.toLowerCase());
     })
+    .filter((item) => {
+      if (activeTab === "tv" && showUnwatchedOnly) {
+        return !isUpToDate(item as TmdbContentDto);
+      }
+      return true;
+    })
     .sort((a, b) => {
-      const statusA = activeTab === "game" ? a.userStatus : a.user_status;
-      const statusB = activeTab === "game" ? b.userStatus : b.user_status;
-      const orderA = STATUS_ORDER[statusA] || 99;
-      const orderB = STATUS_ORDER[statusB] || 99;
-      return orderA - orderB;
+      // Helper to get value
+      const getValue = (item: any, key: SortOption) => {
+        if (key === "title") {
+          return activeTab === "game"
+            ? item.title
+            : item.display_name || item.title || item.name;
+        }
+        if (key === "rating") {
+          return activeTab === "game" ? item.userRating : item.user_rating;
+        }
+        if (key === "date") {
+          return activeTab === "game"
+            ? item.releaseDate
+            : item.first_air_date || item.release_date;
+        }
+        return "";
+      };
+
+      const valA = getValue(a, sortConfig.key);
+      const valB = getValue(b, sortConfig.key);
+
+      if (!valA && !valB) return 0;
+      if (!valA) return 1;
+      if (!valB) return -1;
+
+      if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
     });
 
   const formatLatestEpisode = (latestEpisode?: string, isShort = false) => {
@@ -417,6 +480,29 @@ export default function EntertainmentLibraryPage() {
             )}
           </div>
 
+          {/* Unwatched Filter Button (TV Only) */}
+          {activeTab === "tv" && (
+            <button
+              onClick={() => setShowUnwatchedOnly(!showUnwatchedOnly)}
+              className={`p-2 rounded-full border transition ${
+                showUnwatchedOnly
+                  ? "bg-skin-primary text-white border-skin-primary"
+                  : "bg-skin-surface border-skin-border hover:bg-skin-surface/90 hover:text-skin-primary"
+              }`}
+              title={
+                showUnwatchedOnly
+                  ? t("entertainment:library.show_all")
+                  : t("entertainment:library.unwatched_episodes")
+              }
+            >
+              {showUnwatchedOnly ? (
+                <EyeSlashIcon className="w-5 h-5" />
+              ) : (
+                <EyeIcon className="w-5 h-5" />
+              )}
+            </button>
+          )}
+
           {/* Sync Button */}
           <button
             onClick={handleSync}
@@ -430,6 +516,70 @@ export default function EntertainmentLibraryPage() {
           >
             <ArrowPathIcon className="w-5 h-5" />
           </button>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+              className="p-2 rounded-full bg-skin-surface hover:bg-skin-surface/90 border border-skin-border transition hover:text-skin-primary flex items-center gap-2"
+              title={t("entertainment:sort.sort_by")}
+            >
+              {sortConfig.direction === "asc" ? (
+                <BarsArrowUpIcon className="w-5 h-5" />
+              ) : (
+                <BarsArrowDownIcon className="w-5 h-5" />
+              )}
+            </button>
+
+            {isSortDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setIsSortDropdownOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-skin-surface border border-skin-border rounded-lg shadow-xl z-30 py-1 animate-fade-in">
+                  <div className="px-3 py-2 border-b border-skin-border flex items-center justify-between">
+                    <span className="text-xs font-bold text-skin-muted uppercase">
+                      {t("entertainment:sort.sort_by")}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSortDirection();
+                      }}
+                      className="text-xs text-skin-primary hover:text-skin-text transition"
+                    >
+                      {sortConfig.direction === "asc"
+                        ? t("entertainment:sort.ascending")
+                        : t("entertainment:sort.descending")}
+                    </button>
+                  </div>
+                  {(["title", "date", "rating"] as SortOption[]).map(
+                    (option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          handleSortChange(option);
+                          setIsSortDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition ${
+                          sortConfig.key === option
+                            ? "bg-skin-primary/10 text-skin-primary"
+                            : "text-skin-text hover:bg-skin-base/50"
+                        }`}
+                      >
+                        {option === "title" && t("entertainment:sort.title")}
+                        {option === "date" &&
+                          t("entertainment:sort.release_date")}
+                        {option === "rating" &&
+                          t("entertainment:sort.user_rating")}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           {/* View Toggle Buttons */}
           <div className="relative bg-skin-surface p-1 rounded-lg flex border border-skin-border">
             {/* Sliding Indicator */}
@@ -513,8 +663,8 @@ export default function EntertainmentLibraryPage() {
                     activeTab === "tv"
                       ? "translateX(0%)"
                       : activeTab === "movie"
-                      ? "translateX(100%)"
-                      : "translateX(200%)",
+                        ? "translateX(100%)"
+                        : "translateX(200%)",
                 }}
               />
             </div>
@@ -602,7 +752,7 @@ export default function EntertainmentLibraryPage() {
                       content={item as TmdbContentDto}
                       type={activeTab as "tv" | "movie"}
                     />
-                  )
+                  ),
                 )}
               </div>
             ) : (
@@ -784,7 +934,7 @@ export default function EntertainmentLibraryPage() {
                                 <CheckCircleIcon
                                   className="w-6 h-6 text-skin-secondary flex-shrink-0"
                                   title={t(
-                                    "entertainment:library.table.watched_up_to_date"
+                                    "entertainment:library.table.watched_up_to_date",
                                   )}
                                 />
                               ) : (
@@ -796,7 +946,7 @@ export default function EntertainmentLibraryPage() {
                                   disabled={loadingItems.has(item.id)}
                                   className="text-skin-accent hover:text-skin-accent/80 transition disabled:opacity-50"
                                   title={t(
-                                    "entertainment:library.table.watch_next"
+                                    "entertainment:library.table.watch_next",
                                   )}
                                 >
                                   {loadingItems.has(item.id) ? (
@@ -822,7 +972,7 @@ export default function EntertainmentLibraryPage() {
                             <span className="hidden md:inline">
                               {formatLatestEpisode(
                                 item.latest_episode,
-                                false
+                                false,
                               ) || "-"}
                             </span>
                           </td>
@@ -838,7 +988,7 @@ export default function EntertainmentLibraryPage() {
                               <td className="px-4 py-3 hidden md:table-cell">
                                 {item.userPlaytime
                                   ? `${item.userPlaytime} ${t(
-                                      "entertainment:games.hours_short"
+                                      "entertainment:games.hours_short",
                                     )}`
                                   : "-"}
                               </td>
@@ -886,7 +1036,7 @@ export default function EntertainmentLibraryPage() {
                                   e.stopPropagation();
                                   handleStatusEditClick(
                                     item as TmdbContentDto,
-                                    activeTab as "tv" | "movie"
+                                    activeTab as "tv" | "movie",
                                   );
                                 }}
                                 className="p-2 text-skin-muted hover:text-skin-primary hover:bg-skin-surface rounded-full transition"

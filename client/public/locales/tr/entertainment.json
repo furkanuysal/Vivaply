@@ -46,6 +46,8 @@
     "title": "Kütüphanem",
     "no_content_in_this_list": "Bu listede henüz içerik yok.",
     "discover_new_content": "Yeni içerikleri keşfet!",
+    "show_all": "Tümünü Göster",
+    "unwatched_episodes": "İzlenmemiş Bölümler",
     "table": {
       "poster": "Afiş",
       "title": "Başlık",
@@ -60,6 +62,14 @@
       "actions": "Eylemler",
       "watched_up_to_date": "Güncel bölümler izlendi!"
     }
+  },
+  "sort": {
+    "sort_by": "Sırala",
+    "title": "Başlık",
+    "user_rating": "Puanım",
+    "release_date": "Çıkış Tarihi",
+    "ascending": "Artan",
+    "descending": "Azalan"
   },
   "common": {
     "tv": "Dizi",

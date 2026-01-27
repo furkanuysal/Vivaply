@@ -46,6 +46,8 @@
     "title": "My Library",
     "no_content_in_this_list": "There is no content in this list yet.",
     "discover_new_content": "Discover new content!",
+    "show_all": "Show All",
+    "unwatched_episodes": "Unwatched Episodes",
     "table": {
       "poster": "Poster",
       "title": "Title",
@@ -60,6 +62,14 @@
       "actions": "Actions",
       "watched_up_to_date": "Up to date!"
     }
+  },
+  "sort": {
+    "sort_by": "Sort by",
+    "title": "Title",
+    "user_rating": "My Rating",
+    "release_date": "Release Date",
+    "ascending": "Ascending",
+    "descending": "Descending"
   },
   "common": {
     "tv": "TV",
