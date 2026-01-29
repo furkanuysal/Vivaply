@@ -36,6 +36,9 @@ namespace Vivaply.API.DTOs.Entertainment.Tmdb
         [JsonPropertyName("status")]
         public string? Status { get; set; }
 
+        [JsonPropertyName("genres")]
+        public List<TmdbGenreDto>? Genres { get; set; }
+
         [JsonPropertyName("display_date")]
         public string DisplayDate =>
             !string.IsNullOrEmpty(ReleaseDate) ? ReleaseDate : FirstAirDate ?? "";
