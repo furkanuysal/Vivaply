@@ -7,6 +7,7 @@ export interface TmdbContentDto {
   overview?: string;
   status?: string;
   vote_average: number;
+  genres?: TmdbGenreDto[];
   first_air_date?: string;
   release_date?: string;
   display_date: string;
@@ -18,6 +19,11 @@ export interface TmdbContentDto {
   last_watched_episode?: number;
   last_watched_at?: string;
   latest_episode?: string;
+}
+
+export interface TmdbGenreDto {
+  id: number;
+  name: string;
 }
 
 export interface AddToLibraryDto {

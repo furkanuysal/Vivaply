@@ -105,6 +105,19 @@ export default function EntertainmentHeader({
             <ProdStatusBadge status={data.status} />
           </div>
 
+          {type !== "game" && data.genres && data.genres.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {data.genres.map((g: any) => (
+                <span
+                  key={g.id}
+                  className="bg-skin-surface/50 border border-skin-border px-3 py-1 rounded-lg text-xs text-skin-muted font-medium hover:text-skin-text transition-colors"
+                >
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
+
           <h3 className="text-xl font-bold mb-2">
             {t("entertainment:detail.overview")}
           </h3>
