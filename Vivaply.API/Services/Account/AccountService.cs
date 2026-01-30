@@ -30,6 +30,7 @@ namespace Vivaply.API.Services.Account
 
             return new UserProfileDto
             {
+                Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
                 AvatarUrl = user.AvatarUrl,

@@ -37,6 +37,15 @@ namespace Vivaply.API.Services.Entertainment.Tmdb
             return JsonSerializer.Deserialize<TmdbShowDetailDto>(content);
         }
 
+        public async Task<List<TmdbContentDto>> DiscoverTvAsync(string genreIds, string language = "en-US")
+        {
+            var response = await _httpClient.GetAsync(
+                $"discover/tv?api_key={_apiKey}&with_genres={genreIds}&language={language}"
+            );
+
+            return await ParseResponseAsync<TmdbContentDto>(response);
+        }
+
         // --- MOVIES ---
         public async Task<List<TmdbContentDto>> SearchMoviesAsync(string query, string language = "en-US")
         {
@@ -57,6 +66,15 @@ namespace Vivaply.API.Services.Entertainment.Tmdb
             if (!response.IsSuccessStatusCode) return null;
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<TmdbContentDto>(content);
+        }
+
+        public async Task<List<TmdbContentDto>> DiscoverMoviesAsync(string genreIds, string language = "en-US")
+        {
+            var response = await _httpClient.GetAsync(
+                $"discover/movie?api_key={_apiKey}&with_genres={genreIds}&language={language}"
+            );
+
+            return await ParseResponseAsync<TmdbContentDto>(response);
         }
 
         // --- TV SEASON DETAILS ---

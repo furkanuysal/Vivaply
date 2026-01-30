@@ -2,6 +2,7 @@
 using Vivaply.API.Services.Entertainment.Game;
 using Vivaply.API.Services.Entertainment.Igdb;
 using Vivaply.API.Services.Entertainment.Media;
+using Vivaply.API.Services.Entertainment.Recommendation;
 using Vivaply.API.Services.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment
@@ -25,6 +26,8 @@ namespace Vivaply.API.Services.Entertainment
                 client.BaseAddress = new Uri("https://api.igdb.com/v4/");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
+
+            services.AddScoped<IRecommendationService, RecommendationService>();
 
             return services;
         }
