@@ -81,6 +81,8 @@
   },
   "discovery": {
     "discover": "Discover",
+    "recommended_for_you": "Recommended for You",
+    "trending": "Trending",
     "search_tv_shows": "Search TV Shows... (e.g. Breaking Bad)",
     "search_movies": "Search Movies... (e.g. Inception)",
     "search_games": "Search Games... (e.g. Minecraft)"

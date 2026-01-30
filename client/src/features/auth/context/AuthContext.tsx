@@ -10,6 +10,7 @@ import { accountService } from "@/features/account/services/accountService";
 import type { LoginDto, RegisterDto } from "@/features/auth/types";
 import type { UserProfileDto } from "@/features/account/types";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AUTH_MARKER_KEY = "vivaply_is_logged_in";
 
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -79,6 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Logout error", error);
     } finally {
+      queryClient.clear();
       localStorage.removeItem(AUTH_MARKER_KEY);
       setUser(null);
       toast.info("Logged out successfully");

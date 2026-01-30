@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 
 interface SearchResultsSectionProps {
+  title?: string;
   loading: boolean;
   displayedQuery: string;
   hasResults: boolean;
@@ -9,6 +10,7 @@ interface SearchResultsSectionProps {
 }
 
 export default function SearchResultsSection({
+  title,
   loading,
   displayedQuery,
   hasResults,
@@ -27,9 +29,10 @@ export default function SearchResultsSection({
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-skin-text border-l-4 border-skin-primary pl-3">
-        {displayedQuery
-          ? t("common:search.search_results", { query: displayedQuery })
-          : t("common:search.recommended_for_you")}
+        {title ||
+          (displayedQuery
+            ? t("common:search.search_results", { query: displayedQuery })
+            : t("common:search.recommended_for_you"))}
       </h2>
 
       {hasResults ? (

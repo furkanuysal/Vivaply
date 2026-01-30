@@ -81,6 +81,8 @@
   },
   "discovery": {
     "discover": "Keşfet",
+    "recommended_for_you": "Sizin İçin Önerilenler",
+    "trending": "Trend Olanlar",
     "search_tv_shows": "Dizi ara... (Örn: Breaking Bad)",
     "search_movies": "Film ara... (Örn: Inception)",
     "search_games": "Oyun ara... (Örn: Minecraft)"

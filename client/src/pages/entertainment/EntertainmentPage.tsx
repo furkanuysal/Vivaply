@@ -1,25 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { mediaService } from "@/features/entertainment/services/mediaService";
 import MediaCard from "@/features/entertainment/components/shared/MediaCard";
 import type {
   TmdbContentDto,
   GameContentDto,
 } from "@/features/entertainment/types";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import { useRecommendations } from "@/features/entertainment/hooks/useRecommendations";
 import { gamesService } from "@/features/entertainment/services/gameService";
 import GameCard from "@/features/entertainment/components/shared/GameCard";
 import SearchResultsSection from "@/components/common/SearchResultsSection";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export default function EntertainmentPage() {
   const [query, setQuery] = useState("");
   const [displayedQuery, setDisplayedQuery] = useState("");
   const [results, setResults] = useState<(TmdbContentDto | GameContentDto)[]>(
-    []
+    [],
   );
   const [activeTab, setActiveTab] = useState<"tv" | "movie" | "game">("tv");
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation(["common", "entertainment"]);
+  const { user } = useAuth();
+  const { data: recommendations, isLoading: recLoading } = useRecommendations();
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Fetch trending on load
   useEffect(() => {
@@ -48,6 +57,18 @@ export default function EntertainmentPage() {
     }
   };
 
+  const scrollLeft = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: -300, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: 300, behavior: "smooth" });
+    }
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) {
@@ -73,6 +94,14 @@ export default function EntertainmentPage() {
     }
   };
 
+  const currentRecommendations =
+    activeTab === "tv" ? recommendations?.tv : recommendations?.movies;
+  const showRecommendations =
+    user &&
+    !recLoading &&
+    currentRecommendations &&
+    currentRecommendations.length > 0;
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Search and Filter Area */}
@@ -92,8 +121,8 @@ export default function EntertainmentPage() {
                   activeTab === "tv"
                     ? "translateX(0%)"
                     : activeTab === "movie"
-                    ? "translateX(100%)"
-                    : "translateX(200%)",
+                      ? "translateX(100%)"
+                      : "translateX(200%)",
               }}
             />
           </div>
@@ -138,8 +167,8 @@ export default function EntertainmentPage() {
             activeTab === "tv"
               ? t("entertainment:discovery.search_tv_shows")
               : activeTab === "movie"
-              ? t("entertainment:discovery.search_movies")
-              : t("entertainment:discovery.search_games")
+                ? t("entertainment:discovery.search_movies")
+                : t("entertainment:discovery.search_games")
           }`}
           className="w-full bg-skin-surface border border-skin-border text-skin-text px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition placeholder:text-skin-muted"
           value={query}
@@ -155,6 +184,9 @@ export default function EntertainmentPage() {
       </form>
 
       <SearchResultsSection
+        title={
+          !query.trim() ? t("entertainment:discovery.trending") : undefined
+        }
         loading={loading}
         displayedQuery={displayedQuery}
         hasResults={results.length > 0}
@@ -169,10 +201,71 @@ export default function EntertainmentPage() {
                 content={item as TmdbContentDto}
                 type={activeTab as "tv" | "movie"}
               />
-            )
+            ),
           )}
         </div>
       </SearchResultsSection>
+
+      {/* Recommendations Section */}
+      {!query.trim() && activeTab !== "game" && showRecommendations && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-skin-text border-l-4 border-skin-primary pl-3">
+            {t("entertainment:discovery.recommended_for_you")}
+          </h2>
+
+          {recLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-skin-primary"></div>
+            </div>
+          ) : (
+            <div className="relative group/carousel">
+              {/* Left Button */}
+              <button
+                onClick={scrollLeft}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg"
+                aria-label="Scroll left"
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+
+              {/* Right Button */}
+              <button
+                onClick={scrollRight}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg"
+                aria-label="Scroll right"
+              >
+                <ChevronRightIcon className="w-6 h-6" />
+              </button>
+
+              <div
+                ref={carouselRef}
+                className="
+    flex overflow-x-auto overflow-y-visible gap-4 pb-4
+    snap-x snap-mandatory
+    scrollbar-hide
+  "
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {currentRecommendations?.map((item: TmdbContentDto, index) => (
+                  <div
+                    key={item.id}
+                    className={`
+        shrink-0 w-[160px] md:w-[200px] snap-start
+        ${index === 0 ? "ml-4" : ""}
+        ${index === currentRecommendations.length - 1 ? "mr-4" : ""}
+      `}
+                  >
+                    <MediaCard
+                      content={item}
+                      type={activeTab as "tv" | "movie"}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

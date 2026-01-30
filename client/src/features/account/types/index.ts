@@ -1,4 +1,5 @@
 export interface UserProfileDto {
+  id: string;
   username: string;
   email: string;
   bio?: string;
