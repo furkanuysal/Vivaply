@@ -58,6 +58,20 @@ export default {
         ...theme("colors"),
         DEFAULT: theme("colors.skin.border", "currentColor"),
       }),
+      animation: {
+        "scale-in": "scale-in 0.2s ease-out cubic-bezier(0.16, 1, 0.3, 1)",
+        "fade-in": "fade-in 0.2s ease-out",
+      },
+      keyframes: {
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+      },
     },
   },
   plugins: [],
