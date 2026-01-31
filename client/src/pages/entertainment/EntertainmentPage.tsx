@@ -59,13 +59,27 @@ export default function EntertainmentPage() {
 
   const scrollLeft = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -300, behavior: "smooth" });
+      const itemWidth =
+        carouselRef.current.firstElementChild?.clientWidth || 200;
+      const gap = 16; // gap-4
+      const scrollAmount = itemWidth + gap;
+      carouselRef.current.scrollBy({
+        left: -scrollAmount * 2,
+        behavior: "smooth",
+      });
     }
   };
 
   const scrollRight = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 300, behavior: "smooth" });
+      const itemWidth =
+        carouselRef.current.firstElementChild?.clientWidth || 200;
+      const gap = 16; // gap-4
+      const scrollAmount = itemWidth + gap;
+      carouselRef.current.scrollBy({
+        left: scrollAmount * 2,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -222,7 +236,7 @@ export default function EntertainmentPage() {
               {/* Left Button */}
               <button
                 onClick={scrollLeft}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg"
+                className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg border border-white/10"
                 aria-label="Scroll left"
               >
                 <ChevronLeftIcon className="w-6 h-6" />
@@ -231,7 +245,7 @@ export default function EntertainmentPage() {
               {/* Right Button */}
               <button
                 onClick={scrollRight}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg"
+                className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/60 p-2 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity disabled:opacity-0 hover:bg-black/80 backdrop-blur-sm shadow-lg border border-white/10"
                 aria-label="Scroll right"
               >
                 <ChevronRightIcon className="w-6 h-6" />
@@ -239,21 +253,12 @@ export default function EntertainmentPage() {
 
               <div
                 ref={carouselRef}
-                className="
-    flex overflow-x-auto overflow-y-visible gap-4 pb-4
-    snap-x snap-mandatory
-    scrollbar-hide
-  "
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide pointer-events-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
-                {currentRecommendations?.map((item: TmdbContentDto, index) => (
+                {currentRecommendations?.map((item) => (
                   <div
                     key={item.id}
-                    className={`
-        shrink-0 w-[160px] md:w-[200px] snap-start
-        ${index === 0 ? "ml-4" : ""}
-        ${index === currentRecommendations.length - 1 ? "mr-4" : ""}
-      `}
+                    className="shrink-0 w-[160px] md:w-[200px] snap-start"
                   >
                     <MediaCard
                       content={item}
