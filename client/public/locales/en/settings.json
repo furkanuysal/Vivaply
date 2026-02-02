@@ -9,6 +9,8 @@
     "change": "Change",
     "level": "Level {{level}}",
     "avatar_hint": "Click on the image to change your profile photo. You can use JPG, PNG, or GIF formats.",
+    "username": "Username",
+    "username_placeholder": "Enter your username",
     "location": "Location",
     "about": "About Me",
     "about_placeholder": "Briefly describe yourself...",
@@ -27,6 +29,7 @@
   "toasts": {
     "profile_updated": "Profile successfully updated!",
     "update_failed": "Update failed.",
+    "username_cannot_be_taken": "This username cannot be taken.",
     "avatar_updated": "Avatar successfully refreshed!",
     "avatar_error": "An error occurred while uploading the image.",
     "password_updated": "Password successfully changed! Please log in again.",

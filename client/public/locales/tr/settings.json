@@ -9,6 +9,8 @@
     "change": "Değiştir",
     "level": "Level {{level}}",
     "avatar_hint": "Profil fotoğrafınızı değiştirmek için resmin üzerine tıklayın. JPG, PNG veya GIF formatlarını kullanabilirsiniz.",
+    "username": "Kullanıcı Adı",
+    "username_placeholder": "Kullanıcı adınızı girin",
     "location": "Konum",
     "about": "Hakkımda",
     "about_placeholder": "Kendinden kısaca bahset...",
@@ -27,6 +29,7 @@
   "toasts": {
     "profile_updated": "Profil başarıyla güncellendi!",
     "update_failed": "Güncelleme başarısız oldu.",
+    "username_cannot_be_taken": "Bu kullanıcı adı alınamaz.",
     "avatar_updated": "Avatar başarıyla yenilendi!",
     "avatar_error": "Resim yüklenirken bir hata oluştu.",
     "password_updated": "Şifre başarıyla değiştirildi! Lütfen tekrar giriş yapın.",

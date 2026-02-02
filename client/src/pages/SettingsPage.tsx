@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"general" | "security">("general");
 
   // Form States
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [passwords, setPasswords] = useState({ current: "", new: "" });
@@ -34,6 +35,7 @@ export default function SettingsPage() {
       const data = await accountService.getProfile();
       setUser(data);
       if ((data as any).bio) setBio((data as any).bio);
+      if (data.username) setUsername(data.username);
       if ((data as any).location) setLocation((data as any).location);
     } finally {
       setLoading(false);
@@ -51,13 +53,19 @@ export default function SettingsPage() {
     if (!user) return;
     try {
       await accountService.updateProfile({
-        username: user.username,
+        username,
         bio,
         location,
       });
       toast.success(t("toasts.profile_updated"));
-    } catch (error) {
-      toast.error(t("toasts.update_failed"));
+    } catch (error: any) {
+      // Return 409 Conflict
+      if (error.response && error.response.status === 409) {
+        toast.error(t("toasts.username_cannot_be_taken"));
+      } else {
+        // Other errors (server error etc.)
+        toast.error(t("toasts.update_failed"));
+      }
     }
   };
 
@@ -228,6 +236,19 @@ export default function SettingsPage() {
                 className="space-y-6 max-w-2xl"
               >
                 <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-skin-text ml-1">
+                      {t("general.username")}
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-skin-base/50 border border-skin-border/50 rounded-xl px-4 py-3 text-skin-text placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50 outline-none transition-all"
+                      placeholder={t("general.username_placeholder")}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-skin-text ml-1">
                       {t("general.location")}

@@ -30,8 +30,17 @@ namespace Vivaply.API.Controllers
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
         {
-            await _accountService.UpdateProfileAsync(GetUserId(), request);
-            return Ok(new { message = "Profile updated successfully." });
+            try
+            {
+                await _accountService.UpdateProfileAsync(GetUserId(), request);
+                return Ok(new { message = "Profile updated successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Service throws "Username already taken" exception
+                // Return 409 Conflict
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         // Upload Avatar
