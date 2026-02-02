@@ -14,14 +14,16 @@ import {
   FilmIcon,
   BookOpenIcon,
   PuzzlePieceIcon,
+  PlusIcon,
+  EllipsisHorizontalIcon,
 } from "@heroicons/react/24/outline";
 
 // Components
 import {
-  ActionButton,
   DashboardCard,
-  DashboardSection,
+  DashboardListCard,
   StatCard,
+  DashboardEmptyState,
 } from "@/features/dashboard/components";
 
 export default function DashboardPage() {
@@ -37,7 +39,7 @@ export default function DashboardPage() {
         setData(result);
       } catch (error) {
         console.error("Dashboard couldn't be loaded", error);
-        toast.error(t("common:errors.content_not_found"));
+        toast.error(t("common:messages.content_not_found"));
       } finally {
         setLoading(false);
       }
@@ -47,142 +49,147 @@ export default function DashboardPage() {
 
   if (loading)
     return (
-      <div className="flex h-[50vh] items-center justify-center text-skin-text">
-        <div className="animate-pulse text-xl font-medium">
-          {t("common:loading")}
-        </div>
+      <div className="flex h-[50vh] items-center justify-center text-skin-text animate-pulse">
+        {t("common:loading")}
       </div>
     );
   if (!data) return null;
 
-  const hasData =
+  // Check if there is any data
+  const hasAnyData =
     data.continueWatching.length > 0 ||
     data.continueReading.length > 0 ||
     data.continuePlaying.length > 0;
 
   return (
-    <div className="animate-fade-in text-skin-text pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* HERO & STATS HEADER */}
-      <div className="py-10">
-        <h1 className="text-4xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-skin-primary to-skin-secondary bg-clip-text text-transparent">
+    <div className="animate-fade-in text-skin-text pb-20 max-w-7xl mx-auto px-6 lg:px-8 pt-8 space-y-10">
+      {/* Header & Stats */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-4xl font-black tracking-tight text-skin-text">
           {t("dashboard:titles.welcome")}
         </h1>
-        <p className="text-skin-muted text-lg mb-10">
+        <p className="text-skin-muted text-lg">
           {t("dashboard:titles.welcome_subtitle")}
         </p>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <StatCard
-            label={t("dashboard:stats.total_episodes")}
-            value={data.stats.totalEpisodes}
-            icon={<TvIcon className="w-8 h-8" />}
-            color="text-skin-secondary"
-            bg="bg-skin-secondary/20"
-            borderColor="border-skin-secondary/50"
-          />
-          <StatCard
-            label={t("dashboard:stats.total_movies")}
-            value={data.stats.totalMovies}
-            icon={<FilmIcon className="w-8 h-8" />}
-            color="text-skin-primary"
-            bg="bg-skin-primary/20"
-            borderColor="border-skin-primary/50"
-          />
-          <StatCard
-            label={t("dashboard:stats.total_books")}
-            value={data.stats.totalBooks}
-            icon={<BookOpenIcon className="w-8 h-8" />}
-            color="text-skin-accent"
-            bg="bg-skin-accent/20"
-            borderColor="border-skin-accent/50"
-          />
-          <StatCard
-            label={t("dashboard:stats.total_games")}
-            value={data.stats.totalGames}
-            icon={<PuzzlePieceIcon className="w-8 h-8" />}
-            color="text-skin-rating-90"
-            bg="bg-skin-rating-90/20"
-            borderColor="border-skin-rating-90/50"
-          />
-        </div>
       </div>
 
-      {/* EMPTY STATE */}
-      {!hasData && (
-        <div className="flex flex-col items-center justify-center py-20 bg-skin-surface/30 rounded-3xl border border-dashed border-skin-border/50">
-          <p className="text-skin-muted text-xl mb-6 font-medium">
-            {t("dashboard:empty_state.message")}
-          </p>
-          <div className="flex flex-wrap justify-center gap-6">
-            <ActionButton
-              label={t("dashboard:empty_state.add_tv_show")}
-              onClick={() => navigate("/entertainment")}
-              color="text-skin-secondary border-skin-secondary/30 hover:bg-skin-secondary/10"
-            />
-            <ActionButton
-              label={t("dashboard:empty_state.add_book")}
-              onClick={() => navigate("/books")}
-              color="text-skin-accent border-skin-accent/30 hover:bg-skin-accent/10"
-            />
-            <ActionButton
-              label={t("dashboard:empty_state.add_game")}
-              onClick={() => navigate("/games")}
-              color="text-skin-rating-90 border-skin-rating-90/30 hover:bg-skin-rating-90/10"
-            />
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          label={t("dashboard:stats.total_episodes")}
+          value={data.stats.totalEpisodes}
+          icon={<TvIcon />}
+        />
+        <StatCard
+          label={t("dashboard:stats.total_movies")}
+          value={data.stats.totalMovies}
+          icon={<FilmIcon />}
+        />
+        <StatCard
+          label={t("dashboard:stats.total_books")}
+          value={data.stats.totalBooks}
+          icon={<BookOpenIcon />}
+        />
+        <StatCard
+          label={t("dashboard:stats.total_games")}
+          value={data.stats.totalGames}
+          icon={<PuzzlePieceIcon />}
+        />
+      </div>
+
+      {/* --- Main Content --- */}
+
+      {!hasAnyData ? (
+        <DashboardEmptyState />
+      ) : (
+        <>
+          {/* Recently Watched */}
+          {data.continueWatching.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-5 px-1">
+                <h3 className="text-2xl font-bold tracking-tight text-skin-text">
+                  {t("dashboard:titles.last_watched")}
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data.continueWatching.map((item) => (
+                  <DashboardCard
+                    key={item.id}
+                    item={item}
+                    navigate={navigate}
+                    t={t}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* BOTTOM SPLIT SECTION (Books & Games) - List Style Applied */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Reading List */}
+            <div className="bg-skin-surface p-6 rounded-2xl border border-skin-border/50 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-skin-text">
+                  {t("dashboard:titles.last_read")}
+                </h3>
+                <button
+                  onClick={() => navigate("/knowledge")}
+                  className="text-skin-primary hover:bg-skin-primary/10 p-2 rounded-lg transition-colors"
+                >
+                  <PlusIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                {data.continueReading.length > 0 ? (
+                  data.continueReading.map((item) => (
+                    <DashboardListCard
+                      key={item.id}
+                      item={item}
+                      navigate={navigate}
+                      t={t}
+                    />
+                  ))
+                ) : (
+                  <p className="text-skin-muted text-sm">
+                    {t("dashboard:empty_state.no_books_yet")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Games */}
+            <div className="bg-skin-surface p-6 rounded-2xl border border-skin-border/50 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-skin-text">
+                  {t("dashboard:titles.last_played")}
+                </h3>
+                <button
+                  onClick={() => navigate("/entertainment/library")}
+                  className="text-skin-primary hover:bg-skin-primary/10 p-2 rounded-lg transition-colors"
+                >
+                  <EllipsisHorizontalIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                {data.continuePlaying.length > 0 ? (
+                  data.continuePlaying.map((item) => (
+                    <DashboardListCard
+                      key={item.id}
+                      item={item}
+                      navigate={navigate}
+                      t={t}
+                    />
+                  ))
+                ) : (
+                  <p className="text-skin-muted text-sm">
+                    {t("dashboard:empty_state.no_games_yet")}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
-
-      {/* CONTENT SECTIONS */}
-      <div className="space-y-12">
-        {data.continueWatching.length > 0 && (
-          <DashboardSection
-            title={t("dashboard:titles.last_watched")}
-            icon={<TvIcon className="w-6 h-6" />}
-          >
-            {data.continueWatching.map((item) => (
-              <DashboardCard
-                key={item.id}
-                item={item}
-                navigate={navigate}
-                t={t}
-              />
-            ))}
-          </DashboardSection>
-        )}
-
-        {data.continueReading.length > 0 && (
-          <DashboardSection
-            title={t("dashboard:titles.last_read")}
-            icon={<BookOpenIcon className="w-6 h-6" />}
-          >
-            {data.continueReading.map((item) => (
-              <DashboardCard
-                key={item.id}
-                item={item}
-                navigate={navigate}
-                t={t}
-              />
-            ))}
-          </DashboardSection>
-        )}
-
-        {data.continuePlaying.length > 0 && (
-          <DashboardSection
-            title={t("dashboard:titles.last_played")}
-            icon={<PuzzlePieceIcon className="w-6 h-6" />}
-          >
-            {data.continuePlaying.map((item) => (
-              <DashboardCard
-                key={item.id}
-                item={item}
-                navigate={navigate}
-                t={t}
-              />
-            ))}
-          </DashboardSection>
-        )}
-      </div>
     </div>
   );
 }
