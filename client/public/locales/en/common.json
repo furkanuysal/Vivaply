@@ -44,11 +44,18 @@
     "refresh_library": "Refresh Library",
     "search": "Search",
     "view": "View",
-    "update": "Update"
+    "update": "Update",
+    "explore": "Explore"
   },
   "search": {
     "recommended_for_you": "Recommended for You",
     "search_results": "Search Results for '{{query}}'"
+  },
+  "types": {
+    "movie": "Movie",
+    "tv": "TV Series",
+    "book": "Book",
+    "game": "Game"
   },
   "loading": "Loading..."
 }

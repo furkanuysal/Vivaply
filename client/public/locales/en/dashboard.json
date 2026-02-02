@@ -3,7 +3,7 @@
     "welcome": "Welcome!",
     "welcome_subtitle": "Ready to pick up where you left off?",
     "last_watched": "Last Watched",
-    "last_read": "Last Read Books",
+    "last_read": "Last Read",
     "last_played": "Last Played"
   },
   "stats": {
@@ -12,17 +12,32 @@
     "total_books": "Books Read",
     "total_games": "Games Finished"
   },
+  "status": {
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "played": "Played"
+  },
   "empty_state": {
     "message": "No active content yet. Start exploring!",
     "add_tv_show": "Add TV Show",
     "add_movie": "Add Movie",
     "add_book": "Add Book",
-    "add_game": "Add Game"
+    "add_game": "Add Game",
+    "no_books_yet": "No books added yet.",
+    "no_games_yet": "No games added yet.",
+    "title": "Start Your Journey",
+    "subtitle": "It's a bit quiet here. Break the silence by adding content.",
+    "quick_add": "Quick Add",
+    "add_movie_tv": "Add Movie/TV",
+    "add_movie_tv_desc": "Log what you've watched",
+    "add_book_desc": "Track your reading",
+    "add_game_desc": "Build your game library"
   },
   "units": {
     "page": "Page",
     "hour": "Hour",
     "season": "Season",
-    "episode": "Episode"
+    "episode": "Episode",
+    "hour_short": "h"
   }
 }

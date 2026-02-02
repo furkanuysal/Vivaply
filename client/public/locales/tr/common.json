@@ -44,11 +44,18 @@
     "refresh_library": "Kütüphaneyi Yenile",
     "search": "Ara",
     "view": "Görüntüle",
-    "update": "Güncelle"
+    "update": "Güncelle",
+    "explore": "Keşfet"
   },
   "search": {
     "recommended_for_you": "Sizin için Önerilenler",
     "search_results": "'{{query}}' için Sonuçlar"
+  },
+  "types": {
+    "movie": "Film",
+    "tv": "Dizi",
+    "book": "Kitap",
+    "game": "Oyun"
   },
   "loading": "Yükleniyor..."
 }

@@ -3,7 +3,7 @@
     "welcome": "Hoş Geldin!",
     "welcome_subtitle": "Kaldığın yerden devam etmeye hazır mısın?",
     "last_watched": "En Son İzlenen",
-    "last_read": "En Son Okunan Kitaplar",
+    "last_read": "En Son Okunan",
     "last_played": "En Son Oynanan"
   },
   "stats": {
@@ -12,17 +12,32 @@
     "total_books": "Okunan Kitap",
     "total_games": "Bitirilen Oyun"
   },
+  "status": {
+    "in_progress": "Devam Ediyor",
+    "completed": "Tamamlandı",
+    "played": "Oynandı"
+  },
   "empty_state": {
     "message": "Henüz aktif bir içeriğin yok. Keşfetmeye başla!",
     "add_tv_show": "Dizi Ekle",
     "add_movie": "Film Ekle",
     "add_book": "Kitap Ekle",
-    "add_game": "Oyun Ekle"
+    "add_game": "Oyun Ekle",
+    "no_books_yet": "Henüz kitap eklenmedi.",
+    "no_games_yet": "Henüz oyun eklenmedi.",
+    "title": "Yolculuğuna Başla",
+    "subtitle": "Şu an burası biraz sessiz. İçerik ekleyerek bu sessizliği boz.",
+    "quick_add": "Hızlı Ekle",
+    "add_movie_tv": "Film/Dizi Ekle",
+    "add_movie_tv_desc": "Son izlediklerini kaydet",
+    "add_book_desc": "Kitaplarını takip et",
+    "add_game_desc": "Oyun kütüphaneni oluştur"
   },
   "units": {
     "page": "Sayfa",
     "hour": "Saat",
     "season": "Sezon",
-    "episode": "Bölüm"
+    "episode": "Bölüm",
+    "hour_short": "sa"
   }
 }
