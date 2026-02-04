@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Vivaply.API.Entities.Identity;
 
 namespace Vivaply.API.Entities.Entertainment
@@ -41,5 +42,9 @@ namespace Vivaply.API.Entities.Entertainment
         // Review given by user
         [MaxLength(1000)]
         public string? Review { get; set; }
+
+        // Genres cached as JSON array of integers
+        [Column(TypeName = "jsonb")]
+        public string? GenresJson { get; set; }
     }
 }

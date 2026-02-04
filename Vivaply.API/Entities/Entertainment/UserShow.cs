@@ -53,5 +53,9 @@ namespace Vivaply.API.Entities.Entertainment
 
         // Watched Episodes
         public List<WatchedEpisode> WatchedEpisodes { get; set; } = new();
+
+        // Genres cached as JSON array of integers
+        [Column(TypeName = "jsonb")]
+        public string? GenresJson { get; set; }
     }
 }
