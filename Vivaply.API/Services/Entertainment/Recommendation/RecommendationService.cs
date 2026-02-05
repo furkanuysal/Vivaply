@@ -3,6 +3,7 @@ using Vivaply.API.Data;
 using Vivaply.API.DTOs.Entertainment.Recommendation;
 using Vivaply.API.DTOs.Entertainment.Tmdb;
 using Vivaply.API.Entities.Entertainment;
+using Vivaply.API.Services.Entertainment.Recommendation.Helpers;
 using Vivaply.API.Services.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment.Recommendation
@@ -96,10 +97,9 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
             foreach (var show in userShows)
             {
-                var detail = await _tmdb.GetTvShowDetailsAsync(show.TmdbShowId);
-                if (detail?.Genres == null) continue;
+                var genres = GenreProfileHelper.GetGenres(show.GenresJson);
 
-                foreach (var genre in detail.Genres)
+                foreach (var genre in genres)
                 {
                     if (!scores.ContainsKey(genre.Id))
                         scores[genre.Id] = 0;
@@ -124,10 +124,9 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
             foreach (var show in recentShows)
             {
-                var detail = await _tmdb.GetTvShowDetailsAsync(show.TmdbShowId);
-                if (detail?.Genres == null) continue;
+                var genres = GenreProfileHelper.GetGenres(show.GenresJson);
 
-                foreach (var genre in detail.Genres)
+                foreach (var genre in genres)
                 {
                     if (!scores.ContainsKey(genre.Id))
                         scores[genre.Id] = 0;
@@ -153,10 +152,9 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
             foreach (var movie in userMovies)
             {
-                var detail = await _tmdb.GetMovieDetailsAsync(movie.TmdbMovieId);
-                if (detail?.Genres == null) continue;
+                var genres = GenreProfileHelper.GetGenres(movie.GenresJson);
 
-                foreach (var genre in detail.Genres)
+                foreach (var genre in genres)
                 {
                     if (!scores.ContainsKey(genre.Id))
                         scores[genre.Id] = 0;
@@ -182,10 +180,9 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
             foreach (var movie in recentMovies)
             {
-                var detail = await _tmdb.GetMovieDetailsAsync(movie.TmdbMovieId);
-                if (detail?.Genres == null) continue;
+                var genres = GenreProfileHelper.GetGenres(movie.GenresJson);
 
-                foreach (var genre in detail.Genres)
+                foreach (var genre in genres)
                 {
                     if (!scores.ContainsKey(genre.Id))
                         scores[genre.Id] = 0;
