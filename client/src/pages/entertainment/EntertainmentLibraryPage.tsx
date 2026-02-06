@@ -272,11 +272,15 @@ export default function EntertainmentLibraryPage() {
       await mediaService.syncLibrary();
       toast.success(t("common:messages.library_content_refreshed"));
 
-      // Fetch updated library data
       const data = await mediaService.getLibrary();
       const gameData = await gamesService.getLibrary();
       setLibraryData({ ...data, game: gameData });
-    } catch (error) {
+    } catch (error: any) {
+      // Rate limit check (HTTP 429)
+      if (error.response && error.response.status === 429) {
+        toast.info(t("common:messages.library_recently_refreshed"));
+        return;
+      }
       toast.error(t("common:messages.library_content_couldnt_refresh"));
     } finally {
       setIsSyncing(false);

@@ -21,7 +21,8 @@
     "content_update_error": "Content update failed.",
     "no_date": "No Date",
     "save_success": "Saved successfully.",
-    "save_error": "Failed to save."
+    "save_error": "Failed to save.",
+    "library_recently_refreshed": "Library is already up to date. You can refresh again later."
   },
   "dialogs": {
     "remove_from_library_title": "Remove Content from Library",

@@ -21,7 +21,8 @@
     "content_update_error": "İçerik güncellenemedi.",
     "no_date": "Tarih Yok",
     "save_success": "Kaydedildi.",
-    "save_error": "Kaydetme işlemi başarısız."
+    "save_error": "Kaydetme işlemi başarısız.",
+    "library_recently_refreshed": "Kütüphane zaten güncel. Daha sonra tekrar deneyin."
   },
   "dialogs": {
     "remove_from_library_title": "İçeriği Kütüphaneden Kaldır",
