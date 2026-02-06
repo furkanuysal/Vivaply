@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using Vivaply.API.DTOs.Entertainment.Commands.Games;
 using Vivaply.API.DTOs.Entertainment.Commands.Media;
-using Vivaply.API.Services;
 using Vivaply.API.Services.Entertainment.Discovery;
 using Vivaply.API.Services.Entertainment.Game;
 using Vivaply.API.Services.Entertainment.Media;
+using Vivaply.API.Services.Infrastructure.RateLimiting;
 
 namespace Vivaply.API.Controllers
 {
@@ -102,14 +103,11 @@ namespace Vivaply.API.Controllers
         [HttpGet("game/{id:int}")]
         public async Task<IActionResult> GetGameDetail(int id)
         {
-            var userId = Guid.TryParse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier),
-                out var uid
-            ) ? uid : (Guid?)null;
+            var userId = GetUserIdOrNull();
 
             var game = await _gameService.GetDetailAsync(userId, id);
             return game == null
-                ? NotFound("Oyun bulunamadı.")
+                ? NotFound("The game could not be found.")
                 : Ok(game);
         }
 
@@ -237,6 +235,7 @@ namespace Vivaply.API.Controllers
         }
 
         // Sync library with TMDB to latest data
+        [EnableRateLimiting(RateLimitPolicies.MediaSync)]
         [HttpPost("library/sync")]
         public async Task<IActionResult> SyncLibrary()
         {

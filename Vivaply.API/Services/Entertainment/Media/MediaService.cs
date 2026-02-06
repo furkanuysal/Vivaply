@@ -8,6 +8,7 @@ using Vivaply.API.DTOs.Entertainment.Tmdb;
 using Vivaply.API.Entities.Entertainment;
 using Vivaply.API.Services.Entertainment.Media.Helpers;
 using Vivaply.API.Services.Entertainment.Tmdb;
+using Vivaply.API.Services.Infrastructure.RateLimiting;
 
 namespace Vivaply.API.Services.Entertainment.Media
 {

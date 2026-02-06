@@ -109,11 +109,11 @@ app.UseStaticFiles();
 // Activate CORS Middleware
 app.UseCors("AllowReactApp");
 
-// Activate Rate Limiting Middleware
-app.UseRateLimiter();
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Activate Rate Limiting Middleware
+app.UseRateLimiter();
 
 app.MapControllers();
 
