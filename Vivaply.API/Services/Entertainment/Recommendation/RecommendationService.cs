@@ -21,37 +21,29 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
         public async Task<RecommendationResponseDto> GetRecommendationsAsync(Guid userId, string language = "en-US")
         {
-            // --- TV ---
-            var longTermTv = await BuildUserGenreProfileTv(userId);
-            var recentTv = await BuildRecentGenreProfileTv(userId);
-            var finalTvProfile = MergeProfiles(longTermTv, recentTv);
+            var tvProfile = await BuildUserGenreProfileTv(userId);
+            var movieProfile = await BuildUserGenreProfileMovie(userId);
 
-            var topTvGenres = finalTvProfile
+            var topTvGenres = tvProfile
+                .OrderByDescending(x => x.Value)
                 .Take(3)
                 .Select(x => x.Key)
                 .ToList();
 
-            // --- MOVIE ---
-            var longTermMovie = await BuildUserGenreProfileMovie(userId);
-            var recentMovie = await BuildRecentGenreProfileMovie(userId);
-            var finalMovieProfile = MergeProfiles(longTermMovie, recentMovie);
-
-            var topMovieGenres = finalMovieProfile
+            var topMovieGenres = movieProfile
+                .OrderByDescending(x => x.Value)
                 .Take(3)
                 .Select(x => x.Key)
                 .ToList();
 
-
-            // Discover
-            var recommendedTv = topTvGenres.Any()
+            var tvCandidates = topTvGenres.Any()
                 ? await _tmdb.DiscoverTvAsync(string.Join(",", topTvGenres), language)
                 : new List<TmdbContentDto>();
 
-            var recommendedMovies = topMovieGenres.Any()
+            var movieCandidates = topMovieGenres.Any()
                 ? await _tmdb.DiscoverMoviesAsync(string.Join(",", topMovieGenres), language)
                 : new List<TmdbContentDto>();
 
-            // Watched filter
             var watchedTvIds = await _db.UserShows
                 .Where(x => x.UserId == userId)
                 .Select(x => x.TmdbShowId)
@@ -62,183 +54,176 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
                 .Select(x => x.TmdbMovieId)
                 .ToListAsync();
 
-            recommendedTv = recommendedTv
-                .Where(x => !watchedTvIds.Contains(x.Id))
-                .OrderByDescending(x => ScoreItem(x, finalTvProfile))
-                .Take(20)
-                .ToList();
-
-            recommendedMovies = recommendedMovies
-                .Where(x => !watchedMovieIds.Contains(x.Id))
-                .OrderByDescending(x => ScoreItem(x, finalMovieProfile))
-                .Take(20)
-                .ToList();
-
             return new RecommendationResponseDto
             {
-                Tv = recommendedTv,
-                Movies = recommendedMovies
+                Tv = RankWithDiversity(
+                    tvCandidates.Where(x => !watchedTvIds.Contains(x.Id)).ToList(),
+                    tvProfile,
+                    20
+                ),
+                Movies = RankWithDiversity(
+                    movieCandidates.Where(x => !watchedMovieIds.Contains(x.Id)).ToList(),
+                    movieProfile,
+                    20
+                )
             };
         }
 
-
         // ---------------- PROFILE BUILDERS ----------------
 
-        // TV Long-term profile builder
         private async Task<Dictionary<int, double>> BuildUserGenreProfileTv(Guid userId)
         {
-            var userShows = await _db.UserShows
-                .Where(x => x.UserId == userId &&
-                       (x.Status == WatchStatus.Watching ||
-                        x.Status == WatchStatus.Completed))
+            var shows = await _db.UserShows
+                .Where(x => x.UserId == userId)
                 .ToListAsync();
 
-            var scores = new Dictionary<int, double>();
-
-            foreach (var show in userShows)
-            {
-                var genres = GenreProfileHelper.GetGenres(show.GenresJson);
-
-                foreach (var genre in genres)
-                {
-                    if (!scores.ContainsKey(genre.Id))
-                        scores[genre.Id] = 0;
-
-                    var weight = show.Status == WatchStatus.Completed ? 2 : 1;
-                    scores[genre.Id] += weight;
-                }
-            }
-
-            return Normalize(scores);
-        }
-        // Recent TV profile builder
-        private async Task<Dictionary<int, double>> BuildRecentGenreProfileTv(Guid userId)
-        {
-            var recentShows = await _db.UserShows
-                .Where(x => x.UserId == userId && x.LastWatchedAt != null)
-                .OrderByDescending(x => x.LastWatchedAt)
-                .Take(5)
-                .ToListAsync();
-
-            var scores = new Dictionary<int, double>();
-
-            foreach (var show in recentShows)
-            {
-                var genres = GenreProfileHelper.GetGenres(show.GenresJson);
-
-                foreach (var genre in genres)
-                {
-                    if (!scores.ContainsKey(genre.Id))
-                        scores[genre.Id] = 0;
-
-                    // recency boost
-                    scores[genre.Id] += 2;
-                }
-            }
-
-            return Normalize(scores);
+            return Normalize(BuildProfile(
+                shows,
+                s => s.GenresJson,
+                s => s.Status,
+                s => s.UserRating,
+                s => s.LastWatchedAt
+            ));
         }
 
-        // Movie long-term profile builder
         private async Task<Dictionary<int, double>> BuildUserGenreProfileMovie(Guid userId)
         {
-            var userMovies = await _db.UserMovies
-                .Where(x => x.UserId == userId &&
-                       (x.Status == WatchStatus.Watching ||
-                        x.Status == WatchStatus.Completed))
+            var movies = await _db.UserMovies
+                .Where(x => x.UserId == userId)
                 .ToListAsync();
 
+            return Normalize(BuildProfile(
+                movies,
+                m => m.GenresJson,
+                m => m.Status,
+                m => m.UserRating,
+                m => m.WatchedAt
+            ));
+        }
+
+        private Dictionary<int, double> BuildProfile<T>(
+     IEnumerable<T> items,
+     Func<T, string?> genreJson,
+     Func<T, WatchStatus> status,
+     Func<T, double?> rating,
+     Func<T, DateTime?> lastWatched
+ )
+        {
             var scores = new Dictionary<int, double>();
 
-            foreach (var movie in userMovies)
+            foreach (var item in items)
             {
-                var genres = GenreProfileHelper.GetGenres(movie.GenresJson);
+                var json = genreJson(item);
+                if (string.IsNullOrWhiteSpace(json))
+                    continue;
 
-                foreach (var genre in genres)
+                var weight =
+                    GetStatusWeight(status(item)) *
+                    GetRatingWeight(rating(item)) *
+                    GetRecencyBoost(lastWatched(item));
+
+                if (weight == 0) continue;
+
+                var genres = GenreProfileHelper.GetGenres(json);
+                foreach (var g in genres)
                 {
-                    if (!scores.ContainsKey(genre.Id))
-                        scores[genre.Id] = 0;
-
-                    var weight = movie.Status == WatchStatus.Completed ? 2 : 1;
-                    scores[genre.Id] += weight;
+                    scores[g.Id] = scores.GetValueOrDefault(g.Id) + weight;
                 }
             }
 
-            return Normalize(scores);
+            return scores;
         }
 
-        // Recent movie profile builder
-        private async Task<Dictionary<int, double>> BuildRecentGenreProfileMovie(Guid userId)
+        // ---------------- SCORING ----------------
+
+        private static IEnumerable<int> GetGenreIds(TmdbContentDto item)
         {
-            var recentMovies = await _db.UserMovies
-                .Where(x => x.UserId == userId && x.WatchedAt != null)
-                .OrderByDescending(x => x.WatchedAt)
-                .Take(5)
-                .ToListAsync();
+            if (item.GenreIds?.Any() == true)
+                return item.GenreIds;
 
-            var scores = new Dictionary<int, double>();
+            if (item.Genres?.Any() == true)
+                return item.Genres.Select(g => g.Id);
 
-            foreach (var movie in recentMovies)
-            {
-                var genres = GenreProfileHelper.GetGenres(movie.GenresJson);
-
-                foreach (var genre in genres)
-                {
-                    if (!scores.ContainsKey(genre.Id))
-                        scores[genre.Id] = 0;
-
-                    scores[genre.Id] += 2;
-                }
-            }
-
-            return Normalize(scores);
+            return Enumerable.Empty<int>();
         }
 
-        private Dictionary<int, double> MergeProfiles(
-            Dictionary<int, double> longTerm,
-            Dictionary<int, double> recent)
+        private double BaseScore(TmdbContentDto item, Dictionary<int, double> profile)
         {
-            var result = new Dictionary<int, double>();
+            return GetGenreIds(item)
+                .Sum(id => profile.TryGetValue(id, out var score) ? score : 0);
+        }
 
-            var allGenres = longTerm.Keys
-                .Union(recent.Keys)
+        private List<TmdbContentDto> RankWithDiversity(
+            List<TmdbContentDto> items,
+            Dictionary<int, double> profile,
+            int limit)
+        {
+            var result = new List<TmdbContentDto>();
+            var genreCounts = new Dictionary<int, int>();
+
+            var ranked = items
+                .Select(i => new { Item = i, Score = BaseScore(i, profile) })
+                .OrderByDescending(x => x.Score)
                 .ToList();
 
-            foreach (var genreId in allGenres)
+            foreach (var entry in ranked)
             {
-                var longScore = longTerm.ContainsKey(genreId) ? longTerm[genreId] : 0;
-                var recentScore = recent.ContainsKey(genreId) ? recent[genreId] : 0;
+                if (result.Count >= limit)
+                    break;
 
-                result[genreId] = (longScore * 0.7) + (recentScore * 0.3);
+                if (entry.Score < -0.3)
+                    continue;
+
+                double penalty = 1.0;
+                foreach (var gid in GetGenreIds(entry.Item))
+                {
+                    if (genreCounts.TryGetValue(gid, out var count))
+                        penalty *= 1.0 / (1 + count * 0.5);
+                }
+
+                if (entry.Score * penalty <= 0)
+                    continue;
+
+                result.Add(entry.Item);
+
+                foreach (var gid in GetGenreIds(entry.Item))
+                {
+                    genreCounts[gid] = genreCounts.GetValueOrDefault(gid) + 1;
+                }
             }
 
-            return result
-                .OrderByDescending(x => x.Value)
-                .ToDictionary(x => x.Key, x => x.Value);
+            return result;
         }
 
-        // Score an item based on the user's genre profile
-        private double ScoreItem(TmdbContentDto item, Dictionary<int, double> profile)
+        // ---------------- HELPERS ----------------
+
+        private static Dictionary<int, double> Normalize(Dictionary<int, double> scores)
         {
-            if (item.Genres == null || item.Genres.Count == 0)
-                return 0;
-
-            return item.Genres.Sum(g =>
-                profile.ContainsKey(g.Id) ? profile[g.Id] : 0
-            );
+            var max = scores.Values.Where(v => v > 0).DefaultIfEmpty(1).Max();
+            return scores.ToDictionary(kv => kv.Key, kv => kv.Value / max);
         }
 
-        //Normalize scores to 0-1 range
-        private Dictionary<int, double> Normalize(Dictionary<int, double> scores)
+        private static double GetStatusWeight(WatchStatus status) => status switch
         {
-            var max = scores.Values.DefaultIfEmpty(1).Max();
-            if (max == 0) max = 1;
+            WatchStatus.Completed => 1.5,
+            WatchStatus.Watching => 1.2,
+            WatchStatus.PlanToWatch => 0.2,
+            WatchStatus.OnHold => 0.3,
+            WatchStatus.Dropped => -0.5,
+            _ => 0
+        };
 
-            return scores.ToDictionary(
-                x => x.Key,
-                x => x.Value / max
-            );
+        private static double GetRatingWeight(double? rating)
+            => rating.HasValue ? 0.5 + rating.Value / 10 : 1.0;
+
+        private static double GetRecencyBoost(DateTime? lastWatched)
+        {
+            if (!lastWatched.HasValue) return 1.0;
+
+            var days = (DateTime.UtcNow - lastWatched.Value).TotalDays;
+            if (days <= 7) return 1.4;
+            if (days <= 30) return 1.2;
+            return 1.0;
         }
-
     }
 }
