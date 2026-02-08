@@ -3,13 +3,44 @@ services:
     image: postgres:16-alpine
     container_name: vivaply_postgres
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  vivaply-api:
+    build:
+      context: ../Vivaply.API
+    container_name: vivaply_api
+    depends_on:
+      - vivaply-db
+    environment:
+      ConnectionStrings__VivaplyDb: Host=vivaply-db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      JwtSettings__Key: ${JWT_KEY}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      TmdbSettings__ApiKey: ${TMDB_API_KEY}
+      GoogleBooksSettings__ApiKey: ${GOOGLE_BOOKS_API_KEY}
+      IgdbSettings__ClientId: ${IGDB_CLIENT_ID}
+      IgdbSettings__ClientSecret: ${IGDB_CLIENT_SECRET}
+      AllowedOrigins: ${ALLOWED_ORIGINS}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5000:5000"
+
+  vivaply-client:
+    build:
+      context: ../client
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: vivaply_client
+    depends_on:
+      - vivaply-api
+    ports:
+      - "3000:80"
 
 volumes:
   postgres_data:
