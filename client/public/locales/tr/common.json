@@ -46,7 +46,8 @@
     "search": "Ara",
     "view": "Görüntüle",
     "update": "Güncelle",
-    "explore": "Keşfet"
+    "explore": "Keşfet",
+    "clear": "Temizle"
   },
   "search": {
     "recommended_for_you": "Sizin için Önerilenler",

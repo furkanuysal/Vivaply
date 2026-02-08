@@ -46,7 +46,8 @@
     "search": "Search",
     "view": "View",
     "update": "Update",
-    "explore": "Explore"
+    "explore": "Explore",
+    "clear": "Clear"
   },
   "search": {
     "recommended_for_you": "Recommended for You",

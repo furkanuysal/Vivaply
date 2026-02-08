@@ -42,6 +42,12 @@ export default function EntertainmentHeader({
     setIsConfirmOpen(false);
   };
 
+  const commonTypeMap = {
+    tv: "entertainment:common.tv",
+    movie: "entertainment:common.movie",
+    game: "entertainment:common.game",
+  } as const;
+
   return (
     <>
       <ConfirmDialog
@@ -100,7 +106,10 @@ export default function EntertainmentHeader({
               {data.display_date?.split("-")[0]}
             </span>
             <span className="uppercase bg-skin-surface/50 px-2 py-1 rounded text-xs">
-              {t(`entertainment:common.${type}`)}
+              {t(
+                commonTypeMap[type as keyof typeof commonTypeMap] ||
+                  `entertainment:common.${type}`,
+              )}
             </span>
             <ProdStatusBadge status={data.status} />
           </div>
