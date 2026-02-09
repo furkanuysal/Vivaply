@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,7 +16,8 @@ using Vivaply.API.Services.Location;
 var builder = WebApplication.CreateBuilder(args);
 
 // Database Configuration
-var connectionString = builder.Configuration.GetConnectionString("VivaplyDb");
+var connectionString = builder.Configuration.GetConnectionString("VivaplyDb") ?? 
+    throw new InvalidOperationException("Connection string 'VivaplyDb' is not configured.");
 builder.Services.AddDbContext<VivaplyDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -35,6 +37,13 @@ builder.Services.AddKnowledgeServices();
 
 // Services Configuration
 builder.Services.AddControllers();
+
+// Health Checks Configuration
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        connectionString,
+        name: "postgres",
+        timeout: TimeSpan.FromSeconds(3));
 
 // CORS Configuration
 var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? string.Empty;
@@ -116,5 +125,17 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+
+// Health Check Endpoint
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    AllowCachingResponses = false
+}).AllowAnonymous();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Name == "postgres",
+    AllowCachingResponses = false
+}).AllowAnonymous();
 
 app.Run();
