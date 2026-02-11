@@ -13,7 +13,7 @@ RUN dotnet publish -c Release -o /app/publish
 # =========================
 # Runtime stage (.NET 10 ASP.NET)
 # =========================
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 # Install curl (required for Docker healthchecks)
 RUN apt-get update \
