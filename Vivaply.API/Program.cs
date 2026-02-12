@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,7 +16,7 @@ using Vivaply.API.Services.Location;
 var builder = WebApplication.CreateBuilder(args);
 
 // Database Configuration
-var connectionString = builder.Configuration.GetConnectionString("VivaplyDb") ?? 
+var connectionString = builder.Configuration.GetConnectionString("VivaplyDb") ??
     throw new InvalidOperationException("Connection string 'VivaplyDb' is not configured.");
 builder.Services.AddDbContext<VivaplyDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -103,6 +103,40 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Database Migration with Retry Logic
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var context = services.GetRequiredService<VivaplyDbContext>();
+
+    // Retry logic to handle potential database connection issues during startup
+    int retryCount = 0;
+    bool connected = false;
+
+    while (retryCount < 5 && !connected)
+    {
+        try
+        {
+            logger.LogInformation("Connecting to database and checking migrations... (Count {Retry})", retryCount + 1);
+            context.Database.Migrate();
+            connected = true;
+            logger.LogInformation("Database updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            retryCount++;
+            logger.LogWarning("Database is not ready yet, retrying in 3 seconds... (Error: {Message})", ex.Message);
+            Thread.Sleep(3000); // Wait for 3 seconds before retrying
+            if (retryCount >= 5)
+            {
+                logger.LogCritical(ex, "Failed to connect to database after 5 attempts. Application is shutting down.");
+                throw;
+            }
+        }
+    }
+}
 
 // Http Request Pipeline Configuration
 if (app.Environment.IsDevelopment())
