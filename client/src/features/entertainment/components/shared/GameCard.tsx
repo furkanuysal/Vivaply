@@ -28,14 +28,18 @@ export default function GameCard({ game }: Props) {
     <>
       <div
         ref={ref}
-        onMouseEnter={() => setHovered(true)}
+        onMouseEnter={() => {
+          if (window.innerWidth >= 768) {
+            setHovered(true);
+          }
+        }}
         onMouseLeave={() => setHovered(false)}
         onClick={() => navigate(`/entertainment/game/${game.id}`)}
         className="
           bg-skin-surface rounded-xl overflow-hidden shadow-lg
           border border-skin-border/40
           transition-all duration-300
-          cursor-pointer relative
+          cursor-pointer relative min-w-0
         "
       >
         {/* Cover */}
@@ -59,7 +63,7 @@ export default function GameCard({ game }: Props) {
         </div>
 
         {/* Details */}
-        <div className="p-4">
+        <div className="p-2.5 md:p-4">
           <h3
             className="text-skin-text font-bold truncate mb-1"
             title={game.title}

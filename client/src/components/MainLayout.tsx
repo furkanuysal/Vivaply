@@ -42,7 +42,6 @@ export default function MainLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
   const toggleMenu = (key: string) => {
     if (isCollapsed) {
       setIsCollapsed(false);
@@ -353,7 +352,7 @@ export default function MainLayout() {
         animate={isMobile ? "mobile" : isCollapsed ? "collapsed" : "expanded"}
         variants={mainVariants}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="flex-1 min-h-screen bg-skin-base relative z-10"
+        className="flex-1 min-w-0 min-h-screen bg-skin-base relative z-10"
       >
         {/* Mobile Header */}
         <header className="md:hidden h-16 px-4 flex items-center justify-between border-b border-skin-border/20 bg-skin-surface/80 backdrop-blur-xl sticky top-0 z-30">

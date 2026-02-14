@@ -123,7 +123,6 @@ export default function EntertainmentPage() {
         <h1 className="text-3xl font-bold text-skin-text">
           {t("entertainment:discovery.discover")}
         </h1>
-
         {/* Tab Switcher */}
         <div className="relative bg-skin-surface p-1 rounded-lg flex border border-skin-border">
           {/* Sliding Indicator */}
@@ -142,7 +141,7 @@ export default function EntertainmentPage() {
           </div>
           <button
             onClick={() => setActiveTab("tv")}
-            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-3 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium transition ${
               activeTab === "tv"
                 ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
@@ -152,7 +151,7 @@ export default function EntertainmentPage() {
           </button>
           <button
             onClick={() => setActiveTab("movie")}
-            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-3 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium transition ${
               activeTab === "movie"
                 ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
@@ -162,7 +161,7 @@ export default function EntertainmentPage() {
           </button>
           <button
             onClick={() => setActiveTab("game")}
-            className={`relative z-10 flex-1 px-4 py-2 rounded-md text-sm font-medium transition ${
+            className={`relative z-10 flex-1 px-3 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium transition ${
               activeTab === "game"
                 ? "text-skin-base"
                 : "text-skin-muted hover:text-skin-text"
@@ -184,14 +183,14 @@ export default function EntertainmentPage() {
                 ? t("entertainment:discovery.search_movies")
                 : t("entertainment:discovery.search_games")
           }`}
-          className="w-full bg-skin-surface border border-skin-border text-skin-text px-5 py-4 rounded-xl pl-12 focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition placeholder:text-skin-muted"
+          className="w-full bg-skin-surface border border-skin-border text-skin-text px-4 py-3 md:px-5 md:py-4 rounded-xl pl-10 md:pl-12 text-sm md:text-base focus:outline-none focus:border-skin-primary focus:ring-1 focus:ring-skin-primary transition placeholder:text-skin-muted"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <MagnifyingGlassIcon className="w-6 h-6 text-skin-muted absolute left-4 top-4" />
+        <MagnifyingGlassIcon className="w-5 h-5 md:w-6 md:h-6 text-skin-muted absolute left-3 top-3.5 md:left-4 md:top-4" />
         <button
           type="submit"
-          className="absolute right-3 top-2.5 bg-skin-primary hover:bg-skin-primary/90 text-skin-base px-4 py-1.5 rounded-lg font-medium transition"
+          className="absolute right-2 top-2 md:right-3 md:top-2.5 bg-skin-primary hover:bg-skin-primary/90 text-skin-base px-3 py-1.5 md:px-4 md:py-1.5 rounded-lg text-xs md:text-sm font-medium transition"
         >
           {t("common:buttons.search")}
         </button>
@@ -205,7 +204,7 @@ export default function EntertainmentPage() {
         displayedQuery={displayedQuery}
         hasResults={results.length > 0}
       >
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-6">
           {results.map((item) =>
             activeTab === "game" ? (
               <GameCard key={item.id} game={item as GameContentDto} />
