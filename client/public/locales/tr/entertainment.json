@@ -59,7 +59,8 @@
       "latest_episode": "Son Çıkan",
       "prod_status": "Yapım Durumu",
       "user_status": "Kullanıcı Durumu",
-      "date": "Tarih",
+      "watch_date": "İzleme Tarihi",
+      "release_date": "Çıkış Tarihi",
       "actions": "Eylemler",
       "watched_up_to_date": "Güncel bölümler izlendi!"
     }

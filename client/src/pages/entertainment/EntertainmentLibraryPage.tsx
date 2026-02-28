@@ -825,9 +825,14 @@ export default function EntertainmentLibraryPage() {
                       >
                         {t("entertainment:library.table.user_status")}
                       </th>
+                      {activeTab === "movie" && (
+                        <th className="px-4 py-4 hidden md:table-cell">
+                          {t("entertainment:library.table.watch_date")}
+                        </th>
+                      )}
                       {activeTab !== "game" && (
                         <th className="px-4 py-4 hidden md:table-cell">
-                          {t("entertainment:library.table.date")}
+                          {t("entertainment:library.table.release_date")}
                         </th>
                       )}
                       <th className="px-4 py-4 text-right">
@@ -1016,6 +1021,15 @@ export default function EntertainmentLibraryPage() {
                               {STATUS_CONFIG[userStatus]?.label}
                             </span>
                           </td>
+                          {activeTab === "movie" && (
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              {item.last_watched_at
+                                ? new Date(
+                                    item.last_watched_at,
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </td>
+                          )}
                           {activeTab !== "game" && (
                             <td className="px-4 py-3 hidden md:table-cell">
                               {dateStr?.split("-")[0] || "-"}

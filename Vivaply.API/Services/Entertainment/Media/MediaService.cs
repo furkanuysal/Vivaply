@@ -103,7 +103,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                             details.LastEpisodeToAir.EpisodeNumber
                         )
                         : null,
-                        GenresJson = GenreJsonHelper.Serialize(details.Genres)
+                    GenresJson = GenreJsonHelper.Serialize(details.Genres)
                 };
 
                 _dbContext.UserShows.Add(show);
@@ -234,6 +234,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                     result.UserStatus = movie.Status;
                     result.UserRating = movie.UserRating;
                     result.UserReview = movie.Review;
+                    result.LastWatchedAt = movie.WatchedAt;
                 }
             }
 
@@ -399,6 +400,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                     ReleaseDate = movie.ReleaseDate,
                     Status = movie.ProductionStatus,
                     UserReview = movie.Review,
+                    LastWatchedAt = movie.WatchedAt,
                     Genres = GenreJsonHelper.Deserialize(movie.GenresJson)
                 })
                 .ToListAsync();
@@ -1010,6 +1012,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                 Status = WatchStatus.Completed,
                 VoteAverage = details.VoteAverage,
                 ProductionStatus = details.Status,
+                WatchedAt = DateTime.UtcNow,
                 GenresJson = GenreJsonHelper.Serialize(details.Genres)
             };
 

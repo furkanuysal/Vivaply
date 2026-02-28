@@ -59,7 +59,8 @@
       "latest_episode": "Latest Episode",
       "prod_status": "Production Status",
       "user_status": "User Status",
-      "date": "Date",
+      "watch_date": "Watch Date",
+      "release_date": "Release Date",
       "actions": "Actions",
       "watched_up_to_date": "Up to date!"
     }
