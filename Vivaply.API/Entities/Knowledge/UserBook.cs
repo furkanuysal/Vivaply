@@ -13,6 +13,7 @@ namespace Vivaply.API.Entities.Knowledge
         // Google Books ID (String value, example: "zyTCAlFPjgYC")
         [MaxLength(50)]
         public string GoogleBookId { get; set; } = string.Empty;
+      //  public BookMetadata? Metadata { get; set; }
 
         // Cached Book Data
         [MaxLength(500)]

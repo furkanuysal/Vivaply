@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Vivaply.API.Entities.Entertainment.Tmdb;
 using Vivaply.API.Entities.Identity;
 
 namespace Vivaply.API.Entities.Entertainment
@@ -14,6 +15,7 @@ namespace Vivaply.API.Entities.Entertainment
 
         // TMBD Movie ID
         public int TmdbMovieId { get; set; }
+     //   public MovieMetadata? Metadata { get; set; }
 
         // Cached Basic Movie Info
         [MaxLength(200)]

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Vivaply.API.Entities.Entertainment.Tmdb;
 using Vivaply.API.Entities.Identity;
 
 namespace Vivaply.API.Entities.Entertainment
@@ -14,6 +15,7 @@ namespace Vivaply.API.Entities.Entertainment
 
         // TMDB Show ID
         public int TmdbShowId { get; set; }
+     //   public ShowMetadata? Metadata { get; set; }
 
         // Keep basic show info for quick access
         [MaxLength(200)]

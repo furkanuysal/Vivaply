@@ -10,6 +10,7 @@ namespace Vivaply.API.Entities.Entertainment.Igdb
         public User? User { get; set; }
 
         public int IgdbId { get; set; } // IGDB ID
+     //   public GameMetadata? Metadata { get; set; }
 
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
