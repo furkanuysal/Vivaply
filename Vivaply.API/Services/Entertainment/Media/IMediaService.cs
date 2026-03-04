@@ -89,12 +89,5 @@ namespace Vivaply.API.Services.Entertainment.Media
             Guid userId,
             AddMediaReviewDto request
         );
-
-
-        // -------- MAINTENANCE --------
-
-        Task<int> FixBrokenMediaDataAsync();
-
-        Task<int> SyncMediaLibraryAsync(Guid userId);
     }
 }

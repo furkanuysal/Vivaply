@@ -4,6 +4,7 @@ using Vivaply.API.DTOs.Entertainment.Commands.Games;
 using Vivaply.API.DTOs.Entertainment.Igdb;
 using Vivaply.API.Entities.Entertainment.Igdb;
 using Vivaply.API.Services.Entertainment.Igdb;
+using Vivaply.API.Services.Infrastructure.Serialization;
 
 namespace Vivaply.API.Services.Entertainment.Game
 {
@@ -28,15 +29,17 @@ namespace Vivaply.API.Services.Entertainment.Game
                 return game;
 
             var userGame = await _dbContext.UserGames
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.IgdbId == igdbId);
 
             if (userGame == null)
                 return game;
 
-            // Sync vote average
-            if (Math.Abs(userGame.VoteAverage - game.VoteAverage) > 0.1)
+            // Sync vote average (metadata)
+            if (userGame.Metadata != null && Math.Abs(userGame.Metadata.VoteAverage - game.VoteAverage) > 0.1)
             {
-                userGame.VoteAverage = game.VoteAverage;
+                userGame.Metadata.VoteAverage = game.VoteAverage;
+                userGame.Metadata.LastFetchedAt = DateTime.UtcNow;
                 await _dbContext.SaveChangesAsync();
             }
 
@@ -59,15 +62,19 @@ namespace Vivaply.API.Services.Entertainment.Game
                 .Select(x => new GameContentDto
                 {
                     Id = x.IgdbId,
-                    Title = x.Title,
-                    CoverUrl = x.CoverUrl,
+
+                    // Metadata
+                    Title = x.Metadata!.Title,
+                    CoverUrl = x.Metadata!.CoverUrl,
+                    VoteAverage = x.Metadata!.VoteAverage,
+                    ReleaseDate = x.Metadata!.ReleaseDate,
+                    Platforms = string.Join(", ", JsonHelper.DeserializeList<string>(x.Metadata!.PlatformsJson)),
+                    Developers = string.Join(", ", JsonHelper.DeserializeList<string>(x.Metadata!.DevelopersJson)),
+                    Genres = string.Join(", ", JsonHelper.DeserializeList<string>(x.Metadata!.GenresJson)),
+
+                    // User data
                     UserStatus = x.Status,
-                    VoteAverage = x.VoteAverage,
                     UserRating = x.UserRating,
-                    ReleaseDate = x.ReleaseDate,
-                    Platforms = x.Platforms ?? "",
-                    Developers = x.Developers ?? "",
-                    Genres = x.Genres ?? "",
                     UserPlatform = x.UserPlatform,
                     UserPlaytime = x.UserPlaytime,
                     CompletionType = x.CompletionType
@@ -77,32 +84,23 @@ namespace Vivaply.API.Services.Entertainment.Game
 
         public async Task AddToLibraryAsync(Guid userId, TrackGameDto request)
         {
-            if (await _dbContext.UserGames.AnyAsync(x =>
-                x.UserId == userId && x.IgdbId == request.IgdbId))
+            if (await _dbContext.UserGames.AnyAsync(x => x.UserId == userId && x.IgdbId == request.IgdbId))
                 throw new InvalidOperationException("Game already exists in library.");
 
-            var details = await _igdbService.GetGameDetailAsync(request.IgdbId);
-            if (details == null)
-                throw new InvalidOperationException("Game details could not be fetched.");
+            await GetOrCreateMetadataAsync(request.IgdbId);
 
             var game = new UserGame
             {
                 UserId = userId,
                 IgdbId = request.IgdbId,
-                Title = details.Title,
-                CoverUrl = details.CoverUrl,
-                ReleaseDate = details.ReleaseDate,
                 Status = request.Status,
-                VoteAverage = details.VoteAverage,
-                Platforms = details.Platforms,
-                Developers = details.Developers,
-                Genres = details.Genres,
-                DateAdded = DateTime.UtcNow,
                 UserPlatform = request.UserPlatform,
+                DateAdded = DateTime.UtcNow,
                 DateFinished = request.Status == PlayStatus.Completed ? DateTime.UtcNow : null
             };
 
             _dbContext.UserGames.Add(game);
+
             await _dbContext.SaveChangesAsync();
         }
 
@@ -158,28 +156,21 @@ namespace Vivaply.API.Services.Entertainment.Game
 
             if (game == null)
             {
-                var details = await _igdbService.GetGameDetailAsync(request.IgdbId);
-                if (details == null)
-                    throw new InvalidOperationException("Game details could not be fetched.");
+                await GetOrCreateMetadataAsync(request.IgdbId);
 
                 game = new UserGame
                 {
                     UserId = userId,
                     IgdbId = request.IgdbId,
-                    Title = details.Title,
-                    CoverUrl = details.CoverUrl,
-                    ReleaseDate = details.ReleaseDate,
-                    Platforms = details.Platforms,
-                    Developers = details.Developers,
-                    Genres = details.Genres,
                     Status = PlayStatus.Playing,
-                    VoteAverage = details.VoteAverage
+                    DateAdded = DateTime.UtcNow
                 };
 
                 _dbContext.UserGames.Add(game);
             }
 
             game.UserRating = request.Rating;
+
             await _dbContext.SaveChangesAsync();
         }
 
@@ -205,6 +196,57 @@ namespace Vivaply.API.Services.Entertainment.Game
 
             _dbContext.UserGames.Remove(game);
             await _dbContext.SaveChangesAsync();
+        }
+
+        // Private Helper Methods
+
+        private GameMetadata CreateMetadata(int igdbId, GameContentDto details)
+        {
+            return new GameMetadata
+            {
+                IgdbId = igdbId,
+                Title = details.Title,
+                CoverUrl = details.CoverUrl,
+                ReleaseDate = details.ReleaseDate,
+
+                PlatformsJson = JsonHelper.Serialize(
+                    details.Platforms.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim())
+                        .ToList()
+                ),
+
+                DevelopersJson = JsonHelper.Serialize(
+                    details.Developers.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim())
+                        .ToList()
+                ),
+
+                GenresJson = JsonHelper.Serialize(
+                    details.Genres.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim())
+                        .ToList()
+                ),
+
+                VoteAverage = details.VoteAverage,
+                LastFetchedAt = DateTime.UtcNow
+            };
+        }
+
+        private async Task<GameMetadata> GetOrCreateMetadataAsync(int igdbId)
+        {
+            var metadata = await _dbContext.GameMetadata.FindAsync(igdbId);
+
+            if (metadata != null)
+                return metadata;
+
+            var details = await _igdbService.GetGameDetailAsync(igdbId)
+                ?? throw new InvalidOperationException("Game details could not be fetched.");
+
+            metadata = CreateMetadata(igdbId, details);
+
+            _dbContext.GameMetadata.Add(metadata);
+
+            return metadata;
         }
     }
 }

@@ -13,19 +13,7 @@ namespace Vivaply.API.Entities.Knowledge
         // Google Books ID (String value, example: "zyTCAlFPjgYC")
         [MaxLength(50)]
         public string GoogleBookId { get; set; } = string.Empty;
-      //  public BookMetadata? Metadata { get; set; }
-
-        // Cached Book Data
-        [MaxLength(500)]
-        public string Title { get; set; } = string.Empty;
-
-        [MaxLength(500)]
-        public string Authors { get; set; } = string.Empty; // String values separated by commas
-
-        [MaxLength(500)]
-        public string? CoverUrl { get; set; }
-
-        public int PageCount { get; set; } // Total Pages
+        public BookMetadata? Metadata { get; set; }
 
         // User-specific fields
         public ReadStatus Status { get; set; } = ReadStatus.PlanToRead;

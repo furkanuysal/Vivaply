@@ -35,9 +35,9 @@ namespace Vivaply.API.Services.Dashboard
                 {
                     Id = show.TmdbShowId.ToString(),
                     Type = "tv",
-                    Title = show.ShowName,
-                    ImageUrl = !string.IsNullOrEmpty(show.PosterPath)
-                        ? TMDB_IMAGE_BASE + show.PosterPath
+                    Title = show.Metadata!.Name,
+                    ImageUrl = !string.IsNullOrEmpty(show.Metadata!.PosterPath)
+                        ? TMDB_IMAGE_BASE + show.Metadata.PosterPath
                         : null,
 
                     Season = show.LastWatchedSeason,
@@ -56,6 +56,7 @@ namespace Vivaply.API.Services.Dashboard
                 .Where(x => x.UserId == userId && x.Status == PlayStatus.Playing)
                 .OrderByDescending(x => x.DateAdded)
                 .Take(5)
+                .Include(x => x.Metadata)
                 .ToListAsync();
 
             foreach (var game in activeGames)
@@ -64,8 +65,8 @@ namespace Vivaply.API.Services.Dashboard
                 {
                     Id = game.IgdbId.ToString(),
                     Type = "game",
-                    Title = game.Title,
-                    ImageUrl = game.CoverUrl,
+                    Title = game.Metadata?.Title ?? "(Unknown)",
+                    ImageUrl = game.Metadata?.CoverUrl,
                     CurrentValue = game.UserPlaytime,
                     UserStatus = (int)game.Status,
                     LastUpdated = game.DateAdded
@@ -77,20 +78,22 @@ namespace Vivaply.API.Services.Dashboard
                 .Where(x => x.UserId == userId && x.Status == ReadStatus.Reading)
                 .OrderByDescending(x => x.DateAdded)
                 .Take(5)
+                .Include(x => x.Metadata)
                 .ToListAsync();
 
             foreach (var book in activeBooks)
             {
-                int percent = book.PageCount > 0 ? (int)((double)book.CurrentPage / book.PageCount * 100) : 0;
+                var pageCount = book.Metadata?.PageCount ?? 0;
+                int percent = pageCount > 0 ? (int)((double)book.CurrentPage / pageCount * 100) : 0;
 
                 response.ContinueReading.Add(new DashboardItemDto
                 {
                     Id = book.GoogleBookId,
                     Type = "book",
-                    Title = book.Title,
-                    ImageUrl = book.CoverUrl,
+                    Title = book.Metadata?.Title ?? "(Unknown)",
+                    ImageUrl = book.Metadata?.CoverUrl,
                     CurrentValue = book.CurrentPage,
-                    MaxValue = book.PageCount,
+                    MaxValue = pageCount,
                     ProgressPercent = percent,
                     UserStatus = (int)book.Status,
                     LastUpdated = book.DateAdded

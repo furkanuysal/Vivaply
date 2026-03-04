@@ -3,6 +3,7 @@ using Vivaply.API.Data;
 using Vivaply.API.DTOs.Knowledge.Commands.Book;
 using Vivaply.API.DTOs.Knowledge.GoogleBooks;
 using Vivaply.API.Entities.Knowledge;
+using Vivaply.API.Services.Infrastructure.Serialization;
 using Vivaply.API.Services.Knowledge.GoogleBooks;
 
 namespace Vivaply.API.Services.Knowledge.Book
@@ -45,6 +46,8 @@ namespace Vivaply.API.Services.Knowledge.Book
         public async Task<List<BookContentDto>> GetLibraryAsync(Guid userId)
         {
             var books = await _db.UserBooks
+                .AsNoTracking()
+                .Include(x => x.Metadata)
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.DateAdded)
                 .ToListAsync();
@@ -52,13 +55,14 @@ namespace Vivaply.API.Services.Knowledge.Book
             return books.Select(b => new BookContentDto
             {
                 Id = b.GoogleBookId,
-                Title = b.Title,
-                Authors = b.Authors
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(a => a.Trim())
-                    .ToList(),
-                CoverUrl = b.CoverUrl,
-                PageCount = b.PageCount,
+
+                // Metadata
+                Title = b.Metadata?.Title ?? "(Unknown)",
+                Authors = JsonHelper.DeserializeList<string>(b.Metadata?.AuthorsJson),
+                CoverUrl = b.Metadata?.CoverUrl,
+                PageCount = b.Metadata?.PageCount ?? 0,
+
+                // User-specific
                 UserStatus = b.Status,
                 CurrentPage = b.CurrentPage,
                 UserRating = b.UserRating,
@@ -70,16 +74,31 @@ namespace Vivaply.API.Services.Knowledge.Book
         public async Task TrackAsync(Guid userId, AddBookDto request)
         {
             if (await _db.UserBooks.AnyAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId))
-                throw new InvalidOperationException("Bu kitap zaten kütüphanede.");
+                throw new InvalidOperationException("This book is already on library.");
+
+            // Check if metadata exists, if not create a new one (to avoid unnecessary API calls in the future)
+            var metadata = await _db.BookMetadata
+                .FirstOrDefaultAsync(x => x.GoogleBookId == request.GoogleBookId);
+
+            if (metadata == null)
+            {
+                metadata = new BookMetadata
+                {
+                    GoogleBookId = request.GoogleBookId,
+                    Title = request.Title,
+                    AuthorsJson = JsonHelper.SerializeList(request.Authors),
+                    CoverUrl = request.CoverUrl,
+                    PageCount = request.PageCount,
+                    LastFetchedAt = DateTime.UtcNow
+                };
+
+                _db.BookMetadata.Add(metadata);
+            }
 
             _db.UserBooks.Add(new UserBook
             {
                 UserId = userId,
                 GoogleBookId = request.GoogleBookId,
-                Title = request.Title,
-                Authors = string.Join(", ", request.Authors),
-                CoverUrl = request.CoverUrl,
-                PageCount = request.PageCount,
                 Status = request.Status,
                 DateAdded = DateTime.UtcNow,
                 DateFinished = request.Status == ReadStatus.Completed ? DateTime.UtcNow : null
@@ -94,7 +113,7 @@ namespace Vivaply.API.Services.Knowledge.Book
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId);
 
             if (book == null)
-                throw new KeyNotFoundException("Kitap bulunamadı.");
+                throw new KeyNotFoundException("Book couldn't be found.");
 
             _db.UserBooks.Remove(book);
             await _db.SaveChangesAsync();
@@ -109,8 +128,10 @@ namespace Vivaply.API.Services.Knowledge.Book
 
             if (request.Status == ReadStatus.Completed)
             {
-                book.CurrentPage = book.PageCount;
-                if (book.DateFinished == null) book.DateFinished = DateTime.UtcNow;
+                book.CurrentPage = book.Metadata?.PageCount ?? book.CurrentPage;
+
+                if (book.DateFinished == null)
+                    book.DateFinished = DateTime.UtcNow;
             }
             else
             {
@@ -124,9 +145,11 @@ namespace Vivaply.API.Services.Knowledge.Book
         {
             var book = await GetUserBook(userId, request.GoogleBookId);
 
-            book.CurrentPage = Math.Min(request.CurrentPage, book.PageCount);
+            var pageCount = book.Metadata?.PageCount ?? 0;
 
-            if (book.CurrentPage == book.PageCount)
+            book.CurrentPage = Math.Min(request.CurrentPage, pageCount);
+
+            if (book.CurrentPage == pageCount && pageCount > 0)
             {
                 book.Status = ReadStatus.Completed;
                 if (book.DateFinished == null)
@@ -156,16 +179,30 @@ namespace Vivaply.API.Services.Knowledge.Book
             if (book == null)
             {
                 var details = await _googleBooks.GetBookDetailsAsync(request.GoogleBookId)
-                    ?? throw new KeyNotFoundException("Kitap bulunamadı.");
+                    ?? throw new KeyNotFoundException("Book couldn't be found.");
+
+                var metadata = await _db.BookMetadata
+                    .FirstOrDefaultAsync(x => x.GoogleBookId == request.GoogleBookId);
+
+                if (metadata == null)
+                {
+                    metadata = new BookMetadata
+                    {
+                        GoogleBookId = request.GoogleBookId,
+                        Title = details.Title,
+                        AuthorsJson = JsonHelper.SerializeList(details.Authors),
+                        CoverUrl = details.CoverUrl,
+                        PageCount = details.PageCount,
+                        LastFetchedAt = DateTime.UtcNow
+                    };
+
+                    _db.BookMetadata.Add(metadata);
+                }
 
                 book = new UserBook
                 {
                     UserId = userId,
                     GoogleBookId = request.GoogleBookId,
-                    Title = details.Title,
-                    Authors = string.Join(", ", details.Authors),
-                    CoverUrl = details.CoverUrl,
-                    PageCount = details.PageCount,
                     Status = ReadStatus.Reading,
                     DateAdded = DateTime.UtcNow
                 };
@@ -174,6 +211,7 @@ namespace Vivaply.API.Services.Knowledge.Book
             }
 
             book.UserRating = request.Rating;
+
             await _db.SaveChangesAsync();
         }
 
@@ -188,8 +226,9 @@ namespace Vivaply.API.Services.Knowledge.Book
         private async Task<UserBook> GetUserBook(Guid userId, string googleBookId)
         {
             return await _db.UserBooks
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId)
-                ?? throw new KeyNotFoundException("Kitap kütüphanede bulunamadı.");
+                ?? throw new KeyNotFoundException("Book couldn't be found on library.");
         }
     }
 }

@@ -226,23 +226,6 @@ namespace Vivaply.API.Controllers
             return Ok(new { message = "Review saved." });
         }
 
-        // Maintenance Endpoint: Fix Broken Data
-        [HttpGet("fix-data")]
-        public async Task<IActionResult> FixData()
-        {
-            var count = await _mediaService.FixBrokenMediaDataAsync();
-            return Ok(new { updated = count });
-        }
-
-        // Sync library with TMDB to latest data
-        [EnableRateLimiting(RateLimitPolicies.MediaSync)]
-        [HttpPost("library/sync")]
-        public async Task<IActionResult> SyncLibrary()
-        {
-            var count = await _mediaService.SyncMediaLibraryAsync(GetUserId());
-            return Ok(new { updated = count });
-        }
-
         // Game Library
         [HttpGet("game/library")]
         public async Task<IActionResult> GetGameLibrary()
@@ -256,42 +239,42 @@ namespace Vivaply.API.Controllers
         public async Task<IActionResult> TrackGame([FromBody] TrackGameDto request)
         {
             await _gameService.AddToLibraryAsync(GetUserId(), request);
-            return Ok(new { message = "Oyun kütüphaneye eklendi." });
+            return Ok(new { message = "The game has been added to the library." });
         }
 
         [HttpPut("game/status")]
         public async Task<IActionResult> UpdateGameStatus([FromBody] UpdateGameStatusDto request)
         {
             await _gameService.UpdateStatusAsync(GetUserId(), request);
-            return Ok(new { message = "Durum güncellendi." });
+            return Ok(new { message = "Status updated." });
         }
 
         [HttpPut("game/progress")]
         public async Task<IActionResult> UpdateGameProgress([FromBody] UpdateGameProgressDto request)
         {
             await _gameService.UpdateProgressAsync(GetUserId(), request);
-            return Ok(new { message = "Oyun ilerlemesi güncellendi." });
+            return Ok(new { message = "Game progress has been updated." });
         }
 
         [HttpPut("game/rating")]
         public async Task<IActionResult> RateGame([FromBody] RateGameDto request)
         {
             await _gameService.RateAsync(GetUserId(), request);
-            return Ok(new { message = "Puan kaydedildi." });
+            return Ok(new { message = "Rating saved." });
         }
 
         [HttpPut("game/review")]
         public async Task<IActionResult> AddGameReview([FromBody] AddGameReviewDto request)
         {
             await _gameService.AddReviewAsync(GetUserId(), request);
-            return Ok(new { message = "Not kaydedildi." });
+            return Ok(new { message = "Review saved." });
         }
 
         [HttpDelete("game/remove/{id:int}")]
         public async Task<IActionResult> RemoveGame(int id)
         {
             await _gameService.RemoveAsync(GetUserId(), id);
-            return Ok(new { message = "Oyun kütüphaneden kaldırıldı." });
+            return Ok(new { message = "The game was removed from the library." });
         }
 
         // --- Private Helpers ---

@@ -96,50 +96,34 @@ namespace Vivaply.API.Data
                 .HasForeignKey(g => g.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ShowMetadata Primary Key
+            // Metadata Keys
             modelBuilder.Entity<ShowMetadata>()
                 .HasKey(x => x.TmdbShowId);
 
-            modelBuilder.Entity<ShowMetadata>()
-                .HasIndex(x => x.TmdbShowId)
-                .IsUnique();
-
-            // MovieMetadata Primary Key
             modelBuilder.Entity<MovieMetadata>()
                 .HasKey(x => x.TmdbMovieId);
 
-            modelBuilder.Entity<MovieMetadata>()
-                .HasIndex(x => x.TmdbMovieId)
-                .IsUnique();
+            modelBuilder.Entity<GameMetadata>()
+                .HasKey(x => x.IgdbId);
 
             // UserShow -> ShowMetadata (Many-to-One)
-        /*    modelBuilder.Entity<UserShow>()
+            modelBuilder.Entity<UserShow>()
                 .HasOne(s => s.Metadata)
                 .WithMany()
                 .HasForeignKey(s => s.TmdbShowId)
-                .HasPrincipalKey(m => m.TmdbShowId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<UserMovie>()
                 .HasOne(m => m.Metadata)
                 .WithMany()
                 .HasForeignKey(m => m.TmdbMovieId)
-                .HasPrincipalKey(md => md.TmdbMovieId)
-                .OnDelete(DeleteBehavior.Restrict);*/
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<GameMetadata>()
-                .HasKey(x => x.IgdbId);
-
-            modelBuilder.Entity<GameMetadata>()
-                .HasIndex(x => x.IgdbId)
-                .IsUnique();
-
-          /*  modelBuilder.Entity<UserGame>()
+            modelBuilder.Entity<UserGame>()
                 .HasOne(g => g.Metadata)
                 .WithMany()
                 .HasForeignKey(g => g.IgdbId)
-                .HasPrincipalKey(m => m.IgdbId)
-                .OnDelete(DeleteBehavior.Restrict); */
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Knowledge Relationships
             // User - UserBook Relationships (1-to-Many)
@@ -150,18 +134,31 @@ namespace Vivaply.API.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<BookMetadata>()
-                .HasKey(x => x.GoogleBookId);
+                 .HasKey(x => x.GoogleBookId);
 
-            modelBuilder.Entity<BookMetadata>()
-                .HasIndex(x => x.GoogleBookId)
-                .IsUnique();
-
-            /* modelBuilder.Entity<UserBook>()
+            modelBuilder.Entity<UserBook>()
                  .HasOne(b => b.Metadata)
                  .WithMany()
                  .HasForeignKey(b => b.GoogleBookId)
-                 .HasPrincipalKey(m => m.GoogleBookId)
-                 .OnDelete(DeleteBehavior.Restrict); */
+                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Unique Constraints to prevent duplicate entries for the same user and item
+
+            modelBuilder.Entity<UserShow>()
+                .HasIndex(x => new { x.UserId, x.TmdbShowId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserMovie>()
+                .HasIndex(x => new { x.UserId, x.TmdbMovieId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserGame>()
+                .HasIndex(x => new { x.UserId, x.IgdbId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserBook>()
+                .HasIndex(x => new { x.UserId, x.GoogleBookId })
+                .IsUnique();
         }
     }
 }

@@ -1,35 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+using System.Globalization;
 using Vivaply.API.Data;
 using Vivaply.API.DTOs.Entertainment.Commands.Media;
 using Vivaply.API.DTOs.Entertainment.Results.Library;
 using Vivaply.API.DTOs.Entertainment.Results.Media;
 using Vivaply.API.DTOs.Entertainment.Tmdb;
 using Vivaply.API.Entities.Entertainment;
-using Vivaply.API.Services.Entertainment.Media.Helpers;
+using Vivaply.API.Entities.Entertainment.Tmdb;
 using Vivaply.API.Services.Entertainment.Tmdb;
-using Vivaply.API.Services.Infrastructure.RateLimiting;
+using Vivaply.API.Services.Infrastructure.Serialization;
 
 namespace Vivaply.API.Services.Entertainment.Media
 {
-    public class MediaService : IMediaService
+    public class MediaService(
+        VivaplyDbContext dbContext,
+        ITmdbService tmdbService
+        ) : IMediaService
     {
-        private readonly VivaplyDbContext _dbContext;
-        private readonly ITmdbService _tmdbService;
-
-        public MediaService(
-            VivaplyDbContext dbContext,
-            ITmdbService tmdbService
-        )
-        {
-            _dbContext = dbContext;
-            _tmdbService = tmdbService;
-        }
+        private readonly VivaplyDbContext _dbContext = dbContext;
+        private readonly ITmdbService _tmdbService = tmdbService;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             ValidateTmdbId(request.TmdbId);
 
@@ -38,22 +31,18 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (type == "tv")
             {
                 var show = await _dbContext.UserShows
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId);
-
-                if (show == null)
-                    throw new InvalidOperationException(
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
+                    ?? throw new InvalidOperationException(
                         "You must add the TV show to your library before reviewing it."
                     );
 
                 show.Review = request.Review;
             }
-            else // movie
+            else
             {
                 var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
-
-                if (movie == null)
-                    throw new InvalidOperationException(
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                    ?? throw new InvalidOperationException(
                         "You must add the movie to your library before reviewing it."
                     );
 
@@ -67,8 +56,7 @@ namespace Vivaply.API.Services.Entertainment.Media
 
         public async Task AddMediaToLibraryAsync(Guid userId, AddMediaToLibraryDto request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             ValidateTmdbId(request.TmdbId);
 
@@ -82,33 +70,23 @@ namespace Vivaply.API.Services.Entertainment.Media
                 if (exists)
                     throw new InvalidOperationException("This TV show is already in your library.");
 
-                var details = await _tmdbService.GetTvShowDetailsAsync(request.TmdbId);
-                if (details == null)
-                    throw new InvalidOperationException("TV show details could not be fetched.");
+                var metadata = await GetOrCreateShowMetadataAsync(request.TmdbId);
 
                 var show = new UserShow
                 {
                     UserId = userId,
                     TmdbShowId = request.TmdbId,
-                    ShowName = request.Title,
-                    PosterPath = request.PosterPath,
-                    FirstAirDate = request.Date,
+                    Metadata = metadata,
                     Status = request.Status,
-                    VoteAverage = details.VoteAverage,
-                    ProductionStatus = details.Status,
-                    NextAirDate = details.NextEpisodeToAir?.AirDate,
-                    LatestEpisodeInfo = details.LastEpisodeToAir != null
-                        ? BuildEpisodeInfo(
-                            details.LastEpisodeToAir.SeasonNumber,
-                            details.LastEpisodeToAir.EpisodeNumber
-                        )
-                        : null,
-                    GenresJson = GenreJsonHelper.Serialize(details.Genres)
+                    StartedAt = DateTime.UtcNow,
+                    LastWatchedAt = request.Status == WatchStatus.Completed
+                        ? DateTime.UtcNow
+                        : null
                 };
 
                 _dbContext.UserShows.Add(show);
             }
-            else // movie
+            else
             {
                 var exists = await _dbContext.UserMovies
                     .AnyAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
@@ -116,22 +94,17 @@ namespace Vivaply.API.Services.Entertainment.Media
                 if (exists)
                     throw new InvalidOperationException("This movie is already in your library.");
 
-                var details = await _tmdbService.GetMovieDetailsAsync(request.TmdbId);
-                if (details == null)
-                    throw new InvalidOperationException("Movie details could not be fetched.");
+                var metadata = await GetOrCreateMovieMetadataAsync(request.TmdbId);
 
                 var movie = new UserMovie
                 {
                     UserId = userId,
                     TmdbMovieId = request.TmdbId,
-                    Title = request.Title,
-                    PosterPath = request.PosterPath,
-                    ReleaseDate = request.Date,
+                    Metadata = metadata,
                     Status = request.Status,
-                    VoteAverage = details.VoteAverage,
-                    ProductionStatus = details.Status,
-                    WatchedAt = request.Status == WatchStatus.Completed ? DateTime.UtcNow : null,
-                    GenresJson = GenreJsonHelper.Serialize(details.Genres)
+                    WatchedAt = request.Status == WatchStatus.Completed
+                        ? DateTime.UtcNow
+                        : null
                 };
 
                 _dbContext.UserMovies.Add(movie);
@@ -139,78 +112,6 @@ namespace Vivaply.API.Services.Entertainment.Media
 
             await _dbContext.SaveChangesAsync();
         }
-
-        public async Task<int> FixBrokenMediaDataAsync()
-        {
-            int fixedCount = 0;
-
-            var brokenShows = await _dbContext.UserShows
-                .Where(s =>
-                    s.ShowName.Contains("Unknown") ||
-                    s.VoteAverage == 0 ||
-                    s.LatestEpisodeInfo == null ||
-                    s.ProductionStatus == null ||
-                    s.GenresJson == null)
-                .ToListAsync();
-
-            foreach (var show in brokenShows)
-            {
-                var details = await _tmdbService.GetTvShowDetailsAsync(show.TmdbShowId, "en-US");
-                if (details == null) continue;
-
-                show.ShowName = details.Name ?? show.ShowName;
-                show.PosterPath = details.PosterPath;
-                show.FirstAirDate = details.FirstAirDate;
-                show.VoteAverage = details.VoteAverage;
-                show.NextAirDate = details.NextEpisodeToAir?.AirDate;
-                show.ProductionStatus = details.Status;
-
-                if (details.LastEpisodeToAir != null)
-                {
-                    show.LatestEpisodeInfo =
-                        $"S{details.LastEpisodeToAir.SeasonNumber} E{details.LastEpisodeToAir.EpisodeNumber}";
-                }
-                if (string.IsNullOrEmpty(show.GenresJson) && details.Genres != null)
-                {
-                    show.GenresJson = GenreJsonHelper.Serialize(details.Genres);
-                }
-
-                fixedCount++;
-            }
-
-            var brokenMovies = await _dbContext.UserMovies
-                .Where(m =>
-                    m.Title.Contains("Unknown") ||
-                    m.VoteAverage == 0 ||
-                    m.ProductionStatus == null ||
-                    m.GenresJson == null)
-                .ToListAsync();
-
-            foreach (var movie in brokenMovies)
-            {
-                var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbMovieId, "en-US");
-                if (details == null) continue;
-
-                movie.Title = details.Title ?? movie.Title;
-                movie.PosterPath = details.PosterPath;
-                movie.ReleaseDate = details.ReleaseDate;
-                movie.VoteAverage = details.VoteAverage;
-                movie.ProductionStatus = details.Status;
-
-                if (string.IsNullOrEmpty(movie.GenresJson) && details.Genres != null)
-                {
-                    movie.GenresJson = GenreJsonHelper.Serialize(details.Genres);
-                }
-
-                fixedCount++;
-            }
-
-            if (fixedCount > 0)
-                await _dbContext.SaveChangesAsync();
-
-            return fixedCount;
-        }
-
 
         public async Task<TmdbContentDto?> GetMovieDetailAsync(
          Guid? userId,
@@ -241,12 +142,7 @@ namespace Vivaply.API.Services.Entertainment.Media
             return result;
         }
 
-
-        public async Task<TmdbShowDetailDto?> GetTvShowDetailAsync(
-             Guid? userId,
-             int tmdbId,
-             string language
-            )
+        public async Task<TmdbShowDetailDto?> GetTvShowDetailAsync(Guid? userId,int tmdbId,string language)
         {
             if (tmdbId <= 0)
                 throw new ArgumentException("Invalid tmdbId.", nameof(tmdbId));
@@ -258,45 +154,59 @@ namespace Vivaply.API.Services.Entertainment.Media
                 return result;
 
             var userShow = await _dbContext.UserShows
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbId);
 
             if (userShow == null)
                 return result;
 
+            var metadata = userShow.Metadata;
+
             bool hasChanges = false;
 
-            string? freshLatestInfo = null;
-            if (result.LastEpisodeToAir != null)
+            if (metadata != null)
             {
-                freshLatestInfo = $"S{result.LastEpisodeToAir.SeasonNumber} E{result.LastEpisodeToAir.EpisodeNumber}";
-            }
+                var freshSeason = result.LastEpisodeToAir?.SeasonNumber;
+                var freshEpisode = result.LastEpisodeToAir?.EpisodeNumber;
 
-            if (userShow.LatestEpisodeInfo != freshLatestInfo)
-            {
-                userShow.LatestEpisodeInfo = freshLatestInfo;
-                hasChanges = true;
-            }
+                if (metadata.LastKnownSeason != freshSeason)
+                {
+                    metadata.LastKnownSeason = freshSeason;
+                    hasChanges = true;
+                }
 
-            if (Math.Abs(userShow.VoteAverage - result.VoteAverage) > 0.1)
-            {
-                userShow.VoteAverage = result.VoteAverage;
-                hasChanges = true;
-            }
+                if (metadata.LastKnownEpisode != freshEpisode)
+                {
+                    metadata.LastKnownEpisode = freshEpisode;
+                    hasChanges = true;
+                }
 
-            if (userShow.NextAirDate != result.NextEpisodeToAir?.AirDate)
-            {
-                userShow.NextAirDate = result.NextEpisodeToAir?.AirDate;
-                hasChanges = true;
-            }
+                var nextAirDate = ParseTmdbDate(result.NextEpisodeToAir?.AirDate);
 
-            if (userShow.ProductionStatus != result.Status)
-            {
-                userShow.ProductionStatus = result.Status;
-                hasChanges = true;
-            }
+                if (metadata.NextEpisodeAirDate != nextAirDate)
+                {
+                    metadata.NextEpisodeAirDate = nextAirDate;
+                    hasChanges = true;
+                }
 
-            if (hasChanges)
-                await _dbContext.SaveChangesAsync();
+                if (Math.Abs(metadata.VoteAverage - result.VoteAverage) > 0.1)
+                {
+                    metadata.VoteAverage = result.VoteAverage;
+                    hasChanges = true;
+                }
+
+                if (metadata.ProductionStatus != result.Status)
+                {
+                    metadata.ProductionStatus = result.Status;
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    metadata.LastFetchedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
 
             result.UserStatus = userShow.Status;
             result.UserRating = userShow.UserRating;
@@ -360,50 +270,65 @@ namespace Vivaply.API.Services.Entertainment.Media
             return seasonData;
         }
 
-
         public async Task<MediaLibraryDto> GetUserLibraryAsync(Guid userId)
         {
             // User shows
-            var userShows = await _dbContext.UserShows
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
+            var userShows = await _dbContext.UserShows.
+                Include(x => x.Metadata).
+                Where(x => x.UserId == userId).
+                ToListAsync();
 
             var tvList = userShows.Select(show => new TmdbContentDto
             {
                 Id = show.TmdbShowId,
-                Name = show.ShowName,
-                PosterPath = show.PosterPath,
+
+                Name = show.Metadata!.Name,
+                PosterPath = show.Metadata!.PosterPath,
+                VoteAverage = show.Metadata!.VoteAverage,
+
+                FirstAirDate = show.Metadata!.FirstAirDate?.ToString("yyyy-MM-dd"),
+
+                LatestEpisode = show.Metadata!.LastKnownSeason != null && show.Metadata.LastKnownEpisode != null
+                    ? $"S{show.Metadata.LastKnownSeason} E{show.Metadata.LastKnownEpisode}"
+                    : null,
+
+                Status = show.Metadata!.ProductionStatus,
+
+                Genres = JsonHelper.DeserializeList<TmdbGenreDto>(show.Metadata!.GenresJson),
+
                 UserStatus = show.Status,
-                VoteAverage = show.VoteAverage,
                 UserRating = show.UserRating,
-                FirstAirDate = show.FirstAirDate,
-                LatestEpisode = show.LatestEpisodeInfo,
-                Status = show.ProductionStatus,
                 UserReview = show.Review,
+
                 LastWatchedSeason = show.LastWatchedSeason,
                 LastWatchedEpisode = show.LastWatchedEpisode,
-                LastWatchedAt = show.LastWatchedAt,
-                Genres = GenreJsonHelper.Deserialize(show.GenresJson)
+                LastWatchedAt = show.LastWatchedAt
+
             }).ToList();
 
             // User movies
-            var movieList = await _dbContext.UserMovies
+            var userMovies = await _dbContext.UserMovies
+                .Include(x => x.Metadata)
                 .Where(x => x.UserId == userId)
-                .Select(movie => new TmdbContentDto
-                {
-                    Id = movie.TmdbMovieId,
-                    Title = movie.Title,
-                    PosterPath = movie.PosterPath,
-                    UserStatus = movie.Status,
-                    VoteAverage = movie.VoteAverage,
-                    UserRating = movie.UserRating,
-                    ReleaseDate = movie.ReleaseDate,
-                    Status = movie.ProductionStatus,
-                    UserReview = movie.Review,
-                    LastWatchedAt = movie.WatchedAt,
-                    Genres = GenreJsonHelper.Deserialize(movie.GenresJson)
-                })
                 .ToListAsync();
+
+            var movieList = userMovies.Select(movie => new TmdbContentDto
+            {
+                Id = movie.TmdbMovieId,
+
+                Title = movie.Metadata!.Title,
+                PosterPath = movie.Metadata!.PosterPath,
+                VoteAverage = movie.Metadata!.VoteAverage,
+                ReleaseDate = movie.Metadata!.ReleaseDate?.ToString("yyyy-MM-dd"),
+                Status = movie.Metadata!.ProductionStatus,
+
+                Genres = JsonHelper.DeserializeList<TmdbGenreDto>(movie.Metadata!.GenresJson),
+
+                UserStatus = movie.Status,
+                UserRating = movie.UserRating,
+                UserReview = movie.Review,
+                LastWatchedAt = movie.WatchedAt
+            }).ToList();
 
             return new MediaLibraryDto
             {
@@ -411,13 +336,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                 Movie = movieList
             };
         }
-
-
-        public async Task<MarkSeasonResultDto> MarkSeasonWatchedAsync(
-             Guid userId,
-             int tmdbShowId,
-             int seasonNumber
-            )
+        public async Task<MarkSeasonResultDto> MarkSeasonWatchedAsync(Guid userId, int tmdbShowId, int seasonNumber)
         {
             if (tmdbShowId <= 0)
                 throw new ArgumentException("Invalid tmdbShowId.", nameof(tmdbShowId));
@@ -427,34 +346,32 @@ namespace Vivaply.API.Services.Entertainment.Media
 
             var userShow = await _dbContext.UserShows
                 .Include(x => x.WatchedEpisodes)
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbShowId);
 
-            // If the show is not in the library, auto-add it (same behavior as controller).
+            var now = DateTime.UtcNow;
+
+            // Auto-add show if not in library
             if (userShow == null)
             {
-                var showDetails = await _tmdbService.GetTvShowDetailsAsync(tmdbShowId);
+                var metadata = await GetOrCreateShowMetadataAsync(tmdbShowId);
 
                 userShow = new UserShow
                 {
                     UserId = userId,
                     TmdbShowId = tmdbShowId,
+                    Metadata = metadata,
                     Status = WatchStatus.Watching,
-                    ShowName = showDetails?.Name ?? "Unknown",
-                    PosterPath = showDetails?.PosterPath,
-                    FirstAirDate = showDetails?.FirstAirDate,
-                    ProductionStatus = showDetails?.Status
+                    StartedAt = now
                 };
 
                 _dbContext.UserShows.Add(userShow);
                 await _dbContext.SaveChangesAsync();
             }
 
-            // Fetch season details from TMDB.
-            var seasonData = await _tmdbService.GetTvSeasonDetailsAsync(tmdbShowId, seasonNumber);
-            if (seasonData == null)
-                throw new KeyNotFoundException("Season information could not be found.");
+            var seasonData = await _tmdbService.GetTvSeasonDetailsAsync(tmdbShowId, seasonNumber)
+                ?? throw new KeyNotFoundException("Season information could not be found.");
 
-            // Collect already watched episodes for this season.
             var watchedEpisodeNumbers = userShow.WatchedEpisodes
                 .Where(e => e.SeasonNumber == seasonNumber)
                 .Select(e => e.EpisodeNumber)
@@ -472,7 +389,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                     UserShowId = userShow.Id,
                     SeasonNumber = seasonNumber,
                     EpisodeNumber = episode.EpisodeNumber,
-                    WatchedAt = DateTime.UtcNow
+                    WatchedAt = now
                 });
             }
 
@@ -481,7 +398,6 @@ namespace Vivaply.API.Services.Entertainment.Media
                 _dbContext.WatchedEpisodes.AddRange(episodesToAdd);
 
                 var lastEpisodeNumber = episodesToAdd.Max(e => e.EpisodeNumber);
-                var now = DateTime.UtcNow;
 
                 UpdateLastWatched(userShow, seasonNumber, lastEpisodeNumber, now);
 
@@ -505,14 +421,14 @@ namespace Vivaply.API.Services.Entertainment.Media
 
         public async Task RateMediaAsync(Guid userId, RateMediaDto request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             ValidateTmdbId(request.TmdbId);
 
             if (request.Rating < 0 || request.Rating > 10)
                 throw new ArgumentOutOfRangeException(
-                    nameof(request.Rating),
+                    nameof(request),
+                    request.Rating,
                     "Rating must be between 0 and 10."
                 );
 
@@ -541,20 +457,16 @@ namespace Vivaply.API.Services.Entertainment.Media
             if (normalizedType == "tv")
             {
                 var show = await _dbContext.UserShows
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbId);
-
-                if (show == null)
-                    throw new KeyNotFoundException("TV show not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbId)
+                ?? throw new KeyNotFoundException("TV show not found in user's library.");
 
                 _dbContext.UserShows.Remove(show);
             }
             else // movie
             {
                 var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == tmdbId);
-
-                if (movie == null)
-                    throw new KeyNotFoundException("Movie not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == tmdbId)
+                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
 
                 _dbContext.UserMovies.Remove(movie);
             }
@@ -562,103 +474,23 @@ namespace Vivaply.API.Services.Entertainment.Media
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<int> SyncMediaLibraryAsync(Guid userId)
-        {
-            int updatedCount = 0;
-
-            var userShows = await _dbContext.UserShows
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
-
-            foreach (var show in userShows)
-            {
-                var details = await _tmdbService.GetTvShowDetailsAsync(show.TmdbShowId, "en-US");
-                if (details == null) continue;
-
-                bool hasChanges = false;
-
-                string? freshLatestInfo = null;
-                if (details.LastEpisodeToAir != null)
-                {
-                    freshLatestInfo =
-                        $"S{details.LastEpisodeToAir.SeasonNumber} E{details.LastEpisodeToAir.EpisodeNumber}";
-                }
-
-                if (show.LatestEpisodeInfo != freshLatestInfo) { show.LatestEpisodeInfo = freshLatestInfo; hasChanges = true; }
-                if (show.NextAirDate != details.NextEpisodeToAir?.AirDate) { show.NextAirDate = details.NextEpisodeToAir?.AirDate; hasChanges = true; }
-                if (Math.Abs(show.VoteAverage - details.VoteAverage) > 0.1) { show.VoteAverage = details.VoteAverage; hasChanges = true; }
-                if (show.ProductionStatus != details.Status) { show.ProductionStatus = details.Status; hasChanges = true; }
-
-                if (hasChanges) updatedCount++;
-            }
-
-            var userMovies = await _dbContext.UserMovies
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
-
-            foreach (var movie in userMovies)
-            {
-                var details = await _tmdbService.GetMovieDetailsAsync(movie.TmdbMovieId, "en-US");
-                if (details == null) continue;
-
-                bool hasChanges = false;
-
-                if (Math.Abs(movie.VoteAverage - details.VoteAverage) > 0.1) { movie.VoteAverage = details.VoteAverage; hasChanges = true; }
-                if (movie.ProductionStatus != details.Status) { movie.ProductionStatus = details.Status; hasChanges = true; }
-
-                if (hasChanges) updatedCount++;
-            }
-
-            if (updatedCount > 0)
-                await _dbContext.SaveChangesAsync();
-
-            return updatedCount;
-        }
-
-
         public async Task<ToggleEpisodeResultDto> ToggleEpisodeAsync(
-            Guid userId,
-            int tmdbShowId,
-            int seasonNumber,
-            int episodeNumber
-            )
+            Guid userId, 
+            int tmdbShowId, 
+            int seasonNumber, 
+            int episodeNumber)
         {
             if (tmdbShowId <= 0)
                 throw new ArgumentException("Invalid tmdbShowId.", nameof(tmdbShowId));
 
-            if (seasonNumber < 0)
-                throw new ArgumentOutOfRangeException(nameof(seasonNumber));
+            ArgumentOutOfRangeException.ThrowIfNegative(seasonNumber);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(episodeNumber);
 
-            if (episodeNumber <= 0)
-                throw new ArgumentOutOfRangeException(nameof(episodeNumber));
+            var userShow = await GetOrCreateUserShowAsync(userId, tmdbShowId);
 
-            var userShow = await _dbContext.UserShows
-                .Include(x => x.WatchedEpisodes)
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbShowId);
-
-            if (userShow == null)
-            {
-                var showDetails = await _tmdbService.GetTvShowDetailsAsync(tmdbShowId);
-
-                userShow = new UserShow
-                {
-                    UserId = userId,
-                    TmdbShowId = tmdbShowId,
-                    Status = WatchStatus.Watching,
-                    ShowName = showDetails?.Name ?? "Unknown",
-                    PosterPath = showDetails?.PosterPath,
-                    FirstAirDate = showDetails?.FirstAirDate,
-                    VoteAverage = showDetails?.VoteAverage ?? 0,
-                    NextAirDate = showDetails?.NextEpisodeToAir?.AirDate,
-                    ProductionStatus = showDetails?.Status,
-                    LatestEpisodeInfo = showDetails?.LastEpisodeToAir != null
-                        ? $"S{showDetails.LastEpisodeToAir.SeasonNumber} E{showDetails.LastEpisodeToAir.EpisodeNumber}"
-                        : null
-                };
-
-                _dbContext.UserShows.Add(userShow);
-                await _dbContext.SaveChangesAsync();
-            }
+            await _dbContext.Entry(userShow)
+                .Collection(x => x.WatchedEpisodes)
+                .LoadAsync();
 
             var existingEpisode = userShow.WatchedEpisodes
                 .FirstOrDefault(e => e.SeasonNumber == seasonNumber && e.EpisodeNumber == episodeNumber);
@@ -667,6 +499,7 @@ namespace Vivaply.API.Services.Entertainment.Media
             {
                 _dbContext.WatchedEpisodes.Remove(existingEpisode);
                 userShow.WatchedEpisodes.Remove(existingEpisode);
+
                 RecalculateLastWatched(userShow);
 
                 await _dbContext.SaveChangesAsync();
@@ -676,7 +509,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                     SeasonNumber = seasonNumber,
                     EpisodeNumber = episodeNumber,
                     IsWatched = false,
-                    Message = "İşaret kaldırıldı."
+                    Message = "The flag has been removed."
                 };
             }
 
@@ -699,16 +532,14 @@ namespace Vivaply.API.Services.Entertainment.Media
                 SeasonNumber = seasonNumber,
                 EpisodeNumber = episodeNumber,
                 IsWatched = true,
-                Message = "Bölüm izlendi!"
+                Message = "The episode has been watched!"
             };
-
         }
 
 
         public async Task UpdateMediaProgressAsync(Guid userId, UpdateMediaProgressDto request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             ValidateTmdbId(request.TmdbId);
 
@@ -718,10 +549,8 @@ namespace Vivaply.API.Services.Entertainment.Media
             {
                 var show = await _dbContext.UserShows
                     .Include(x => x.WatchedEpisodes)
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId);
-
-                if (show == null)
-                    throw new KeyNotFoundException("TV show not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
+                    ?? throw new KeyNotFoundException("TV show not found in user's library.");
 
                 // Update main status
                 show.Status = request.Status;
@@ -742,10 +571,8 @@ namespace Vivaply.API.Services.Entertainment.Media
             else // movie
             {
                 var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
-
-                if (movie == null)
-                    throw new KeyNotFoundException("Movie not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
 
                 movie.Status = request.Status;
 
@@ -769,8 +596,7 @@ namespace Vivaply.API.Services.Entertainment.Media
 
         public async Task UpdateMediaStatusAsync(Guid userId, UpdateMediaStatusDto request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             ValidateTmdbId(request.TmdbId);
 
@@ -780,10 +606,8 @@ namespace Vivaply.API.Services.Entertainment.Media
             {
                 var show = await _dbContext.UserShows
                     .Include(x => x.WatchedEpisodes)
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId);
-
-                if (show == null)
-                    throw new KeyNotFoundException("TV show not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
+                    ?? throw new KeyNotFoundException("TV show not found in user's library.");
 
                 show.Status = request.Status;
 
@@ -796,10 +620,8 @@ namespace Vivaply.API.Services.Entertainment.Media
             else // movie
             {
                 var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
-
-                if (movie == null)
-                    throw new KeyNotFoundException("Movie not found in user's library.");
+                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
 
                 movie.Status = request.Status;
 
@@ -816,21 +638,17 @@ namespace Vivaply.API.Services.Entertainment.Media
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<WatchNextEpisodeResultDto> WatchNextEpisodeAsync(
-             Guid userId,
-             int tmdbShowId
-        )
+        public async Task<WatchNextEpisodeResultDto> WatchNextEpisodeAsync(Guid userId, int tmdbShowId)
         {
             var userShow = await _dbContext.UserShows
                 .Include(x => x.WatchedEpisodes)
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbShowId);
+                .Include(x => x.Metadata)
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbShowId)
+                ?? throw new InvalidOperationException("The content isn't in your library!");
 
-            if (userShow == null)
-                throw new InvalidOperationException("Dizi listenizde değil.");
-
+            var metadata = userShow.Metadata;
             var now = DateTime.UtcNow;
 
-            // Find last watched episode
             var lastWatched = userShow.WatchedEpisodes
                 .OrderByDescending(e => e.SeasonNumber)
                 .ThenByDescending(e => e.EpisodeNumber)
@@ -845,7 +663,6 @@ namespace Vivaply.API.Services.Entertainment.Media
                 targetEpisode = lastWatched.EpisodeNumber;
             }
 
-            // Try current season
             var seasonData = await _tmdbService.GetTvSeasonDetailsAsync(tmdbShowId, targetSeason);
 
             if (seasonData != null)
@@ -866,10 +683,10 @@ namespace Vivaply.API.Services.Entertainment.Media
 
                     UpdateLastWatched(userShow, targetSeason, nextEpisode.EpisodeNumber, now);
 
-                    string currentEpisodeInfo = $"S{targetSeason} E{nextEpisode.EpisodeNumber}";
-
-                    if (userShow.ProductionStatus == "Ended" &&
-                        userShow.LatestEpisodeInfo == currentEpisodeInfo)
+                    if (metadata != null &&
+                        metadata.ProductionStatus == "Ended" &&
+                        metadata.LastKnownSeason == targetSeason &&
+                        metadata.LastKnownEpisode == nextEpisode.EpisodeNumber)
                     {
                         userShow.Status = WatchStatus.Completed;
                     }
@@ -881,16 +698,15 @@ namespace Vivaply.API.Services.Entertainment.Media
                         SeasonNumber = targetSeason,
                         EpisodeNumber = nextEpisode.EpisodeNumber,
                         NewStatus = userShow.Status,
-                        Message = $"{targetSeason}. Sezon {nextEpisode.EpisodeNumber}. Bölüm izlendi!"
+                        Message = $"Season {targetSeason} Episode {nextEpisode.EpisodeNumber} has been watched!"
                     };
                 }
             }
 
-            // Try next season
             var nextSeasonNumber = targetSeason + 1;
             var nextSeasonData = await _tmdbService.GetTvSeasonDetailsAsync(tmdbShowId, nextSeasonNumber);
 
-            if (nextSeasonData != null && nextSeasonData.Episodes.Any())
+            if (nextSeasonData != null && nextSeasonData.Episodes.Count > 0)
             {
                 var firstEpisode = nextSeasonData.Episodes
                     .OrderBy(e => e.EpisodeNumber)
@@ -906,10 +722,10 @@ namespace Vivaply.API.Services.Entertainment.Media
 
                 UpdateLastWatched(userShow, nextSeasonNumber, firstEpisode.EpisodeNumber, now);
 
-                string currentEpisodeInfo = $"S{nextSeasonNumber} E{firstEpisode.EpisodeNumber}";
-
-                if (userShow.ProductionStatus == "Ended" &&
-                    userShow.LatestEpisodeInfo == currentEpisodeInfo)
+                if (metadata != null &&
+                    metadata.ProductionStatus == "Ended" &&
+                    metadata.LastKnownSeason == nextSeasonNumber &&
+                    metadata.LastKnownEpisode == firstEpisode.EpisodeNumber)
                 {
                     userShow.Status = WatchStatus.Completed;
                 }
@@ -921,12 +737,12 @@ namespace Vivaply.API.Services.Entertainment.Media
                     SeasonNumber = nextSeasonNumber,
                     EpisodeNumber = firstEpisode.EpisodeNumber,
                     NewStatus = userShow.Status,
-                    Message = $"{nextSeasonNumber}. Sezon {firstEpisode.EpisodeNumber}. Bölüm izlendi!"
+                    Message = $"Season {nextSeasonNumber} Episode {firstEpisode.EpisodeNumber} has been watched!"
                 };
             }
 
             throw new InvalidOperationException(
-                "İzlenecek yeni bölüm bulunamadı (Dizi güncel olabilir)."
+                "Couldn't find a new episode to watch. (It could be up to date)."
             );
         }
 
@@ -955,68 +771,50 @@ namespace Vivaply.API.Services.Entertainment.Media
         {
             var userShow = await _dbContext.UserShows
                 .Include(x => x.WatchedEpisodes)
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == tmdbShowId);
 
             if (userShow != null)
                 return userShow;
 
-            var details = await _tmdbService.GetTvShowDetailsAsync(tmdbShowId);
-            if (details == null)
-                throw new InvalidOperationException("TV show details could not be fetched from TMDB.");
-
-            string? latestEpisodeInfo = null;
-            if (details.LastEpisodeToAir != null)
-            {
-                latestEpisodeInfo =
-                    $"S{details.LastEpisodeToAir.SeasonNumber} E{details.LastEpisodeToAir.EpisodeNumber}";
-            }
+            var metadata = await GetOrCreateShowMetadataAsync(tmdbShowId);
 
             userShow = new UserShow
             {
                 UserId = userId,
                 TmdbShowId = tmdbShowId,
-                ShowName = details.Name ?? "Unknown",
-                PosterPath = details.PosterPath,
-                FirstAirDate = details.FirstAirDate,
+                Metadata = metadata,
                 Status = WatchStatus.Watching,
-                VoteAverage = details.VoteAverage,
-                LatestEpisodeInfo = latestEpisodeInfo,
-                NextAirDate = details.NextEpisodeToAir?.AirDate,
-                ProductionStatus = details.Status,
-                GenresJson = GenreJsonHelper.Serialize(details.Genres)
+                StartedAt = DateTime.UtcNow
             };
 
             _dbContext.UserShows.Add(userShow);
+
             return userShow;
         }
 
         private async Task<UserMovie> GetOrCreateUserMovieAsync(Guid userId, int tmdbMovieId)
         {
             var movie = await _dbContext.UserMovies
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == tmdbMovieId);
 
             if (movie != null)
                 return movie;
 
-            var details = await _tmdbService.GetMovieDetailsAsync(tmdbMovieId);
-            if (details == null)
-                throw new InvalidOperationException("Movie details could not be fetched from TMDB.");
+            var metadata = await GetOrCreateMovieMetadataAsync(tmdbMovieId);
 
             movie = new UserMovie
             {
                 UserId = userId,
                 TmdbMovieId = tmdbMovieId,
-                Title = details.Title ?? "Unknown",
-                PosterPath = details.PosterPath,
-                ReleaseDate = details.ReleaseDate,
+                Metadata = metadata,
                 Status = WatchStatus.Completed,
-                VoteAverage = details.VoteAverage,
-                ProductionStatus = details.Status,
-                WatchedAt = DateTime.UtcNow,
-                GenresJson = GenreJsonHelper.Serialize(details.Genres)
+                WatchedAt = DateTime.UtcNow
             };
 
             _dbContext.UserMovies.Add(movie);
+
             return movie;
         }
 
@@ -1120,7 +918,7 @@ namespace Vivaply.API.Services.Entertainment.Media
                 throw new ArgumentException("Invalid tmdbId.", nameof(tmdbId));
         }
 
-        private void UpdateLastWatched(UserShow show, int season, int episode, DateTime watchedAt)
+        private static void UpdateLastWatched(UserShow show, int season, int episode, DateTime watchedAt)
         {
             if (
                 show.LastWatchedSeason == null ||
@@ -1134,7 +932,7 @@ namespace Vivaply.API.Services.Entertainment.Media
             }
         }
 
-        private void RecalculateLastWatched(UserShow show)
+        private static void RecalculateLastWatched(UserShow show)
         {
             var last = show.WatchedEpisodes
                 .OrderByDescending(e => e.SeasonNumber)
@@ -1154,6 +952,82 @@ namespace Vivaply.API.Services.Entertainment.Media
 
             // Optional: Only for UI / analytics
             show.LastWatchedAt = last.WatchedAt;
+        }
+
+        // Ensure we have metadata for a show, either by fetching existing or creating new.
+        private async Task<ShowMetadata> GetOrCreateShowMetadataAsync(int tmdbId)
+        {
+            var metadata = await _dbContext.ShowMetadata
+                .FirstOrDefaultAsync(x => x.TmdbShowId == tmdbId);
+
+            if (metadata != null)
+                return metadata;
+
+            var details = await _tmdbService.GetTvShowDetailsAsync(tmdbId)
+                ?? throw new InvalidOperationException("TV show details could not be fetched.");
+
+            metadata = new ShowMetadata
+            {
+                TmdbShowId = tmdbId,
+                Name = details.Name ?? "Unknown",
+                PosterPath = details.PosterPath,
+                FirstAirDate = ParseTmdbDate(details.FirstAirDate),
+                VoteAverage = details.VoteAverage,
+                ProductionStatus = details.Status,
+
+                LastKnownSeason = details.LastEpisodeToAir?.SeasonNumber,
+                LastKnownEpisode = details.LastEpisodeToAir?.EpisodeNumber,
+
+                NextEpisodeAirDate = ParseTmdbDate(details.NextEpisodeToAir?.AirDate),
+
+                GenresJson = JsonHelper.Serialize(details.Genres),
+
+                LastFetchedAt = DateTime.UtcNow
+            };
+
+            _dbContext.ShowMetadata.Add(metadata);
+
+            return metadata;
+        }
+
+        // Ensure we have metadata for a movie, either by fetching existing or creating new.
+        private async Task<MovieMetadata> GetOrCreateMovieMetadataAsync(int tmdbId)
+        {
+            var metadata = await _dbContext.MovieMetadata
+                .FirstOrDefaultAsync(x => x.TmdbMovieId == tmdbId);
+
+            if (metadata != null)
+                return metadata;
+
+            var details = await _tmdbService.GetMovieDetailsAsync(tmdbId)
+                ?? throw new InvalidOperationException("Movie details could not be fetched.");
+
+            metadata = new MovieMetadata
+            {
+                TmdbMovieId = tmdbId,
+                Title = details.Title ?? "Unknown",
+                PosterPath = details.PosterPath,
+                ReleaseDate = ParseTmdbDate(details.ReleaseDate),
+                VoteAverage = details.VoteAverage,
+                ProductionStatus = details.Status,
+                GenresJson = JsonHelper.Serialize(details.Genres ?? []),
+                LastFetchedAt = DateTime.UtcNow
+            };
+
+            _dbContext.MovieMetadata.Add(metadata);
+
+            return metadata;
+        }
+
+        private static DateTime? ParseTmdbDate(string? date)
+        {
+            if (string.IsNullOrWhiteSpace(date))
+                return null;
+
+            if (!DateTime.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
+                return null;
+
+            return parsed.ToUniversalTime();
         }
     }
 }

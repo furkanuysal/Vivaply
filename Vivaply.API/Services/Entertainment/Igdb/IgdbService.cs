@@ -100,26 +100,30 @@ namespace Vivaply.API.Services.Entertainment.Igdb
                        platforms.name, genres.name, involved_companies.company.name, involved_companies.developer;
                 where id = {id};";
 
-            var games = await SendQueryAsync("games", body);
-            return games.FirstOrDefault() != null ? MapToDto(games.First()) : null;
+            var game = (await SendQueryAsync("games", body)).FirstOrDefault();
+            return game == null ? null : MapToDto(game);
         }
 
         // Mapper (IGDB -> DTO)
         private GameContentDto MapToDto(IgdbGame game)
         {
-            // Cover Enlarger (t_thumb -> t_cover_big)
             var coverUrl = game.Cover?.Url?.Replace("t_thumb", "t_cover_big");
-            if (coverUrl != null && !coverUrl.StartsWith("https:")) coverUrl = "https:" + coverUrl;
+            if (coverUrl != null && !coverUrl.StartsWith("https:"))
+                coverUrl = "https:" + coverUrl;
 
-            // Date Conversion (Unix -> String)
-            string dateStr = "";
+            DateTime? releaseDate = null;
             if (game.FirstReleaseDateUnix.HasValue)
             {
-                dateStr = DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDateUnix.Value).ToString("yyyy-MM-dd");
+                releaseDate = DateTimeOffset
+                    .FromUnixTimeSeconds(game.FirstReleaseDateUnix.Value)
+                    .UtcDateTime;
             }
 
-            // Developer Extraction
-            var dev = game.InvolvedCompanies?.FirstOrDefault(c => c.Developer)?.Company?.Name ?? "";
+            var developers = game.InvolvedCompanies?
+                .Where(c => c.Developer)
+                .Select(c => c.Company?.Name)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList() ?? new List<string>();
 
             return new GameContentDto
             {
@@ -127,11 +131,13 @@ namespace Vivaply.API.Services.Entertainment.Igdb
                 Title = game.Name,
                 CoverUrl = coverUrl,
                 Summary = game.Summary,
-                VoteAverage = game.TotalRating.HasValue ? Math.Round(game.TotalRating.Value / 10, 1) : 0, // Convert the 100-based system to a 10-based system
-                ReleaseDate = dateStr,
+                VoteAverage = game.TotalRating.HasValue
+                    ? Math.Round(game.TotalRating.Value / 10, 1)
+                    : 0,
+                ReleaseDate = releaseDate,
                 Platforms = string.Join(", ", game.Platforms?.Select(p => p.Name) ?? Array.Empty<string>()),
                 Genres = string.Join(", ", game.Genres?.Select(g => g.Name) ?? Array.Empty<string>()),
-                Developers = dev
+                Developers = string.Join(", ", developers)
             };
         }
     }

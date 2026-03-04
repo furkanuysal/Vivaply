@@ -8,16 +8,10 @@ using Vivaply.API.Services.Entertainment.Tmdb;
 
 namespace Vivaply.API.Services.Entertainment.Recommendation
 {
-    public class RecommendationService : IRecommendationService
+    public class RecommendationService(VivaplyDbContext db, ITmdbService tmdb) : IRecommendationService
     {
-        private readonly VivaplyDbContext _db;
-        private readonly ITmdbService _tmdb;
-
-        public RecommendationService(VivaplyDbContext db, ITmdbService tmdb)
-        {
-            _db = db;
-            _tmdb = tmdb;
-        }
+        private readonly VivaplyDbContext _db = db;
+        private readonly ITmdbService _tmdb = tmdb;
 
         public async Task<RecommendationResponseDto> GetRecommendationsAsync(Guid userId, string language = "en-US")
         {
@@ -26,15 +20,15 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
             var topTvGenres = tvProfile
                 .OrderByDescending(x => x.Value)
-                .Take(3)
+                .Take(5)
                 .Select(x => x.Key)
-                .ToList();
+                .ToArray();
 
             var topMovieGenres = movieProfile
                 .OrderByDescending(x => x.Value)
-                .Take(3)
+                .Take(5)
                 .Select(x => x.Key)
-                .ToList();
+                .ToArray();
 
             var tvCandidates = topTvGenres.Any()
                 ? await _tmdb.DiscoverTvAsync(string.Join(",", topTvGenres), language)
@@ -45,14 +39,16 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
                 : new List<TmdbContentDto>();
 
             var watchedTvIds = await _db.UserShows
+                .AsNoTracking()
                 .Where(x => x.UserId == userId)
                 .Select(x => x.TmdbShowId)
-                .ToListAsync();
+                .ToHashSetAsync();
 
             var watchedMovieIds = await _db.UserMovies
+                .AsNoTracking()
                 .Where(x => x.UserId == userId)
                 .Select(x => x.TmdbMovieId)
-                .ToListAsync();
+                .ToHashSetAsync();
 
             return new RecommendationResponseDto
             {
@@ -73,41 +69,55 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
 
         private async Task<Dictionary<int, double>> BuildUserGenreProfileTv(Guid userId)
         {
-            var shows = await _db.UserShows
+            var items = await _db.UserShows
+                .AsNoTracking()
                 .Where(x => x.UserId == userId)
+                .Select(x => new ProfileItem(
+                    x.Metadata!.GenresJson,
+                    x.Status,
+                    x.UserRating,
+                    x.LastWatchedAt
+                ))
                 .ToListAsync();
 
             return Normalize(BuildProfile(
-                shows,
-                s => s.GenresJson,
-                s => s.Status,
-                s => s.UserRating,
-                s => s.LastWatchedAt
+                items,
+                i => i.GenresJson,
+                i => i.Status,
+                i => i.Rating,
+                i => i.LastWatched
             ));
         }
 
         private async Task<Dictionary<int, double>> BuildUserGenreProfileMovie(Guid userId)
         {
-            var movies = await _db.UserMovies
+            var items = await _db.UserMovies
+                .AsNoTracking()
                 .Where(x => x.UserId == userId)
+                .Select(x => new ProfileItem(
+                    x.Metadata!.GenresJson,
+                    x.Status,
+                    x.UserRating,
+                    x.WatchedAt
+                ))
                 .ToListAsync();
 
             return Normalize(BuildProfile(
-                movies,
-                m => m.GenresJson,
-                m => m.Status,
-                m => m.UserRating,
-                m => m.WatchedAt
+                items,
+                i => i.GenresJson,
+                i => i.Status,
+                i => i.Rating,
+                i => i.LastWatched
             ));
         }
 
         private Dictionary<int, double> BuildProfile<T>(
-     IEnumerable<T> items,
-     Func<T, string?> genreJson,
-     Func<T, WatchStatus> status,
-     Func<T, double?> rating,
-     Func<T, DateTime?> lastWatched
- )
+            IEnumerable<T> items,
+            Func<T, string?> genreJson,
+            Func<T, WatchStatus> status,
+            Func<T, double?> rating,
+            Func<T, DateTime?> lastWatched
+            )
         {
             var scores = new Dictionary<int, double>();
 
@@ -162,7 +172,7 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
             var genreCounts = new Dictionary<int, int>();
 
             var ranked = items
-                .Select(i => new { Item = i, Score = BaseScore(i, profile) })
+                .Select(i => (Item: i, Score: BaseScore(i, profile)))
                 .OrderByDescending(x => x.Score)
                 .ToList();
 
@@ -225,5 +235,12 @@ namespace Vivaply.API.Services.Entertainment.Recommendation
             if (days <= 30) return 1.2;
             return 1.0;
         }
+
+        private sealed record ProfileItem(
+            string? GenresJson,
+            WatchStatus Status,
+            double? Rating,
+            DateTime? LastWatched
+            );
     }
 }

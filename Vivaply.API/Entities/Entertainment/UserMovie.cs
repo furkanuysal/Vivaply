@@ -15,27 +15,12 @@ namespace Vivaply.API.Entities.Entertainment
 
         // TMBD Movie ID
         public int TmdbMovieId { get; set; }
-     //   public MovieMetadata? Metadata { get; set; }
-
-        // Cached Basic Movie Info
-        [MaxLength(200)]
-        public string Title { get; set; } = string.Empty;
-
-        [MaxLength(200)]
-        public string? PosterPath { get; set; }
-        public double VoteAverage { get; set; }
+        public MovieMetadata? Metadata { get; set; }
 
         // Watch Status
         public WatchStatus Status { get; set; } = WatchStatus.PlanToWatch;
 
-        // Production status
-        [MaxLength(50)]
-        public string? ProductionStatus { get; set; }
-
         public DateTime? WatchedAt { get; set; } // When watched
-
-        [MaxLength(20)]
-        public string? ReleaseDate { get; set; }
 
         // Rating given by user
         [Range(1, 10)]
@@ -44,9 +29,5 @@ namespace Vivaply.API.Entities.Entertainment
         // Review given by user
         [MaxLength(1000)]
         public string? Review { get; set; }
-
-        // Genres cached as JSON array of integers
-        [Column(TypeName = "jsonb")]
-        public string? GenresJson { get; set; }
     }
 }

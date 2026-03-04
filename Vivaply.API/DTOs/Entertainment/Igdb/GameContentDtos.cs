@@ -11,7 +11,7 @@ namespace Vivaply.API.DTOs.Entertainment.Igdb
 
         // Normalized values
         public double VoteAverage { get; set; } // 0–10
-        public string? ReleaseDate { get; set; }
+        public DateTime? ReleaseDate { get; set; }
 
         // Flattened lists (UI-friendly)
         public string Platforms { get; set; } = string.Empty;
