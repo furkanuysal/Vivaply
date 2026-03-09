@@ -14,20 +14,29 @@ namespace Vivaply.API.Services.Knowledge.GoogleBooks
             _apiKey = config["GoogleBooksSettings:ApiKey"] ?? throw new Exception("Google Books API Key bulunamadı!");
         }
 
-        public async Task<List<BookContentDto>> SearchBooksAsync(string query, string lang = "en")
+        public async Task<List<BookContentDto>> SearchBooksAsync(
+            string query,
+            string? lang = null,
+            int startIndex = 0)
         {
-            // &langRestrict={lang} parametresi ile dile göre arama yapılabilir
-            var response = await _httpClient.GetAsync($"volumes?q={query}&key={_apiKey}&maxResults=20");
+            var langParam = string.IsNullOrWhiteSpace(lang)
+                ? ""
+                : $"&langRestrict={lang}";
 
-            if (!response.IsSuccessStatusCode) return new List<BookContentDto>();
+            var response = await _httpClient.GetAsync(
+                $"volumes?q={query}{langParam}&startIndex={startIndex}&maxResults=20&key={_apiKey}"
+            );
+
+            if (!response.IsSuccessStatusCode)
+                return new List<BookContentDto>();
 
             var content = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<GoogleBooksResponse>(content);
 
-            if (result?.Items == null) return new List<BookContentDto>();
+            if (result?.Items == null)
+                return new List<BookContentDto>();
 
-            // Google formatını kendi DTO'muza çeviriyoruz (Mapping)
-            return result.Items.Select(item => MapToDto(item)).ToList();
+            return result.Items.Select(MapToDto).ToList();
         }
 
         public async Task<BookContentDto?> GetBookDetailsAsync(string googleBookId)

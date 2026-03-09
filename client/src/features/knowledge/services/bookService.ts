@@ -13,8 +13,18 @@ export const bookService = {
   searchBooks: async (query: string, options?: { signal?: AbortSignal }) => {
     const response = await api.get<BookContentDto[]>(
       `/Knowledge/book/search?query=${query}`,
-      { signal: options?.signal }
+      { signal: options?.signal },
     );
+    return response.data;
+  },
+
+  // Discover books
+  discoverBooks: async (lang: string, options?: { signal?: AbortSignal }) => {
+    const response = await api.get<BookContentDto[]>(
+      `/Knowledge/book/discover?lang=${encodeURIComponent(lang)}`,
+      { signal: options?.signal },
+    );
+
     return response.data;
   },
 

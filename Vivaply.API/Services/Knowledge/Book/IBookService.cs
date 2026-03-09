@@ -7,6 +7,7 @@ namespace Vivaply.API.Services.Knowledge.Book
     {
         // Discovery
         Task<List<BookContentDto>> SearchAsync(string query);
+        Task<List<BookContentDto>> DiscoverAsync(string lang);
         Task<BookContentDto?> GetDetailAsync(Guid userId, string googleBookId);
 
         // Library

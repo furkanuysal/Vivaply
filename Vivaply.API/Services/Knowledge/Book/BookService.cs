@@ -23,6 +23,31 @@ namespace Vivaply.API.Services.Knowledge.Book
         public Task<List<BookContentDto>> SearchAsync(string query)
             => _googleBooks.SearchBooksAsync(query);
 
+        public async Task<List<BookContentDto>> DiscoverAsync(string lang)
+        {
+            var subjects = new[]
+            {
+                "fiction",
+                "fantasy",
+                "mystery",
+                "thriller",
+                "romance",
+                "biography",
+                "self-help"
+            };
+
+            var random = new Random();
+            var subject = subjects[random.Next(subjects.Length)];
+            var startIndex = random.Next(0, 200);
+
+
+            return await _googleBooks.SearchBooksAsync(
+                $"subject:{subject}&orderBy=relevance",
+                lang,
+                startIndex
+                );
+        }
+
         public async Task<BookContentDto?> GetDetailAsync(Guid userId, string googleBookId)
         {
             var book = await _googleBooks.GetBookDetailsAsync(googleBookId);

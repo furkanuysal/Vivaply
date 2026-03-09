@@ -11,15 +11,14 @@ export default function KnowledgePage() {
   const [displayedQuery, setDisplayedQuery] = useState("");
   const [results, setResults] = useState<BookContentDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation(["common", "knowledge"]);
 
-  // AbortController Ref (previous request cancel)
+  const { t, i18n } = useTranslation(["common", "knowledge"]);
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
 
-    // Cancel previous search request if still running
     abortControllerRef.current?.abort();
 
     const controller = new AbortController();
@@ -29,6 +28,7 @@ export default function KnowledgePage() {
       const data = await bookService.searchBooks(searchQuery, {
         signal: controller.signal,
       });
+
       setResults(data);
     } catch (err: any) {
       if (err.name !== "AbortError") {
@@ -41,17 +41,42 @@ export default function KnowledgePage() {
     }
   };
 
-  // Initial load only
+  const loadDiscover = async () => {
+    setLoading(true);
+
+    abortControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const data = await bookService.discoverBooks(i18n.language, {
+        signal: controller.signal,
+      });
+
+      setResults(data);
+      setDisplayedQuery("");
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.error("Discover error:", err);
+      }
+    } finally {
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Initial discover load
   useEffect(() => {
-    performSearch("subject:fiction&orderBy=newest");
-  }, []);
+    loadDiscover();
+  }, [i18n.language]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!query.trim()) {
-      performSearch("subject:fiction&orderBy=newest");
-      setDisplayedQuery("");
+      loadDiscover();
       return;
     }
 
@@ -74,7 +99,9 @@ export default function KnowledgePage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+
           <MagnifyingGlassIcon className="w-6 h-6 text-skin-muted absolute left-4 top-4" />
+
           <button
             type="submit"
             className="absolute right-3 top-2.5 bg-skin-primary hover:bg-skin-primary/90 text-skin-base px-6 py-1.5 rounded-lg font-medium transition"

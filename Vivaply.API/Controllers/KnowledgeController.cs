@@ -26,6 +26,12 @@ namespace Vivaply.API.Controllers
         public async Task<IActionResult> Search(string query)
             => Ok(await _bookService.SearchAsync(query));
 
+        [HttpGet("book/discover")]
+        public async Task<IActionResult> Discover([FromQuery] string lang = "en")
+        {
+            return Ok(await _bookService.DiscoverAsync(lang));
+        }
+
         [HttpGet("book/{id}")]
         public async Task<IActionResult> Detail(string id)
             => Ok(await _bookService.GetDetailAsync(UserId, id));
