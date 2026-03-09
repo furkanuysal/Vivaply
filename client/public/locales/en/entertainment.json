@@ -1,6 +1,6 @@
 {
   "messages": {
-    "watch_episode_success": "Episode {{episodeNumber}} has been watched!",
+    "watch_episode_success": "Season {{seasonNumber}} Episode {{episodeNumber}} has been watched!",
     "mark_season_as_completed_success": "Season {{seasonNumber}} has been marked as completed!"
   },
   "dialogs": {

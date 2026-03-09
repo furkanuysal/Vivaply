@@ -23,13 +23,13 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     (
       seasonNum: number,
       episodeId: number,
-      changes: Partial<TmdbEpisodeDto>
+      changes: Partial<TmdbEpisodeDto>,
     ) => {
       // Update current list if applicable
       setSeasonEpisodes((prev) => {
         if (selectedSeason !== seasonNum) return prev;
         return prev.map((ep) =>
-          ep.id === episodeId ? { ...ep, ...changes } : ep
+          ep.id === episodeId ? { ...ep, ...changes } : ep,
         );
       });
 
@@ -39,17 +39,17 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
         return {
           ...prev,
           [seasonNum]: prev[seasonNum].map((ep) =>
-            ep.id === episodeId ? { ...ep, ...changes } : ep
+            ep.id === episodeId ? { ...ep, ...changes } : ep,
           ),
         };
       });
     },
-    [selectedSeason]
+    [selectedSeason],
   );
 
   const handleSeasonClick = async (
     seasonNum: number,
-    options?: { forceReload?: boolean }
+    options?: { forceReload?: boolean },
   ) => {
     if (!tmdbId) return;
 
@@ -67,7 +67,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     try {
       const seasonData = await mediaService.getTvSeasonDetail(
         tmdbId,
-        seasonNum
+        seasonNum,
       );
 
       setSeasonEpisodes(seasonData.episodes);
@@ -90,7 +90,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
     if (mode === "graph" && tmdbId) {
       // Find which seasons we are missing
       const seasonsToFetch = seasons.filter(
-        (s: any) => s.season_number > 0 && !allSeasonsEpisodes[s.season_number]
+        (s: any) => s.season_number > 0 && !allSeasonsEpisodes[s.season_number],
       );
 
       if (seasonsToFetch.length === 0) return;
@@ -98,7 +98,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
       setLoadingAllSeasons(true);
       try {
         const promises = seasonsToFetch.map((s: any) =>
-          mediaService.getTvSeasonDetail(tmdbId, s.season_number)
+          mediaService.getTvSeasonDetail(tmdbId, s.season_number),
         );
 
         const results = await Promise.all(promises);
@@ -122,7 +122,7 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
 
   const handleToggleEpisode = async (
     seasonNum: number,
-    episode: TmdbEpisodeDto
+    episode: TmdbEpisodeDto,
   ) => {
     if (!tmdbId) return;
     const newStatus = !episode.is_watched;
@@ -134,14 +134,15 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
       await mediaService.toggleEpisode(
         tmdbId,
         seasonNum,
-        episode.episode_number
+        episode.episode_number,
       );
 
       if (newStatus) {
         toast.success(
           t("entertainment:messages.watch_episode_success", {
+            seasonNumber: seasonNum,
             episodeNumber: episode.episode_number,
-          })
+          }),
         );
       }
     } catch (error) {
@@ -161,12 +162,12 @@ export function useTvProgress(tmdbId: number | undefined, seasons: any[] = []) {
       toast.success(
         t("entertainment:messages.mark_season_as_completed_success", {
           seasonNumber: selectedSeason,
-        })
+        }),
       );
 
       // Update all episodes in this season to watched
       setSeasonEpisodes((prev) =>
-        prev.map((ep) => ({ ...ep, is_watched: true }))
+        prev.map((ep) => ({ ...ep, is_watched: true })),
       );
 
       setAllSeasonsEpisodes((prev) => {

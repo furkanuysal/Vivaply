@@ -237,7 +237,12 @@ export default function EntertainmentLibraryPage() {
     setLoadingItems((prev) => new Set(prev).add(item.id));
     try {
       const result = await mediaService.watchNextEpisode(item.id);
-      toast.success(result.message);
+      toast.success(
+        t("entertainment:messages.watch_episode_success", {
+          seasonNumber: result.seasonNumber,
+          episodeNumber: result.episodeNumber,
+        }),
+      );
 
       // Update local state
       setLibraryData((prev) => ({

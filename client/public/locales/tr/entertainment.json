@@ -1,6 +1,6 @@
 {
   "messages": {
-    "watch_episode_success": "{{episodeNumber}}. Bölüm izlendi!",
+    "watch_episode_success": "{{seasonNumber}}. Sezon {{episodeNumber}}. Bölüm izlendi!",
     "mark_season_as_completed_success": "{{seasonNumber}}. Sezon tamamlandı!"
   },
   "dialogs": {
