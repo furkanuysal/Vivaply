@@ -102,23 +102,13 @@ namespace Vivaply.API.Services.Knowledge.Book
                 throw new InvalidOperationException("This book is already on library.");
 
             // Check if metadata exists, if not create a new one (to avoid unnecessary API calls in the future)
-            var metadata = await _db.BookMetadata
-                .FirstOrDefaultAsync(x => x.GoogleBookId == request.GoogleBookId);
-
-            if (metadata == null)
-            {
-                metadata = new BookMetadata
-                {
-                    GoogleBookId = request.GoogleBookId,
-                    Title = request.Title,
-                    AuthorsJson = JsonHelper.SerializeList(request.Authors),
-                    CoverUrl = request.CoverUrl,
-                    PageCount = request.PageCount,
-                    LastFetchedAt = DateTime.UtcNow
-                };
-
-                _db.BookMetadata.Add(metadata);
-            }
+            var metadata = await GetOrCreateBookMetadataAsync(
+                request.GoogleBookId,
+                request.Title,
+                request.Authors,
+                request.CoverUrl,
+                request.PageCount
+                );
 
             _db.UserBooks.Add(new UserBook
             {
@@ -206,23 +196,13 @@ namespace Vivaply.API.Services.Knowledge.Book
                 var details = await _googleBooks.GetBookDetailsAsync(request.GoogleBookId)
                     ?? throw new KeyNotFoundException("Book couldn't be found.");
 
-                var metadata = await _db.BookMetadata
-                    .FirstOrDefaultAsync(x => x.GoogleBookId == request.GoogleBookId);
-
-                if (metadata == null)
-                {
-                    metadata = new BookMetadata
-                    {
-                        GoogleBookId = request.GoogleBookId,
-                        Title = details.Title,
-                        AuthorsJson = JsonHelper.SerializeList(details.Authors),
-                        CoverUrl = details.CoverUrl,
-                        PageCount = details.PageCount,
-                        LastFetchedAt = DateTime.UtcNow
-                    };
-
-                    _db.BookMetadata.Add(metadata);
-                }
+                var metadata = await GetOrCreateBookMetadataAsync(
+                    request.GoogleBookId,
+                    details.Title,
+                    details.Authors,
+                    details.CoverUrl,
+                    details.PageCount
+                    );
 
                 book = new UserBook
                 {
@@ -254,6 +234,43 @@ namespace Vivaply.API.Services.Knowledge.Book
                 .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId)
                 ?? throw new KeyNotFoundException("Book couldn't be found on library.");
+        }
+
+        private async Task<BookMetadata> GetOrCreateBookMetadataAsync(
+            string googleBookId,
+            string? title,
+            List<string>? authors,
+            string? coverUrl,
+            int? pageCount)
+        {
+            var metadata = await _db.BookMetadata
+                .FirstOrDefaultAsync(x => x.GoogleBookId == googleBookId);
+
+            if (metadata != null)
+                return metadata;
+
+            metadata = new BookMetadata
+            {
+                GoogleBookId = googleBookId,
+                Title = title ?? "(Unknown)",
+                AuthorsJson = JsonHelper.SerializeList(authors ?? []),
+                CoverUrl = coverUrl,
+                PageCount = pageCount ?? 0,
+                LastFetchedAt = DateTime.UtcNow
+            };
+
+            _db.BookMetadata.Add(metadata);
+
+            try
+            {
+                await _db.SaveChangesAsync();
+                return metadata;
+            }
+            catch (DbUpdateException)
+            {
+                return await _db.BookMetadata
+                    .FirstAsync(x => x.GoogleBookId == googleBookId);
+            }
         }
     }
 }

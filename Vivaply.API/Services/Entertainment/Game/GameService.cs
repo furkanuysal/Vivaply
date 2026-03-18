@@ -234,7 +234,8 @@ namespace Vivaply.API.Services.Entertainment.Game
 
         private async Task<GameMetadata> GetOrCreateMetadataAsync(int igdbId)
         {
-            var metadata = await _dbContext.GameMetadata.FindAsync(igdbId);
+            var metadata = await _dbContext.GameMetadata
+                .FirstOrDefaultAsync(x => x.IgdbId == igdbId);
 
             if (metadata != null)
                 return metadata;
@@ -246,7 +247,16 @@ namespace Vivaply.API.Services.Entertainment.Game
 
             _dbContext.GameMetadata.Add(metadata);
 
-            return metadata;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return metadata;
+            }
+            catch (DbUpdateException)
+            {
+                return await _dbContext.GameMetadata
+                    .FirstAsync(x => x.IgdbId == igdbId);
+            }
         }
     }
 }

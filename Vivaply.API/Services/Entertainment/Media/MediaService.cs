@@ -974,20 +974,25 @@ namespace Vivaply.API.Services.Entertainment.Media
                 FirstAirDate = ParseTmdbDate(details.FirstAirDate),
                 VoteAverage = details.VoteAverage,
                 ProductionStatus = details.Status,
-
                 LastKnownSeason = details.LastEpisodeToAir?.SeasonNumber,
                 LastKnownEpisode = details.LastEpisodeToAir?.EpisodeNumber,
-
                 NextEpisodeAirDate = ParseTmdbDate(details.NextEpisodeToAir?.AirDate),
-
                 GenresJson = JsonHelper.Serialize(details.Genres),
-
                 LastFetchedAt = DateTime.UtcNow
             };
 
             _dbContext.ShowMetadata.Add(metadata);
 
-            return metadata;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return metadata;
+            }
+            catch (DbUpdateException)
+            {
+                return await _dbContext.ShowMetadata
+                    .FirstAsync(x => x.TmdbShowId == tmdbId);
+            }
         }
 
         // Ensure we have metadata for a movie, either by fetching existing or creating new.
@@ -1016,7 +1021,16 @@ namespace Vivaply.API.Services.Entertainment.Media
 
             _dbContext.MovieMetadata.Add(metadata);
 
-            return metadata;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return metadata;
+            }
+            catch (DbUpdateException)
+            {
+                return await _dbContext.MovieMetadata
+                    .FirstAsync(x => x.TmdbMovieId == tmdbId);
+            }
         }
 
         private static DateTime? ParseTmdbDate(string? date)
