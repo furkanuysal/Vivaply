@@ -12,6 +12,10 @@ using Vivaply.API.Services.Entertainment;
 using Vivaply.API.Services.Infrastructure.RateLimiting;
 using Vivaply.API.Services.Knowledge;
 using Vivaply.API.Services.Location;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Vivaply.API.Infrastructure.Security;
+using Vivaply.API.Services.Infrastructure.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,16 @@ var connectionString = builder.Configuration.GetConnectionString("VivaplyDb") ??
     throw new InvalidOperationException("Connection string 'VivaplyDb' is not configured.");
 builder.Services.AddDbContext<VivaplyDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(connectionString);
+    });
+});
+
+builder.Services.AddHangfireServer();
 
 // In-Memory Caching Configuration
 builder.Services.AddMemoryCache();
@@ -102,6 +116,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddScoped<MetadataRefreshJob>();
+
 var app = builder.Build();
 
 // Database Migration with Retry Logic
@@ -155,6 +171,18 @@ app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard("/hangfire");
+}
+else
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = [new HangfireAuthorizationFilter()]
+    });
+}
+
 // Activate Rate Limiting Middleware
 app.UseRateLimiter();
 
@@ -171,5 +199,14 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     Predicate = check => check.Name == "postgres",
     AllowCachingResponses = false
 }).AllowAnonymous();
+
+using (var scope = app.Services.CreateScope())
+{
+    RecurringJob.AddOrUpdate<MetadataRefreshJob>(
+        "refresh-content-metadata",
+        job => job.RefreshContentsAsync(),
+        Cron.Hourly
+    );
+}
 
 app.Run();
