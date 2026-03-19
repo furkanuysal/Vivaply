@@ -1,7 +1,7 @@
 ﻿using Hangfire;
 using Vivaply.API.Services.Infrastructure.Jobs;
 
-namespace Vivaply.API.Services.Infrastructure
+namespace Vivaply.API.Services.Infrastructure.Extensions
 {
     public static class HangfireJobExtensions
     {
@@ -16,6 +16,18 @@ namespace Vivaply.API.Services.Infrastructure
             RecurringJob.AddOrUpdate<MetadataRefreshJob>(
                 "refresh-tv",
                 x => x.RefreshShowsAsync(),
+                Cron.Daily
+            );
+
+            RecurringJob.AddOrUpdate<MetadataRefreshJob>(
+                "refresh-games",
+                x => x.RefreshGamesAsync(),
+                Cron.Daily
+            );
+
+            RecurringJob.AddOrUpdate<MetadataRefreshJob>(
+                "refresh-books",
+                x => x.RefreshBooksAsync(),
                 Cron.Daily
             );
         }

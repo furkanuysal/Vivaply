@@ -1,123 +1,86 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Vivaply.API.Data;
-using Vivaply.API.Services.Entertainment.Tmdb;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Vivaply.API.Data;
+using Vivaply.API.Services.Entertainment.Igdb;
+using Vivaply.API.Services.Entertainment.Tmdb;
+using Vivaply.API.Services.Infrastructure.Options;
+using Vivaply.API.Services.Knowledge.GoogleBooks;
 
 namespace Vivaply.API.Services.Infrastructure.Jobs
 {
     public class MetadataRefreshJob
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly MetadataRefreshOptions _options;
+        private readonly ILogger<MetadataRefreshJob> _logger;
 
-        // ---- CONFIG ----
-        private const int MovieTtlDays = 14;
-        private const int ShowTtlDays = 7;
-
-        private const int BatchSize = 50;
-        private const int MaxConcurrency = 5;
-
-        public MetadataRefreshJob(IServiceScopeFactory scopeFactory)
+        public MetadataRefreshJob(
+            IServiceScopeFactory scopeFactory,
+            IOptions<MetadataRefreshOptions> options,
+            ILogger<MetadataRefreshJob> logger)
         {
             _scopeFactory = scopeFactory;
+            _options = options.Value;
+            _logger = logger;
         }
 
-        // MOVIES
+        // Movies
         public async Task RefreshMoviesAsync()
         {
             using var scope = _scopeFactory.CreateScope();
 
             var db = scope.ServiceProvider.GetRequiredService<VivaplyDbContext>();
             var tmdb = scope.ServiceProvider.GetRequiredService<ITmdbService>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<MetadataRefreshJob>>();
 
             var now = DateTime.UtcNow;
-            var threshold = now.AddDays(-MovieTtlDays);
+            var threshold = now.AddDays(-_options.MovieTtlDays);
 
-            var movies = await db.MovieMetadata
+            var query = db.MovieMetadata
                 .Where(x => x.LastFetchedAt < threshold)
                 .OrderBy(x => x.LastFetchedAt)
-                .Take(BatchSize)
-                .ToListAsync();
+                .Take(_options.BatchSize);
 
-            if (!movies.Any())
-            {
-                logger.LogInformation("[MetadataRefresh] No stale movies found.");
-                return;
-            }
-
-            logger.LogInformation("[MetadataRefresh] Refreshing {Count} movies...", movies.Count);
-
-            var semaphore = new SemaphoreSlim(MaxConcurrency);
-
-            var tasks = movies.Select(async movie =>
-            {
-                await semaphore.WaitAsync();
-
-                try
+            await ExecuteBatchAsync(
+                db,
+                query,
+                x => x.TmdbMovieId,
+                id => tmdb.GetMovieDetailsAsync(id),
+                (movie, details) =>
                 {
-                    var details = await tmdb.GetMovieDetailsAsync(movie.TmdbMovieId);
-                    if (details == null) return;
-
                     movie.Title = details.Title ?? movie.Title;
                     movie.PosterPath = details.PosterPath;
                     movie.VoteAverage = details.VoteAverage;
                     movie.ProductionStatus = details.Status;
                     movie.LastFetchedAt = now;
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "[MetadataRefresh] Movie failed: {Id}", movie.TmdbMovieId);
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
-
-            await Task.WhenAll(tasks);
-
-            await db.SaveChangesAsync();
-
-            logger.LogInformation("[MetadataRefresh] Movies refresh completed.");
+                },
+                "Movies"
+            );
         }
 
-        // TV SHOWS
+        // TV Shows
         public async Task RefreshShowsAsync()
         {
             using var scope = _scopeFactory.CreateScope();
 
             var db = scope.ServiceProvider.GetRequiredService<VivaplyDbContext>();
             var tmdb = scope.ServiceProvider.GetRequiredService<ITmdbService>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<MetadataRefreshJob>>();
 
             var now = DateTime.UtcNow;
-            var threshold = now.AddDays(-ShowTtlDays);
+            var threshold = now.AddDays(-_options.ShowTtlDays);
 
-            var shows = await db.ShowMetadata
+            var query = db.ShowMetadata
                 .Where(x => x.LastFetchedAt < threshold)
                 .OrderBy(x => x.LastFetchedAt)
-                .Take(BatchSize)
-                .ToListAsync();
+                .Take(_options.BatchSize);
 
-            if (!shows.Any())
-            {
-                logger.LogInformation("[MetadataRefresh] No stale shows found.");
-                return;
-            }
-
-            logger.LogInformation("[MetadataRefresh] Refreshing {Count} shows...", shows.Count);
-
-            var semaphore = new SemaphoreSlim(MaxConcurrency);
-
-            var tasks = shows.Select(async show =>
-            {
-                await semaphore.WaitAsync();
-
-                try
+            await ExecuteBatchAsync(
+                db,
+                query,
+                x => x.TmdbShowId,
+                id => tmdb.GetTvShowDetailsAsync(id),
+                (show, details) =>
                 {
-                    var details = await tmdb.GetTvShowDetailsAsync(show.TmdbShowId);
-                    if (details == null) return;
-
                     show.Name = details.Name ?? show.Name;
                     show.PosterPath = details.PosterPath;
                     show.VoteAverage = details.VoteAverage;
@@ -128,10 +91,114 @@ namespace Vivaply.API.Services.Infrastructure.Jobs
                     show.NextEpisodeAirDate = ParseTmdbDate(details.NextEpisodeToAir?.AirDate);
 
                     show.LastFetchedAt = now;
+                },
+                "Shows"
+            );
+        }
+
+        // Games
+        public async Task RefreshGamesAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+
+            var db = scope.ServiceProvider.GetRequiredService<VivaplyDbContext>();
+            var igdb = scope.ServiceProvider.GetRequiredService<IIgdbService>();
+
+            var now = DateTime.UtcNow;
+            var threshold = now.AddDays(-_options.GameTtlDays);
+
+            var query = db.GameMetadata
+                .Where(x => x.LastFetchedAt < threshold)
+                .OrderBy(x => x.LastFetchedAt)
+                .Take(_options.BatchSize);
+
+            await ExecuteBatchAsync(
+                db,
+                query,
+                x => x.IgdbId,
+                id => igdb.GetGameDetailAsync(id),
+                (game, details) =>
+                {
+                    game.Title = details.Title;
+                    game.CoverUrl = details.CoverUrl;
+                    game.ReleaseDate = details.ReleaseDate;
+                    game.LastFetchedAt = now;
+                },
+                "Games"
+            );
+        }
+
+        // Books
+        public async Task RefreshBooksAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+
+            var db = scope.ServiceProvider.GetRequiredService<VivaplyDbContext>();
+            var google = scope.ServiceProvider.GetRequiredService<IGoogleBooksService>();
+
+            var now = DateTime.UtcNow;
+            var threshold = now.AddDays(-_options.BookTtlDays);
+
+            var query = db.BookMetadata
+                .Where(x => x.LastFetchedAt < threshold)
+                .OrderBy(x => x.LastFetchedAt)
+                .Take(_options.BatchSize);
+
+            await ExecuteBatchAsync(
+                db,
+                query,
+                x => x.GoogleBookId,
+                id => google.GetBookDetailsAsync(id),
+                (book, details) =>
+                {
+                    book.Title = details.Title ?? book.Title;
+                    book.CoverUrl = details.CoverUrl;
+                    book.PageCount = details.PageCount;
+                    book.LastFetchedAt = now;
+                },
+                "Books"
+            );
+        }
+
+        // HELPERS
+
+        private async Task ExecuteBatchAsync<TEntity, TId, TDetails>(
+            VivaplyDbContext db,
+            IQueryable<TEntity> query,
+            Func<TEntity, TId> idSelector,
+            Func<TId, Task<TDetails?>> fetchFunc,
+            Action<TEntity, TDetails> updateAction,
+            string logPrefix)
+        {
+
+            var items = await query.ToListAsync();
+
+            if (!items.Any())
+            {
+                _logger.LogInformation("[MetadataRefresh] No stale {Type} found.", logPrefix);
+                return;
+            }
+
+            _logger.LogInformation("[MetadataRefresh] Refreshing {Count} {Type}...", items.Count, logPrefix);
+
+            var semaphore = new SemaphoreSlim(_options.MaxConcurrency);
+
+            var tasks = items.Select(async item =>
+            {
+                await semaphore.WaitAsync();
+
+                try
+                {
+                    var id = idSelector(item);
+                    var details = await fetchFunc(id);
+
+                    if (details == null) return;
+
+                    updateAction(item, details);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "[MetadataRefresh] Show failed: {Id}", show.TmdbShowId);
+                    _logger.LogWarning(ex, "[MetadataRefresh] {Type} failed", logPrefix);
                 }
                 finally
                 {
@@ -143,12 +210,9 @@ namespace Vivaply.API.Services.Infrastructure.Jobs
 
             await db.SaveChangesAsync();
 
-            logger.LogInformation("[MetadataRefresh] Shows refresh completed.");
+            _logger.LogInformation("[MetadataRefresh] {Type} refresh completed.", logPrefix);
         }
 
-        // =========================
-        // 🧩 HELPER
-        // =========================
         private static DateTime? ParseTmdbDate(string? date)
         {
             if (string.IsNullOrWhiteSpace(date))

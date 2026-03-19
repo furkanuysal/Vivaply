@@ -12,8 +12,7 @@ using Vivaply.API.Services;
 using Vivaply.API.Services.Account;
 using Vivaply.API.Services.Dashboard;
 using Vivaply.API.Services.Entertainment;
-using Vivaply.API.Services.Infrastructure;
-using Vivaply.API.Services.Infrastructure.Jobs;
+using Vivaply.API.Services.Infrastructure.Extensions;
 using Vivaply.API.Services.Infrastructure.RateLimiting;
 using Vivaply.API.Services.Knowledge;
 using Vivaply.API.Services.Location;
@@ -49,7 +48,7 @@ builder.Services.AddLocationServices();
 builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services Configuration
 builder.Services.AddControllers();
