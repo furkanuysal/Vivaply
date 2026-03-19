@@ -1,21 +1,22 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Hangfire;
+using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
+using Vivaply.API.Infrastructure.Security;
 using Vivaply.API.Services;
 using Vivaply.API.Services.Account;
 using Vivaply.API.Services.Dashboard;
 using Vivaply.API.Services.Entertainment;
+using Vivaply.API.Services.Infrastructure;
+using Vivaply.API.Services.Infrastructure.Jobs;
 using Vivaply.API.Services.Infrastructure.RateLimiting;
 using Vivaply.API.Services.Knowledge;
 using Vivaply.API.Services.Location;
-using Hangfire;
-using Hangfire.PostgreSql;
-using Vivaply.API.Infrastructure.Security;
-using Vivaply.API.Services.Infrastructure.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddLocationServices();
 builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
+builder.Services.AddInfrastructureServices();
 
 // Services Configuration
 builder.Services.AddControllers();
@@ -115,8 +117,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
-builder.Services.AddScoped<MetadataRefreshJob>();
 
 var app = builder.Build();
 
@@ -200,13 +200,6 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     AllowCachingResponses = false
 }).AllowAnonymous();
 
-using (var scope = app.Services.CreateScope())
-{
-    RecurringJob.AddOrUpdate<MetadataRefreshJob>(
-        "refresh-content-metadata",
-        job => job.RefreshContentsAsync(),
-        Cron.Hourly
-    );
-}
+app.UseVivaplyJobs();
 
 app.Run();
