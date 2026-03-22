@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowPathIcon,
   TrashIcon,
   PencilIcon,
   MagnifyingGlassIcon,
@@ -50,7 +49,6 @@ export default function EntertainmentLibraryPage() {
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [loadingItems, setLoadingItems] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [showUnwatchedOnly, setShowUnwatchedOnly] = useState(false);
@@ -268,27 +266,6 @@ export default function EntertainmentLibraryPage() {
         next.delete(item.id);
         return next;
       });
-    }
-  };
-
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      await mediaService.syncLibrary();
-      toast.success(t("common:messages.library_content_refreshed"));
-
-      const data = await mediaService.getLibrary();
-      const gameData = await gamesService.getLibrary();
-      setLibraryData({ ...data, game: gameData });
-    } catch (error: any) {
-      // Rate limit check (HTTP 429)
-      if (error.response && error.response.status === 429) {
-        toast.info(t("common:messages.library_recently_refreshed"));
-        return;
-      }
-      toast.error(t("common:messages.library_content_couldnt_refresh"));
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -511,20 +488,6 @@ export default function EntertainmentLibraryPage() {
               )}
             </button>
           )}
-
-          {/* Sync Button */}
-          <button
-            onClick={handleSync}
-            disabled={isSyncing}
-            className={`p-2 rounded-full bg-skin-surface hover:bg-skin-surface/90 border border-skin-border transition ${
-              isSyncing
-                ? "animate-spin cursor-not-allowed opacity-50"
-                : "hover:text-skin-primary"
-            }`}
-            title={t("common:buttons.refresh_library")}
-          >
-            <ArrowPathIcon className="w-5 h-5" />
-          </button>
 
           {/* Sort Dropdown */}
           <div className="relative">

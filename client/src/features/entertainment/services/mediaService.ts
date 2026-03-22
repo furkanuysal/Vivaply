@@ -13,7 +13,7 @@ export const mediaService = {
   // Series Search
   searchTv: async (query: string, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
-      `/Entertainment/tv/search?query=${query}&language=${language}`
+      `/Entertainment/tv/search?query=${query}&language=${language}`,
     );
     return response.data;
   },
@@ -21,7 +21,7 @@ export const mediaService = {
   // Movie Search
   searchMovie: async (query: string, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
-      `/Entertainment/movie/search?query=${query}&language=${language}`
+      `/Entertainment/movie/search?query=${query}&language=${language}`,
     );
     return response.data;
   },
@@ -29,7 +29,7 @@ export const mediaService = {
   // Trend Series
   getTrendingTv: async (language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
-      `/Entertainment/tv/trending?language=${language}`
+      `/Entertainment/tv/trending?language=${language}`,
     );
     return response.data;
   },
@@ -37,7 +37,7 @@ export const mediaService = {
   // Trend Movies
   getTrendingMovie: async (language: string = "en-US") => {
     const response = await api.get<TmdbContentDto[]>(
-      `/Entertainment/movie/trending?language=${language}`
+      `/Entertainment/movie/trending?language=${language}`,
     );
     return response.data;
   },
@@ -45,7 +45,7 @@ export const mediaService = {
   // Tv show detail by ID
   getTvDetail: async (id: number, language: string = "en-US") => {
     const response = await api.get<any>(
-      `/Entertainment/tv/${id}?language=${language}`
+      `/Entertainment/tv/${id}?language=${language}`,
     );
     return response.data;
   },
@@ -53,7 +53,7 @@ export const mediaService = {
   // Movie detail by ID
   getMovieDetail: async (id: number, language: string = "en-US") => {
     const response = await api.get<TmdbContentDto>(
-      `/Entertainment/movie/${id}?language=${language}`
+      `/Entertainment/movie/${id}?language=${language}`,
     );
     return response.data;
   },
@@ -67,10 +67,10 @@ export const mediaService = {
   getTvSeasonDetail: async (
     id: number,
     seasonNumber: number,
-    language: string = "en-US"
+    language: string = "en-US",
   ) => {
     const response = await api.get<TmdbSeasonDetailDto>(
-      `/Entertainment/tv/${id}/season/${seasonNumber}?language=${language}`
+      `/Entertainment/tv/${id}/season/${seasonNumber}?language=${language}`,
     );
     return response.data;
   },
@@ -79,7 +79,7 @@ export const mediaService = {
   toggleEpisode: async (
     tmdbShowId: number,
     seasonNumber: number,
-    episodeNumber: number
+    episodeNumber: number,
   ) => {
     const response = await api.post("/Entertainment/episode/toggle", {
       tmdbShowId,
@@ -107,7 +107,7 @@ export const mediaService = {
   updateStatus: async (
     tmdbId: number,
     type: "tv" | "movie",
-    status: WatchStatus
+    status: WatchStatus,
   ) => {
     const response = await api.put("/Entertainment/status", {
       tmdbId,
@@ -126,7 +126,7 @@ export const mediaService = {
   // Remove item from library
   removeFromLibrary: async (tmdbId: number, type: "tv" | "movie") => {
     const response = await api.delete(
-      `/Entertainment/remove?tmdbId=${tmdbId}&type=${type}`
+      `/Entertainment/remove?tmdbId=${tmdbId}&type=${type}`,
     );
     return response.data;
   },
@@ -148,12 +148,6 @@ export const mediaService = {
       type,
       review,
     });
-    return response.data;
-  },
-
-  // Sync library
-  syncLibrary: async () => {
-    const response = await api.post("/Entertainment/library/sync");
     return response.data;
   },
 
