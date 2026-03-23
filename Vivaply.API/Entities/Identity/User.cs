@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 
 namespace Vivaply.API.Entities.Identity
 {
+    [Index(nameof(Email), IsUnique = true)]
+    [Index(nameof(Username), IsUnique = true)]
     public class User
 
     {
@@ -27,6 +30,9 @@ namespace Vivaply.API.Entities.Identity
         public Wallet? Wallet { get; set; }            // VivaCoin
 
         public ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
+
+        public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
+        public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
 
     }
 }

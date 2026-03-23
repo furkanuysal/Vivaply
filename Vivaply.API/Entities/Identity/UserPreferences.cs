@@ -18,13 +18,14 @@ namespace Vivaply.API.Entities.Identity
         public string TimeZone { get; set; } = "UTC";
 
         // Privacy Settings
-        public int ProfileVisibility { get; set; } = 0;
-        public int ActivityVisibility { get; set; } = 1;
+        public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
+        public ActivityVisibility ActivityVisibility { get; set; } = ActivityVisibility.Followers;
+        public FollowPolicy FollowPolicy { get; set; } = FollowPolicy.AutoAccept;
 
         // Notifications
         public bool EmailNotifications { get; set; } = true;
         public bool PushNotifications { get; set; } = true;
 
-        public User? User { get; set; }
+        public User User { get; set; } = null!;
     }
 }
