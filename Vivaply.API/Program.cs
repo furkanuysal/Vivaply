@@ -16,6 +16,7 @@ using Vivaply.API.Services.Infrastructure.Extensions;
 using Vivaply.API.Services.Infrastructure.RateLimiting;
 using Vivaply.API.Services.Knowledge;
 using Vivaply.API.Services.Location;
+using Vivaply.API.Services.Social;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddLocationServices();
 builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
+builder.Services.AddSocialServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services Configuration
