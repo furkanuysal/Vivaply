@@ -1,22 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Vivaply.API.Entities.Identity;
+using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Services.Social.Follow;
 
-namespace Vivaply.API.Controllers
+namespace Vivaply.API.Modules.Core.Social.Controllers
 {
     [ApiController]
-    [Route("api/follows")]
-    public class FollowController : BaseApiController
+    [Route("/api/users")]
+    public class FollowController(IFollowService followService) : BaseApiController
     {
-        private readonly IFollowService _followService;
-
-        public FollowController(IFollowService followService)
-        {
-            _followService = followService;
-        }
+        private readonly IFollowService _followService = followService;
 
         // FOLLOW
-        [HttpPost("{targetUserId}")]
+        [HttpPost("{targetUserId}/follow")]
         public async Task<IActionResult> Follow(Guid targetUserId)
         {
             await _followService.FollowAsync(CurrentUserId, targetUserId);
@@ -24,7 +19,7 @@ namespace Vivaply.API.Controllers
         }
 
         // UNFOLLOW
-        [HttpDelete("{targetUserId}")]
+        [HttpDelete("{targetUserId}/follow")]
         public async Task<IActionResult> Unfollow(Guid targetUserId)
         {
             await _followService.UnfollowAsync(CurrentUserId, targetUserId);
@@ -32,7 +27,7 @@ namespace Vivaply.API.Controllers
         }
 
         // ACCEPT REQUEST
-        [HttpPost("{requesterId}/accept")]
+        [HttpPut("{requesterId}/follow/accept")]
         public async Task<IActionResult> Accept(Guid requesterId)
         {
             await _followService.AcceptRequestAsync(CurrentUserId, requesterId);
@@ -40,7 +35,7 @@ namespace Vivaply.API.Controllers
         }
 
         // REJECT REQUEST
-        [HttpPost("{requesterId}/reject")]
+        [HttpPut("{requesterId}/follow/reject")]
         public async Task<IActionResult> Reject(Guid requesterId)
         {
             await _followService.RejectRequestAsync(CurrentUserId, requesterId);
@@ -64,7 +59,7 @@ namespace Vivaply.API.Controllers
         }
 
         // GET PENDING REQUESTS (for current user)
-        [HttpGet("pending")]
+        [HttpGet("me/follow-requests")]
         public async Task<IActionResult> GetPending()
         {
             var result = await _followService.GetPendingRequestsAsync(CurrentUserId);
@@ -72,7 +67,7 @@ namespace Vivaply.API.Controllers
         }
 
         // GET RELATION STATUS
-        [HttpGet("{targetUserId}/status")]
+        [HttpGet("{targetUserId}/follow/status")]
         public async Task<IActionResult> GetStatus(Guid targetUserId)
         {
             var result = await _followService.GetRelationStatusAsync(CurrentUserId, targetUserId);

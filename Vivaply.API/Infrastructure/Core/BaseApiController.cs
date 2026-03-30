@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Vivaply.API.Entities.Identity;
 
-namespace Vivaply.API.Controllers
+namespace Vivaply.API.Infrastructure.Core
 {
     [ApiController]
     public abstract class BaseApiController : ControllerBase

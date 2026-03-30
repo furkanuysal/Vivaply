@@ -7,22 +7,17 @@ using Vivaply.API.DTOs;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
+using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Services;
 
-namespace Vivaply.API.Controllers
+namespace Vivaply.API.Modules.Core.Identity.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(VivaplyDbContext context, ITokenService tokenService) : BaseApiController
     {
-        private readonly VivaplyDbContext _context;
-        private readonly ITokenService _tokenService;
-
-        public AuthController(VivaplyDbContext context, ITokenService tokenService)
-        {
-            _context = context;
-            _tokenService = tokenService;
-        }
+        private readonly VivaplyDbContext _context = context;
+        private readonly ITokenService _tokenService = tokenService;
 
         // Register
         [HttpPost("register")]
@@ -213,11 +208,10 @@ namespace Vivaply.API.Controllers
             await _context.SaveChangesAsync();
         }
 
-        private string HashToken(string token)
+        private static string HashToken(string token)
         {
-            using var sha256 = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(token);
-            var hash = sha256.ComputeHash(bytes);
+            var hash = SHA256.HashData(bytes);
             return Convert.ToBase64String(hash);
         }
     }

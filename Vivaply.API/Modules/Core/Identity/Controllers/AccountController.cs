@@ -1,28 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Vivaply.API.DTOs.Account;
-using Vivaply.API.Entities.Identity;
+using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Services.Account;
 
-namespace Vivaply.API.Controllers
+namespace Vivaply.API.Modules.Core.Identity.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController(IAccountService accountService) : BaseApiController
     {
-        private readonly IAccountService _accountService;
-
-        public AccountController(IAccountService accountService)
-        {
-            _accountService = accountService;
-        }
+        private readonly IAccountService _accountService = accountService;
 
         [HttpGet] // URL: /api/Account
         public async Task<IActionResult> GetMyProfile()
         {
-            var profile = await _accountService.GetProfileAsync(GetUserId());
+            var profile = await _accountService.GetProfileAsync(CurrentUserId);
             return Ok(profile);
         }
 
@@ -32,7 +26,7 @@ namespace Vivaply.API.Controllers
         {
             try
             {
-                await _accountService.UpdateProfileAsync(GetUserId(), request);
+                await _accountService.UpdateProfileAsync(CurrentUserId, request);
                 return Ok(new { message = "Profile updated successfully." });
             }
             catch (InvalidOperationException ex)
@@ -47,7 +41,7 @@ namespace Vivaply.API.Controllers
         [HttpPost("avatar")]
         public async Task<IActionResult> UploadAvatar([FromForm] UploadAvatarDto request)
         {
-            var avatarUrl = await _accountService.UploadAvatarAsync(GetUserId(), request);
+            var avatarUrl = await _accountService.UploadAvatarAsync(CurrentUserId, request);
             return Ok(new { message = "Avatar uploaded successfully.", avatarUrl });
         }
 
@@ -55,7 +49,7 @@ namespace Vivaply.API.Controllers
         [HttpPut("password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
-            await _accountService.ChangePasswordAsync(GetUserId(), request);
+            await _accountService.ChangePasswordAsync(CurrentUserId, request);
             return Ok(new { message = "Password changed successfully." });
         }
 
@@ -63,17 +57,8 @@ namespace Vivaply.API.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAccount()
         {
-            await _accountService.DeleteAccountAsync(GetUserId());
+            await _accountService.DeleteAccountAsync(CurrentUserId);
             return Ok(new { message = "Account deleted successfully." });
-        }
-
-        // Helper: Get User ID from Token
-        private Guid GetUserId()
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdString, out var userId))
-                throw new UnauthorizedAccessException();
-            return userId;
         }
     }
 }
