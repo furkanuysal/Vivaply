@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Vivaply.API.Modules.Core.Identity.Enums;
 
 namespace Vivaply.API.Entities.Identity
 {

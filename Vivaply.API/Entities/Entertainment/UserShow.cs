@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Vivaply.API.Entities.Entertainment.Tmdb;
 using Vivaply.API.Entities.Identity;
+using Vivaply.API.Modules.Core.Entertainment.Enums;
 
 namespace Vivaply.API.Entities.Entertainment
 {
@@ -34,6 +34,6 @@ namespace Vivaply.API.Entities.Entertainment
         public int? LastWatchedEpisode { get; set; }
 
         // Watched Episodes
-        public List<WatchedEpisode> WatchedEpisodes { get; set; } = new();
+        public List<WatchedEpisode> WatchedEpisodes { get; set; } = [];
     }
 }

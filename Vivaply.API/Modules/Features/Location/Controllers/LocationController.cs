@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services.Infrastructure.RateLimiting;
-using Vivaply.API.Services.Location;
+using Vivaply.API.Infrastructure.RateLimiting;
+using Vivaply.API.Modules.Features.Location.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Features.Location.Controllers
 {

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivaply.API.Entities.Identity;
+using Vivaply.API.Modules.Core.Knowledge.Enums;
 
 namespace Vivaply.API.Entities.Knowledge
 {

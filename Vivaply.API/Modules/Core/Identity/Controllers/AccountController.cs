@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vivaply.API.DTOs.Account;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services.Account;
+using Vivaply.API.Modules.Core.Identity.DTOs.Account;
+using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Identity.Controllers
 {

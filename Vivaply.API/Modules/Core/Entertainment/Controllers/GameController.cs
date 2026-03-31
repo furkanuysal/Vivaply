@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vivaply.API.DTOs.Entertainment.Commands.Games;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services.Entertainment.Game;
+using Vivaply.API.Modules.Core.Entertainment.DTOs.Commands.Games;
+using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Entertainment.Controllers
 {

@@ -1,0 +1,271 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Vivaply.API.Data;
+using Vivaply.API.Entities.Knowledge;
+using Vivaply.API.Infrastructure.Serialization;
+using Vivaply.API.Modules.Core.Knowledge.DTOs.Commands.Book;
+using Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks;
+using Vivaply.API.Modules.Core.Knowledge.Enums;
+using Vivaply.API.Modules.Core.Knowledge.Services.Interfaces;
+
+namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
+{
+    public class BookService(VivaplyDbContext db, IGoogleBooksService googleBooks) : IBookService
+    {
+        private readonly VivaplyDbContext _db = db;
+        private readonly IGoogleBooksService _googleBooks = googleBooks;
+
+        // --- Discovery ---
+        public Task<List<BookContentDto>> SearchAsync(string query)
+            => _googleBooks.SearchBooksAsync(query);
+
+        public async Task<List<BookContentDto>> DiscoverAsync(string lang)
+        {
+            var subjects = new[]
+            {
+                "fiction",
+                "fantasy",
+                "mystery",
+                "thriller",
+                "romance",
+                "biography",
+                "self-help"
+            };
+
+            var random = new Random();
+            var subject = subjects[random.Next(subjects.Length)];
+            var startIndex = random.Next(0, 200);
+
+
+            return await _googleBooks.SearchBooksAsync(
+                $"subject:{subject}&orderBy=relevance",
+                lang,
+                startIndex
+                );
+        }
+
+        public async Task<BookContentDto?> GetDetailAsync(Guid userId, string googleBookId)
+        {
+            var book = await _googleBooks.GetBookDetailsAsync(googleBookId);
+            if (book == null) return null;
+
+            var userBook = await _db.UserBooks
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId);
+
+            if (userBook != null)
+            {
+                book.UserStatus = userBook.Status;
+                book.CurrentPage = userBook.CurrentPage;
+                book.UserRating = userBook.UserRating;
+                book.UserReview = userBook.Review;
+            }
+
+            return book;
+        }
+
+        // --- Library ---
+        public async Task<List<BookContentDto>> GetLibraryAsync(Guid userId)
+        {
+            var books = await _db.UserBooks
+                .AsNoTracking()
+                .Include(x => x.Metadata)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.DateAdded)
+                .ToListAsync();
+
+            return books.Select(b => new BookContentDto
+            {
+                Id = b.GoogleBookId,
+
+                // Metadata
+                Title = b.Metadata?.Title ?? "(Unknown)",
+                Authors = JsonHelper.DeserializeList<string>(b.Metadata?.AuthorsJson),
+                CoverUrl = b.Metadata?.CoverUrl,
+                PageCount = b.Metadata?.PageCount ?? 0,
+
+                // User-specific
+                UserStatus = b.Status,
+                CurrentPage = b.CurrentPage,
+                UserRating = b.UserRating,
+                UserReview = b.Review
+            }).ToList();
+        }
+
+
+        public async Task TrackAsync(Guid userId, AddBookDto request)
+        {
+            if (await _db.UserBooks.AnyAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId))
+                throw new InvalidOperationException("This book is already on library.");
+
+            // Check if metadata exists, if not create a new one (to avoid unnecessary API calls in the future)
+            var metadata = await GetOrCreateBookMetadataAsync(
+                request.GoogleBookId,
+                request.Title,
+                request.Authors,
+                request.CoverUrl,
+                request.PageCount
+                );
+
+            _db.UserBooks.Add(new UserBook
+            {
+                UserId = userId,
+                GoogleBookId = request.GoogleBookId,
+                Status = request.Status,
+                DateAdded = DateTime.UtcNow,
+                DateFinished = request.Status == ReadStatus.Completed ? DateTime.UtcNow : null
+            });
+
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task RemoveAsync(Guid userId, string googleBookId)
+        {
+            var book = await _db.UserBooks
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId);
+
+            if (book == null)
+                throw new KeyNotFoundException("Book couldn't be found.");
+
+            _db.UserBooks.Remove(book);
+            await _db.SaveChangesAsync();
+        }
+
+        // --- Progress / Status ---
+        public async Task UpdateStatusAsync(Guid userId, UpdateBookStatusDto request)
+        {
+            var book = await GetUserBook(userId, request.GoogleBookId);
+
+            book.Status = request.Status;
+
+            if (request.Status == ReadStatus.Completed)
+            {
+                book.CurrentPage = book.Metadata?.PageCount ?? book.CurrentPage;
+
+                if (book.DateFinished == null)
+                    book.DateFinished = DateTime.UtcNow;
+            }
+            else
+            {
+                book.DateFinished = null;
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task UpdateProgressAsync(Guid userId, UpdateBookProgressDto request)
+        {
+            var book = await GetUserBook(userId, request.GoogleBookId);
+
+            var pageCount = book.Metadata?.PageCount ?? 0;
+
+            book.CurrentPage = Math.Min(request.CurrentPage, pageCount);
+
+            if (book.CurrentPage == pageCount && pageCount > 0)
+            {
+                book.Status = ReadStatus.Completed;
+                if (book.DateFinished == null)
+                    book.DateFinished = DateTime.UtcNow;
+            }
+            else
+            {
+                if (book.Status == ReadStatus.Completed)
+                {
+                    book.Status = ReadStatus.Reading;
+                    book.DateFinished = null;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
+        // --- Rating / Review ---
+        public async Task RateAsync(Guid userId, RateBookDto request)
+        {
+            if (request.Rating < 0 || request.Rating > 10)
+                throw new ArgumentOutOfRangeException(nameof(request.Rating));
+
+            var book = await _db.UserBooks
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
+
+            if (book == null)
+            {
+                var details = await _googleBooks.GetBookDetailsAsync(request.GoogleBookId)
+                    ?? throw new KeyNotFoundException("Book couldn't be found.");
+
+                var metadata = await GetOrCreateBookMetadataAsync(
+                    request.GoogleBookId,
+                    details.Title,
+                    details.Authors,
+                    details.CoverUrl,
+                    details.PageCount
+                    );
+
+                book = new UserBook
+                {
+                    UserId = userId,
+                    GoogleBookId = request.GoogleBookId,
+                    Status = ReadStatus.Reading,
+                    DateAdded = DateTime.UtcNow
+                };
+
+                _db.UserBooks.Add(book);
+            }
+
+            book.UserRating = request.Rating;
+
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task ReviewAsync(Guid userId, ReviewBookDto request)
+        {
+            var book = await GetUserBook(userId, request.GoogleBookId);
+            book.Review = request.Review;
+            await _db.SaveChangesAsync();
+        }
+
+        // --- Helper ---
+        private async Task<UserBook> GetUserBook(Guid userId, string googleBookId)
+        {
+            return await _db.UserBooks
+                .Include(x => x.Metadata)
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId)
+                ?? throw new KeyNotFoundException("Book couldn't be found on library.");
+        }
+
+        private async Task<BookMetadata> GetOrCreateBookMetadataAsync(
+            string googleBookId,
+            string? title,
+            List<string>? authors,
+            string? coverUrl,
+            int? pageCount)
+        {
+            var metadata = await _db.BookMetadata
+                .FirstOrDefaultAsync(x => x.GoogleBookId == googleBookId);
+
+            if (metadata != null)
+                return metadata;
+
+            metadata = new BookMetadata
+            {
+                GoogleBookId = googleBookId,
+                Title = title ?? "(Unknown)",
+                AuthorsJson = JsonHelper.SerializeList(authors ?? []),
+                CoverUrl = coverUrl,
+                PageCount = pageCount ?? 0,
+                LastFetchedAt = DateTime.UtcNow
+            };
+
+            _db.BookMetadata.Add(metadata);
+
+            try
+            {
+                await _db.SaveChangesAsync();
+                return metadata;
+            }
+            catch (DbUpdateException)
+            {
+                return await _db.BookMetadata
+                    .FirstAsync(x => x.GoogleBookId == googleBookId);
+            }
+        }
+    }
+}

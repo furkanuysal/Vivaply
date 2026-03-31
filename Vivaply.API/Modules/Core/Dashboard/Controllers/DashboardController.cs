@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services.Dashboard;
+using Vivaply.API.Modules.Core.Dashboard.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Dashboard.Controllers
 {

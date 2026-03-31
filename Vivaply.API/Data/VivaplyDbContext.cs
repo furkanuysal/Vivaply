@@ -9,12 +9,8 @@ using Vivaply.API.Entities.Knowledge;
 
 namespace Vivaply.API.Data
 {
-    public class VivaplyDbContext : DbContext
+    public class VivaplyDbContext(DbContextOptions<VivaplyDbContext> options) : DbContext(options)
     {
-        // Constructor
-        public VivaplyDbContext(DbContextOptions<VivaplyDbContext> options) : base(options)
-        {
-        }
 
         // General Tables (Entities)
         public DbSet<User> Users { get; set; }

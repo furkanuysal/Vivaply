@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services.Social.Follow;
+using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Controllers
 {

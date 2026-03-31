@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using Vivaply.API.Data;
-using Vivaply.API.DTOs;
 using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Services;
+using Vivaply.API.Modules.Core.Identity.DTOs.Auth;
+using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Identity.Controllers
 {

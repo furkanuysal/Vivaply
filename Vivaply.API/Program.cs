@@ -7,16 +7,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Vivaply.API.Data;
+using Vivaply.API.Infrastructure.Extensions;
+using Vivaply.API.Infrastructure.RateLimiting;
 using Vivaply.API.Infrastructure.Security;
-using Vivaply.API.Services;
-using Vivaply.API.Services.Account;
-using Vivaply.API.Services.Dashboard;
-using Vivaply.API.Services.Entertainment;
-using Vivaply.API.Services.Infrastructure.Extensions;
-using Vivaply.API.Services.Infrastructure.RateLimiting;
-using Vivaply.API.Services.Knowledge;
-using Vivaply.API.Services.Location;
-using Vivaply.API.Services.Social;
+using Vivaply.API.Modules.Core.Dashboard.Services.Implementations;
+using Vivaply.API.Modules.Core.Dashboard.Services.Interfaces;
+using Vivaply.API.Modules.Core.Entertainment.Extensions;
+using Vivaply.API.Modules.Core.Identity.Extensions;
+using Vivaply.API.Modules.Core.Identity.Services.Implementations;
+using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
+using Vivaply.API.Modules.Core.Knowledge.Extensions;
+using Vivaply.API.Modules.Core.Social.Extensions;
+using Vivaply.API.Modules.Features.Location.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
