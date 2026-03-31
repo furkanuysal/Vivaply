@@ -3,7 +3,7 @@ import type { DashboardSummaryDto } from "@/features/dashboard/types";
 
 export const dashboardService = {
   getDashboard: async () => {
-    const response = await api.get<DashboardSummaryDto>("/Dashboard");
+    const response = await api.get<DashboardSummaryDto>("/dashboard");
     return response.data;
   },
 };

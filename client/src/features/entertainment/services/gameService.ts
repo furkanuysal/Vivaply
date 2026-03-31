@@ -9,9 +9,9 @@ import type {
 export const gamesService = {
   // Search
   searchGames: async (query: string) => {
-    // Backend URL: /api/entertainment/game/search
+    // Backend URL: /api/discovery/games/search
     const response = await api.get<GameContentDto[]>(
-      `/Entertainment/Game/search?query=${query}`
+      `/discovery/games/search?query=${query}`,
     );
     return response.data;
   },
@@ -19,34 +19,32 @@ export const gamesService = {
   // Trending
   getTrendingGames: async () => {
     const response = await api.get<GameContentDto[]>(
-      "/Entertainment/Game/trending"
+      "/discovery/games/trending",
     );
     return response.data;
   },
 
   // Detail
   getGameDetail: async (id: number) => {
-    const response = await api.get<GameContentDto>(`/Entertainment/Game/${id}`);
+    const response = await api.get<GameContentDto>(`/games/${id}`);
     return response.data;
   },
 
   // Library
   getLibrary: async () => {
-    const response = await api.get<GameContentDto[]>(
-      "/Entertainment/Game/library"
-    );
+    const response = await api.get<GameContentDto[]>("/games/library");
     return response.data;
   },
 
   // Track
   trackGame: async (data: TrackGameDto) => {
-    const response = await api.post("/Entertainment/Game/track", data);
+    const response = await api.post("/games", data);
     return response.data;
   },
 
   // Update Status
   updateStatus: async (igdbId: number, status: PlayStatus) => {
-    const response = await api.put("/Entertainment/Game/status", {
+    const response = await api.put("/games/status", {
       igdbId,
       status,
     });
@@ -55,7 +53,7 @@ export const gamesService = {
 
   // Rate
   rateGame: async (igdbId: number, rating: number) => {
-    const response = await api.put("/Entertainment/Game/rating", {
+    const response = await api.put("/games/rating", {
       igdbId,
       rating,
     });
@@ -64,7 +62,7 @@ export const gamesService = {
 
   // Review
   addReview: async (igdbId: number, review: string) => {
-    const response = await api.put("/Entertainment/Game/review", {
+    const response = await api.put("/games/review", {
       igdbId,
       review,
     });
@@ -73,13 +71,13 @@ export const gamesService = {
 
   // Update Progress
   updateProgress: async (data: UpdateGameProgressDto) => {
-    const response = await api.put("/Entertainment/Game/progress", data);
+    const response = await api.put("/games/progress", data);
     return response.data;
   },
 
   // Remove
   removeGame: async (id: number) => {
-    const response = await api.delete(`/Entertainment/Game/remove/${id}`);
+    const response = await api.delete(`/games/${id}`);
     return response.data;
   },
 };

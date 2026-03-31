@@ -2,6 +2,8 @@ import { type NavigateFunction } from "react-router-dom";
 import type { TFunction } from "i18next";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 import type { DashboardItemDto } from "@/features/dashboard/types";
+import { DashboardItemType } from "@/features/dashboard/types";
+import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";
 
 interface DashboardListCardProps {
   item: DashboardItemDto;
@@ -19,7 +21,7 @@ export default function DashboardListCard({
   let progressLabel = "";
   let progressColor = "text-skin-primary";
 
-  if (item.type === "book") {
+  if (item.type === DashboardItemType.Book) {
     subText = t("common:types.book");
 
     // Secure percentage calculation
@@ -30,7 +32,7 @@ export default function DashboardListCard({
     progressText = `%${percent}`;
     progressLabel = t("dashboard:status.in_progress");
     progressColor = "text-skin-accent"; // Book color
-  } else if (item.type === "game") {
+  } else if (item.type === DashboardItemType.Game) {
     subText = t("common:types.game");
 
     // Game time
@@ -41,7 +43,7 @@ export default function DashboardListCard({
 
   return (
     <div
-      onClick={() => navigate(item.routePath)}
+      onClick={() => navigate(getRoutePath(item.type, item.id))}
       className="flex items-center gap-4 p-3 hover:bg-skin-surface/50 rounded-xl transition-colors cursor-pointer group border border-transparent hover:border-skin-border/30"
     >
       {/* Cover Image */}
@@ -57,7 +59,7 @@ export default function DashboardListCard({
         ) : (
           <UniversalCoverFallback
             title={item.title}
-            type={item.type || "other"}
+            type={TYPE_LABEL[item.type]}
             variant="compact"
           />
         )}

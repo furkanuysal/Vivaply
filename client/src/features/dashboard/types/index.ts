@@ -8,7 +8,7 @@ export interface DashboardStatsDto {
 
 export interface DashboardItemDto {
   id: string;
-  type: "tv" | "movie" | "book" | "game";
+  type: DashboardItemType;
   title: string;
   imageUrl?: string;
   season?: number;
@@ -18,7 +18,6 @@ export interface DashboardItemDto {
   progressPercent?: number;
   userStatus: number;
   lastUpdated: string;
-  routePath: string;
 }
 
 export interface DashboardSummaryDto {
@@ -27,3 +26,13 @@ export interface DashboardSummaryDto {
   continuePlaying: DashboardItemDto[];
   stats: DashboardStatsDto;
 }
+
+// Dashboard Item Type
+export const DashboardItemType = {
+  Tv: 0,
+  Movie: 1,
+  Book: 2,
+  Game: 3,
+} as const;
+export type DashboardItemType =
+  (typeof DashboardItemType)[keyof typeof DashboardItemType];

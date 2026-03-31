@@ -8,7 +8,7 @@ export interface RecommendationResponse {
 
 export const recommendationService = {
   getRecommendations: async (language: string = "en-US") => {
-    const response = await api.get<RecommendationResponse>("/Recommendation", {
+    const response = await api.get<RecommendationResponse>("/recommendations", {
       params: { language },
     });
     return response.data;

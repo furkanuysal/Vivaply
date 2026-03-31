@@ -8,6 +8,8 @@ import {
 } from "@heroicons/react/24/outline";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 import type { DashboardItemDto } from "@/features/dashboard/types";
+import { DashboardItemType } from "@/features/dashboard/types";
+import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";
 
 interface DashboardCardProps {
   item: DashboardItemDto;
@@ -21,7 +23,7 @@ export default function DashboardCard({
   t,
 }: DashboardCardProps) {
   let subText = "";
-  if (item.type === "tv" && item.season && item.episode) {
+  if (item.type === DashboardItemType.Tv && item.season && item.episode) {
     subText = `${t("dashboard:units.season")} ${item.season} • ${t("dashboard:units.episode")} ${item.episode}`;
   } else {
     subText = t("common:types.movie") || "Film";
@@ -31,7 +33,7 @@ export default function DashboardCard({
 
   return (
     <div
-      onClick={() => navigate(item.routePath)}
+      onClick={() => navigate(getRoutePath(item.type, item.id))}
       className="group relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md cursor-pointer transform hover:scale-[1.02] transition-all duration-300 border border-skin-border/30"
     >
       {/* --- Background Image --- */}
@@ -45,7 +47,7 @@ export default function DashboardCard({
         ) : (
           <UniversalCoverFallback
             title={item.title}
-            type={item.type || "other"}
+            type={TYPE_LABEL[item.type]}
             className="w-full h-full"
           />
         )}
@@ -56,12 +58,12 @@ export default function DashboardCard({
 
       {/* --- Top Right Icon Badge --- */}
       <div className="absolute top-3 right-3 z-20 bg-skin-surface/90 backdrop-blur text-skin-text p-2 rounded-full shadow-lg border border-skin-border/10">
-        {item.type === "tv" && <TvIcon className="w-5 h-5" />}
-        {(item.type === "movie" || !item.type) && (
+        {item.type === DashboardItemType.Tv && <TvIcon className="w-5 h-5" />}
+        {item.type === DashboardItemType.Movie && (
           <FilmIcon className="w-5 h-5" />
         )}
-        {item.type === "book" && <BookOpenIcon className="w-5 h-5" />}
-        {item.type === "game" && <PuzzlePieceIcon className="w-5 h-5" />}
+        {item.type === DashboardItemType.Book && <BookOpenIcon className="w-5 h-5" />}
+        {item.type === DashboardItemType.Game && <PuzzlePieceIcon className="w-5 h-5" />}
       </div>
 
       {/* --- Content --- */}
