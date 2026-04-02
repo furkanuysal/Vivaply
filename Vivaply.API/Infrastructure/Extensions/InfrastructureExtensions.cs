@@ -1,4 +1,5 @@
-﻿using Vivaply.API.Infrastructure.Jobs;
+using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Infrastructure.Jobs;
 using Vivaply.API.Infrastructure.Options;
 
 namespace Vivaply.API.Infrastructure.Extensions
@@ -18,6 +19,7 @@ namespace Vivaply.API.Infrastructure.Extensions
 
             // Jobs
             services.AddScoped<MetadataRefreshJob>();
+            services.AddScoped<IApplicationEventPublisher, ApplicationEventPublisher>();
 
             return services;
         }

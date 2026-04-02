@@ -1,20 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Knowledge;
+using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Infrastructure.Serialization;
 using Vivaply.API.Modules.Core.Knowledge.DTOs.Commands.Book;
 using Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks;
 using Vivaply.API.Modules.Core.Knowledge.Enums;
 using Vivaply.API.Modules.Core.Knowledge.Services.Interfaces;
+using Vivaply.API.Modules.Core.Social.Events;
 
 namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
 {
-    public class BookService(VivaplyDbContext db, IGoogleBooksService googleBooks) : IBookService
+    public class BookService(
+        VivaplyDbContext db,
+        IGoogleBooksService googleBooks,
+        IApplicationEventPublisher eventPublisher) : IBookService
     {
         private readonly VivaplyDbContext _db = db;
         private readonly IGoogleBooksService _googleBooks = googleBooks;
+        private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
 
-        // --- Discovery ---
         public Task<List<BookContentDto>> SearchAsync(string query)
             => _googleBooks.SearchBooksAsync(query);
 
@@ -35,12 +40,11 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             var subject = subjects[random.Next(subjects.Length)];
             var startIndex = random.Next(0, 200);
 
-
             return await _googleBooks.SearchBooksAsync(
                 $"subject:{subject}&orderBy=relevance",
                 lang,
                 startIndex
-                );
+            );
         }
 
         public async Task<BookContentDto?> GetDetailAsync(Guid userId, string googleBookId)
@@ -62,7 +66,6 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             return book;
         }
 
-        // --- Library ---
         public async Task<List<BookContentDto>> GetLibraryAsync(Guid userId)
         {
             var books = await _db.UserBooks
@@ -75,14 +78,10 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             return books.Select(b => new BookContentDto
             {
                 Id = b.GoogleBookId,
-
-                // Metadata
                 Title = b.Metadata?.Title ?? "(Unknown)",
                 Authors = JsonHelper.DeserializeList<string>(b.Metadata?.AuthorsJson),
                 CoverUrl = b.Metadata?.CoverUrl,
                 PageCount = b.Metadata?.PageCount ?? 0,
-
-                // User-specific
                 UserStatus = b.Status,
                 CurrentPage = b.CurrentPage,
                 UserRating = b.UserRating,
@@ -90,31 +89,55 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             }).ToList();
         }
 
-
         public async Task TrackAsync(Guid userId, AddBookDto request)
         {
             if (await _db.UserBooks.AnyAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId))
                 throw new InvalidOperationException("This book is already on library.");
 
-            // Check if metadata exists, if not create a new one (to avoid unnecessary API calls in the future)
             var metadata = await GetOrCreateBookMetadataAsync(
                 request.GoogleBookId,
                 request.Title,
                 request.Authors,
                 request.CoverUrl,
                 request.PageCount
-                );
+            );
 
-            _db.UserBooks.Add(new UserBook
+            var book = new UserBook
             {
                 UserId = userId,
                 GoogleBookId = request.GoogleBookId,
                 Status = request.Status,
                 DateAdded = DateTime.UtcNow,
                 DateFinished = request.Status == ReadStatus.Completed ? DateTime.UtcNow : null
-            });
+            };
+
+            _db.UserBooks.Add(book);
 
             await _db.SaveChangesAsync();
+
+            if (request.Status == ReadStatus.Reading)
+            {
+                await _eventPublisher.PublishAsync(new BookStartedEvent(
+                    userId,
+                    request.GoogleBookId,
+                    metadata.Title,
+                    metadata.CoverUrl,
+                    book.DateAdded,
+                    book.Id.ToString()
+                ));
+            }
+            else
+            {
+                await _eventPublisher.PublishAsync(new LibraryItemAddedEvent(
+                    userId,
+                    "book",
+                    request.GoogleBookId,
+                    metadata.Title,
+                    metadata.CoverUrl,
+                    "UserBook",
+                    book.Id.ToString()
+                ));
+            }
         }
 
         public async Task RemoveAsync(Guid userId, string googleBookId)
@@ -129,10 +152,10 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             await _db.SaveChangesAsync();
         }
 
-        // --- Progress / Status ---
         public async Task UpdateStatusAsync(Guid userId, UpdateBookStatusDto request)
         {
             var book = await GetUserBook(userId, request.GoogleBookId);
+            var wasCompleted = book.Status == ReadStatus.Completed;
 
             book.Status = request.Status;
 
@@ -149,12 +172,24 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             }
 
             await _db.SaveChangesAsync();
+
+            if (!wasCompleted && request.Status == ReadStatus.Completed)
+            {
+                await _eventPublisher.PublishAsync(new BookFinishedEvent(
+                    userId,
+                    request.GoogleBookId,
+                    book.Metadata?.Title ?? "Unknown",
+                    book.Metadata?.CoverUrl,
+                    book.DateFinished ?? DateTime.UtcNow,
+                    book.Id.ToString()
+                ));
+            }
         }
 
         public async Task UpdateProgressAsync(Guid userId, UpdateBookProgressDto request)
         {
             var book = await GetUserBook(userId, request.GoogleBookId);
-
+            var wasCompleted = book.Status == ReadStatus.Completed;
             var pageCount = book.Metadata?.PageCount ?? 0;
 
             book.CurrentPage = Math.Min(request.CurrentPage, pageCount);
@@ -165,25 +200,34 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                 if (book.DateFinished == null)
                     book.DateFinished = DateTime.UtcNow;
             }
-            else
+            else if (book.Status == ReadStatus.Completed)
             {
-                if (book.Status == ReadStatus.Completed)
-                {
-                    book.Status = ReadStatus.Reading;
-                    book.DateFinished = null;
-                }
+                book.Status = ReadStatus.Reading;
+                book.DateFinished = null;
             }
 
             await _db.SaveChangesAsync();
+
+            if (!wasCompleted && book.Status == ReadStatus.Completed)
+            {
+                await _eventPublisher.PublishAsync(new BookFinishedEvent(
+                    userId,
+                    request.GoogleBookId,
+                    book.Metadata?.Title ?? "Unknown",
+                    book.Metadata?.CoverUrl,
+                    book.DateFinished ?? DateTime.UtcNow,
+                    book.Id.ToString()
+                ));
+            }
         }
 
-        // --- Rating / Review ---
         public async Task RateAsync(Guid userId, RateBookDto request)
         {
             if (request.Rating < 0 || request.Rating > 10)
                 throw new ArgumentOutOfRangeException(nameof(request.Rating));
 
             var book = await _db.UserBooks
+                .Include(x => x.Metadata)
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == request.GoogleBookId);
 
             if (book == null)
@@ -197,14 +241,15 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                     details.Authors,
                     details.CoverUrl,
                     details.PageCount
-                    );
+                );
 
                 book = new UserBook
                 {
                     UserId = userId,
                     GoogleBookId = request.GoogleBookId,
                     Status = ReadStatus.Reading,
-                    DateAdded = DateTime.UtcNow
+                    DateAdded = DateTime.UtcNow,
+                    Metadata = metadata
                 };
 
                 _db.UserBooks.Add(book);
@@ -213,6 +258,15 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             book.UserRating = request.Rating;
 
             await _db.SaveChangesAsync();
+
+            await _eventPublisher.PublishAsync(new BookRatedEvent(
+                userId,
+                request.GoogleBookId,
+                book.Metadata?.Title ?? "Unknown",
+                book.Metadata?.CoverUrl,
+                request.Rating,
+                book.Id.ToString()
+            ));
         }
 
         public async Task ReviewAsync(Guid userId, ReviewBookDto request)
@@ -220,9 +274,18 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             var book = await GetUserBook(userId, request.GoogleBookId);
             book.Review = request.Review;
             await _db.SaveChangesAsync();
+
+            await _eventPublisher.PublishAsync(new BookReviewAddedEvent(
+                userId,
+                request.GoogleBookId,
+                book.Metadata?.Title ?? "Unknown",
+                book.Metadata?.CoverUrl,
+                request.Review,
+                book.UserRating,
+                book.Id.ToString()
+            ));
         }
 
-        // --- Helper ---
         private async Task<UserBook> GetUserBook(Guid userId, string googleBookId)
         {
             return await _db.UserBooks

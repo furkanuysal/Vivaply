@@ -19,6 +19,7 @@ namespace Vivaply.API.Data
         public DbSet<Wallet> Wallets { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public DbSet<UserFollow> UserFollows { get; set; }
+        public DbSet<UserActivity> UserActivities { get; set; }
 
         // Entertainment Tables
         public DbSet<UserShow> UserShows { get; set; }

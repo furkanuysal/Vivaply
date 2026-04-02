@@ -3,6 +3,7 @@ using System.Globalization;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Entertainment;
 using Vivaply.API.Entities.Entertainment.Tmdb;
+using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Infrastructure.Serialization;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.Commands.Media;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.External.Tmdb;
@@ -11,16 +12,19 @@ using Vivaply.API.Modules.Core.Entertainment.DTOs.Results.Library;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.Results.Media;
 using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
+using Vivaply.API.Modules.Core.Social.Events;
 
 namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 {
     public class MediaService(
         VivaplyDbContext dbContext,
-        ITmdbService tmdbService
+        ITmdbService tmdbService,
+        IApplicationEventPublisher eventPublisher
         ) : IMediaService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly ITmdbService _tmdbService = tmdbService;
+        private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
@@ -33,28 +37,54 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             if (type == "tv")
             {
                 var show = await _dbContext.UserShows
+                    .Include(x => x.Metadata)
                     .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
                     ?? throw new InvalidOperationException(
                         "You must add the TV show to your library before reviewing it."
                     );
 
                 show.Review = request.Review;
-            }
-            else
-            {
-                var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
-                    ?? throw new InvalidOperationException(
-                        "You must add the movie to your library before reviewing it."
-                    );
 
-                movie.Review = request.Review;
+                await _dbContext.SaveChangesAsync();
+
+                await _eventPublisher.PublishAsync(new MediaReviewAddedEvent(
+                    userId,
+                    "tv_show",
+                    request.TmdbId.ToString(),
+                    show.Metadata?.Name ?? "Unknown",
+                    show.Metadata?.PosterPath,
+                    request.Review,
+                    show.UserRating,
+                    "UserShow",
+                    show.Id.ToString()
+                ));
+
+                return;
             }
+            
+            var movie = await _dbContext.UserMovies
+                .Include(x => x.Metadata)
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                ?? throw new InvalidOperationException(
+                    "You must add the movie to your library before reviewing it."
+                );
+
+            movie.Review = request.Review;
 
             await _dbContext.SaveChangesAsync();
+
+            await _eventPublisher.PublishAsync(new MediaReviewAddedEvent(
+                userId,
+                "movie",
+                request.TmdbId.ToString(),
+                movie.Metadata?.Title ?? "Unknown",
+                movie.Metadata?.PosterPath,
+                request.Review,
+                movie.UserRating,
+                "UserMovie",
+                movie.Id.ToString()
+            ));
         }
-
-
 
         public async Task AddMediaToLibraryAsync(Guid userId, AddMediaToLibraryDto request)
         {
@@ -87,32 +117,68 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 };
 
                 _dbContext.UserShows.Add(show);
+
+                await _dbContext.SaveChangesAsync();
+
+                await _eventPublisher.PublishAsync(new LibraryItemAddedEvent(
+                    userId,
+                    "tv_show",
+                    request.TmdbId.ToString(),
+                    metadata.Name,
+                    metadata.PosterPath,
+                    "UserShow",
+                    show.Id.ToString()
+                ));
+
+                return;
+            }
+
+            var movieExists = await _dbContext.UserMovies
+                .AnyAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
+
+            if (movieExists)
+                throw new InvalidOperationException("This movie is already in your library.");
+
+            var movieMetadata = await GetOrCreateMovieMetadataAsync(request.TmdbId);
+
+            var movie = new UserMovie
+            {
+                UserId = userId,
+                TmdbMovieId = request.TmdbId,
+                Metadata = movieMetadata,
+                Status = request.Status,
+                WatchedAt = request.Status == WatchStatus.Completed
+                    ? DateTime.UtcNow
+                    : null
+            };
+
+            _dbContext.UserMovies.Add(movie);
+
+            await _dbContext.SaveChangesAsync();
+
+            if (request.Status == WatchStatus.Completed)
+            {
+                await _eventPublisher.PublishAsync(new MovieWatchedEvent(
+                    userId,
+                    request.TmdbId,
+                    movieMetadata.Title,
+                    movieMetadata.PosterPath,
+                    movie.WatchedAt ?? DateTime.UtcNow,
+                    movie.Id.ToString()
+                ));
             }
             else
             {
-                var exists = await _dbContext.UserMovies
-                    .AnyAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId);
-
-                if (exists)
-                    throw new InvalidOperationException("This movie is already in your library.");
-
-                var metadata = await GetOrCreateMovieMetadataAsync(request.TmdbId);
-
-                var movie = new UserMovie
-                {
-                    UserId = userId,
-                    TmdbMovieId = request.TmdbId,
-                    Metadata = metadata,
-                    Status = request.Status,
-                    WatchedAt = request.Status == WatchStatus.Completed
-                        ? DateTime.UtcNow
-                        : null
-                };
-
-                _dbContext.UserMovies.Add(movie);
+                await _eventPublisher.PublishAsync(new LibraryItemAddedEvent(
+                    userId,
+                    "movie",
+                    request.TmdbId.ToString(),
+                    movieMetadata.Title,
+                    movieMetadata.PosterPath,
+                    "UserMovie",
+                    movie.Id.ToString()
+                ));
             }
-
-            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<TmdbContentDto?> GetMovieDetailAsync(
@@ -405,6 +471,16 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
                 await _dbContext.SaveChangesAsync();
 
+                await _eventPublisher.PublishAsync(new SeasonCompletedEvent(
+                    userId,
+                    tmdbShowId,
+                    userShow.Metadata?.Name ?? "Unknown",
+                    userShow.Metadata?.PosterPath,
+                    seasonNumber,
+                    episodesToAdd.Count,
+                    now
+                ));
+
                 return new MarkSeasonResultDto
                 {
                     SeasonNumber = seasonNumber,
@@ -440,14 +516,38 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             {
                 var show = await GetOrCreateUserShowAsync(userId, request.TmdbId);
                 show.UserRating = request.Rating;
-            }
-            else // movie
-            {
-                var movie = await GetOrCreateUserMovieAsync(userId, request.TmdbId);
-                movie.UserRating = request.Rating;
+
+                await _dbContext.SaveChangesAsync();
+
+                await _eventPublisher.PublishAsync(new MediaRatedEvent(
+                    userId,
+                    "tv_show",
+                    request.TmdbId.ToString(),
+                    show.Metadata?.Name ?? "Unknown",
+                    show.Metadata?.PosterPath,
+                    request.Rating,
+                    "UserShow",
+                    show.Id.ToString()
+                ));
+
+                return;
             }
 
+            var movie = await GetOrCreateUserMovieAsync(userId, request.TmdbId);
+            movie.UserRating = request.Rating;
+
             await _dbContext.SaveChangesAsync();
+
+            await _eventPublisher.PublishAsync(new MediaRatedEvent(
+                userId,
+                "movie",
+                request.TmdbId.ToString(),
+                movie.Metadata?.Title ?? "Unknown",
+                movie.Metadata?.PosterPath,
+                request.Rating,
+                "UserMovie",
+                movie.Id.ToString()
+            ));
         }
 
         public async Task RemoveMediaFromLibraryAsync(Guid userId, int tmdbId, string type)
@@ -517,17 +617,30 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
             var now = DateTime.UtcNow;
 
-            _dbContext.WatchedEpisodes.Add(new WatchedEpisode
+            var watchedEpisode = new WatchedEpisode
             {
                 UserShowId = userShow.Id,
                 SeasonNumber = seasonNumber,
                 EpisodeNumber = episodeNumber,
                 WatchedAt = now
-            });
+            };
+
+            _dbContext.WatchedEpisodes.Add(watchedEpisode);
 
             UpdateLastWatched(userShow, seasonNumber, episodeNumber, now);
 
             await _dbContext.SaveChangesAsync();
+
+            await _eventPublisher.PublishAsync(new EpisodeWatchedEvent(
+                userId,
+                tmdbShowId,
+                userShow.Metadata?.Name ?? "Unknown",
+                userShow.Metadata?.PosterPath,
+                seasonNumber,
+                episodeNumber,
+                now,
+                watchedEpisode.Id.ToString()
+            ));
 
             return new ToggleEpisodeResultDto
             {
@@ -551,8 +664,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             {
                 var show = await _dbContext.UserShows
                     .Include(x => x.WatchedEpisodes)
+                    .Include(x => x.Metadata)
                     .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
                     ?? throw new KeyNotFoundException("TV show not found in user's library.");
+
+                var wasCompleted = show.Status == WatchStatus.Completed;
 
                 // Update main status
                 show.Status = request.Status;
@@ -569,31 +685,117 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 {
                     await MarkAllEpisodesWatchedAsync(show, request.TmdbId);
                 }
+
+                await _dbContext.SaveChangesAsync();
+
+                if (request.Rating.HasValue && request.Rating.Value > 0)
+                {
+                    await _eventPublisher.PublishAsync(new MediaRatedEvent(
+                        userId,
+                        "tv_show",
+                        request.TmdbId.ToString(),
+                        show.Metadata?.Name ?? "Unknown",
+                        show.Metadata?.PosterPath,
+                        request.Rating.Value,
+                        "UserShow",
+                        show.Id.ToString()
+                    ));
+                }
+
+                if (!string.IsNullOrWhiteSpace(request.Review))
+                {
+                    await _eventPublisher.PublishAsync(new MediaReviewAddedEvent(
+                        userId,
+                        "tv_show",
+                        request.TmdbId.ToString(),
+                        show.Metadata?.Name ?? "Unknown",
+                        show.Metadata?.PosterPath,
+                        request.Review,
+                        show.UserRating,
+                        "UserShow",
+                        show.Id.ToString()
+                    ));
+                }
+
+                if (!wasCompleted && request.Status == WatchStatus.Completed)
+                {
+                    await _eventPublisher.PublishAsync(new ShowCompletedEvent(
+                        userId,
+                        request.TmdbId,
+                        show.Metadata?.Name ?? "Unknown",
+                        show.Metadata?.PosterPath,
+                        DateTime.UtcNow
+                    ));
+                }
+
+                return;
             }
-            else // movie
+
+            var movie = await _dbContext.UserMovies
+                .Include(x => x.Metadata)
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                ?? throw new KeyNotFoundException("Movie not found in user's library.");
+
+            var movieWasCompleted = movie.Status == WatchStatus.Completed;
+
+            movie.Status = request.Status;
+
+            if (request.Status == WatchStatus.Completed)
             {
-                var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
-                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
-
-                movie.Status = request.Status;
-
-                if (request.Status == WatchStatus.Completed)
-                {
-                    if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    movie.WatchedAt = null;
-                }
-
-                movie.UserRating = ApplyRating(movie.UserRating, request.Rating);
-
-                if (request.Review != null)
-                    movie.Review = request.Review;
+                if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
             }
+            else
+            {
+                movie.WatchedAt = null;
+            }
+
+            movie.UserRating = ApplyRating(movie.UserRating, request.Rating);
+
+            if (request.Review != null)
+                movie.Review = request.Review;
 
             await _dbContext.SaveChangesAsync();
+
+            if (request.Rating.HasValue && request.Rating.Value > 0)
+            {
+                await _eventPublisher.PublishAsync(new MediaRatedEvent(
+                    userId,
+                    "movie",
+                    request.TmdbId.ToString(),
+                    movie.Metadata?.Title ?? "Unknown",
+                    movie.Metadata?.PosterPath,
+                    request.Rating.Value,
+                    "UserMovie",
+                    movie.Id.ToString()
+                ));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Review))
+            {
+                await _eventPublisher.PublishAsync(new MediaReviewAddedEvent(
+                    userId,
+                    "movie",
+                    request.TmdbId.ToString(),
+                    movie.Metadata?.Title ?? "Unknown",
+                    movie.Metadata?.PosterPath,
+                    request.Review,
+                    movie.UserRating,
+                    "UserMovie",
+                    movie.Id.ToString()
+                ));
+            }
+
+            if (!movieWasCompleted && request.Status == WatchStatus.Completed)
+            {
+                await _eventPublisher.PublishAsync(new MovieWatchedEvent(
+                    userId,
+                    request.TmdbId,
+                    movie.Metadata?.Title ?? "Unknown",
+                    movie.Metadata?.PosterPath,
+                    movie.WatchedAt ?? DateTime.UtcNow,
+                    movie.Id.ToString()
+                ));
+            }
         }
 
         public async Task UpdateMediaStatusAsync(Guid userId, UpdateMediaStatusDto request)
@@ -608,9 +810,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             {
                 var show = await _dbContext.UserShows
                     .Include(x => x.WatchedEpisodes)
+                    .Include(x => x.Metadata)
                     .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbShowId == request.TmdbId)
                     ?? throw new KeyNotFoundException("TV show not found in user's library.");
 
+                var wasCompleted = show.Status == WatchStatus.Completed;
                 show.Status = request.Status;
 
                 // If completed, mark all episodes as watched
@@ -618,26 +822,53 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 {
                     await MarkAllEpisodesWatchedAsync(show, request.TmdbId);
                 }
+
+                await _dbContext.SaveChangesAsync();
+
+                if (!wasCompleted && request.Status == WatchStatus.Completed)
+                {
+                    await _eventPublisher.PublishAsync(new ShowCompletedEvent(
+                        userId,
+                        request.TmdbId,
+                        show.Metadata?.Name ?? "Unknown",
+                        show.Metadata?.PosterPath,
+                        DateTime.UtcNow
+                    ));
+                }
+
+                return;
             }
-            else // movie
+
+            var movie = await _dbContext.UserMovies
+                .Include(x => x.Metadata)
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
+                ?? throw new KeyNotFoundException("Movie not found in user's library.");
+
+            var movieWasCompleted = movie.Status == WatchStatus.Completed;
+            movie.Status = request.Status;
+
+            if (request.Status == WatchStatus.Completed)
             {
-                var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == request.TmdbId)
-                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
-
-                movie.Status = request.Status;
-
-                if (request.Status == WatchStatus.Completed)
-                {
-                    if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    movie.WatchedAt = null;
-                }
+                if (movie.WatchedAt == null) movie.WatchedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                movie.WatchedAt = null;
             }
 
             await _dbContext.SaveChangesAsync();
+
+            if (!movieWasCompleted && request.Status == WatchStatus.Completed)
+            {
+                await _eventPublisher.PublishAsync(new MovieWatchedEvent(
+                    userId,
+                    request.TmdbId,
+                    movie.Metadata?.Title ?? "Unknown",
+                    movie.Metadata?.PosterPath,
+                    movie.WatchedAt ?? DateTime.UtcNow,
+                    movie.Id.ToString()
+                ));
+            }
         }
 
         public async Task<WatchNextEpisodeResultDto> WatchNextEpisodeAsync(Guid userId, int tmdbShowId)
@@ -675,13 +906,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
                 if (nextEpisode != null)
                 {
-                    _dbContext.WatchedEpisodes.Add(new WatchedEpisode
+                    var watchedEpisode = new WatchedEpisode
                     {
                         UserShowId = userShow.Id,
                         SeasonNumber = targetSeason,
                         EpisodeNumber = nextEpisode.EpisodeNumber,
                         WatchedAt = now
-                    });
+                    };
+
+                    _dbContext.WatchedEpisodes.Add(watchedEpisode);
 
                     UpdateLastWatched(userShow, targetSeason, nextEpisode.EpisodeNumber, now);
 
@@ -694,6 +927,28 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     }
 
                     await _dbContext.SaveChangesAsync();
+
+                    await _eventPublisher.PublishAsync(new EpisodeWatchedEvent(
+                        userId,
+                        tmdbShowId,
+                        metadata?.Name ?? "Unknown",
+                        metadata?.PosterPath,
+                        targetSeason,
+                        nextEpisode.EpisodeNumber,
+                        now,
+                        watchedEpisode.Id.ToString()
+                    ));
+
+                    if (userShow.Status == WatchStatus.Completed)
+                    {
+                        await _eventPublisher.PublishAsync(new ShowCompletedEvent(
+                            userId,
+                            tmdbShowId,
+                            metadata?.Name ?? "Unknown",
+                            metadata?.PosterPath,
+                            now
+                        ));
+                    }
 
                     return new WatchNextEpisodeResultDto
                     {
@@ -714,13 +969,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     .OrderBy(e => e.EpisodeNumber)
                     .First();
 
-                _dbContext.WatchedEpisodes.Add(new WatchedEpisode
+                var watchedEpisode = new WatchedEpisode
                 {
                     UserShowId = userShow.Id,
                     SeasonNumber = nextSeasonNumber,
                     EpisodeNumber = firstEpisode.EpisodeNumber,
                     WatchedAt = now
-                });
+                };
+
+                _dbContext.WatchedEpisodes.Add(watchedEpisode);
 
                 UpdateLastWatched(userShow, nextSeasonNumber, firstEpisode.EpisodeNumber, now);
 
@@ -733,6 +990,28 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 }
 
                 await _dbContext.SaveChangesAsync();
+
+                await _eventPublisher.PublishAsync(new EpisodeWatchedEvent(
+                    userId,
+                    tmdbShowId,
+                    metadata?.Name ?? "Unknown",
+                    metadata?.PosterPath,
+                    nextSeasonNumber,
+                    firstEpisode.EpisodeNumber,
+                    now,
+                    watchedEpisode.Id.ToString()
+                ));
+
+                if (userShow.Status == WatchStatus.Completed)
+                {
+                    await _eventPublisher.PublishAsync(new ShowCompletedEvent(
+                        userId,
+                        tmdbShowId,
+                        metadata?.Name ?? "Unknown",
+                        metadata?.PosterPath,
+                        now
+                    ));
+                }
 
                 return new WatchNextEpisodeResultDto
                 {
