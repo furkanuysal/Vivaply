@@ -1,0 +1,46 @@
+{
+  "page": {
+    "eyebrow": "Takip Akışı",
+    "title": "Akış",
+    "subtitle": "Takip ettiğin kişilerin neler izlediğini, puanladığını, inceleyip bitirdiğini burada görebilirsin.",
+    "empty_title": "Akışında henüz bir şey yok",
+    "empty_subtitle": "Kişileri takip etmeye başladığında en son aktiviteleri burada görünecek."
+  },
+  "buttons": {
+    "load_more": "Daha fazla yükle",
+    "loading_more": "Yükleniyor..."
+  },
+  "labels": {
+    "watching": "İzliyor",
+    "movie": "Film",
+    "rating": "Puan",
+    "review": "İnceleme",
+    "gaming": "Oyun",
+    "reading": "Okuma",
+    "library": "Kütüphane",
+    "shared_in_feed": "Akışta paylaşıldı"
+  },
+  "activity": {
+    "library_item_added": "{{username}}, {{title}} içeriğini kütüphanesine ekledi.",
+    "episode_watched": "{{username}}, {{title}} dizisinin {{season}}. sezon {{episode}}. bölümünü izledi.",
+    "episodes_watched_batch": "{{username}}, {{title}} dizisinden {{count}} bölüm izledi.",
+    "season_completed": "{{username}}, {{title}} dizisinin {{season}}. sezonunu bitirdi.",
+    "show_completed": "{{username}}, {{title}} dizisini tamamladı.",
+    "movie_watched": "{{username}}, {{title}} filmini izledi.",
+    "rated": "{{username}}, {{title}} içeriğine {{rating}} puan verdi.",
+    "review_added": "{{username}}, {{title}} için bir inceleme paylaştı.",
+    "game_started": "{{username}}, {{title}} oynamaya başladı.",
+    "game_completed": "{{username}}, {{title}} oyununu bitirdi.",
+    "book_started": "{{username}}, {{title}} kitabını okumaya başladı.",
+    "book_finished": "{{username}}, {{title}} kitabını bitirdi.",
+    "fallback": "{{username}} yeni bir güncelleme paylaştı."
+  },
+  "meta": {
+    "season_episode": "{{season}}. sezon {{episode}}. bölüm",
+    "season_count": "{{season}}. sezon · {{count}} bölüm",
+    "season_completed": "{{season}}. sezon tamamlandı",
+    "rating": "Puan: {{rating}}/10",
+    "review_with_rating": "İnceleme · {{rating}}/10",
+    "review": "İnceleme"
+  }
+}

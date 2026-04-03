@@ -16,6 +16,7 @@ i18n
       "entertainment",
       "dashboard",
       "settings",
+      "feed",
     ], // Namespaces
     defaultNS: "common", // Default namespace
 

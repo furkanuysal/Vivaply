@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import LandingPage from "@/pages/LandingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DashboardPage from "@/pages/DashboardPage";
+import FeedPage from "@/features/feed/FeedPage";
 import MainLayout from "@/components/MainLayout";
 import SettingsPage from "@/pages/SettingsPage";
 
@@ -66,6 +67,7 @@ function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="/profile" element={<ProfilePage />} />
 
         {/* Entertainment */}

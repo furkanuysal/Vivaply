@@ -1,0 +1,46 @@
+{
+  "page": {
+    "eyebrow": "Following Feed",
+    "title": "Feed",
+    "subtitle": "Keep up with the people you follow, see what they watched, rated, reviewed, and finished most recently.",
+    "empty_title": "Your feed is quiet for now",
+    "empty_subtitle": "Follow people and their latest activity will start showing up here."
+  },
+  "buttons": {
+    "load_more": "Load more",
+    "loading_more": "Loading..."
+  },
+  "labels": {
+    "watching": "Watching",
+    "movie": "Movie",
+    "rating": "Rating",
+    "review": "Review",
+    "gaming": "Gaming",
+    "reading": "Reading",
+    "library": "Library",
+    "shared_in_feed": "Shared in feed"
+  },
+  "activity": {
+    "library_item_added": "{{username}} added {{title}} to the library.",
+    "episode_watched": "{{username}} watched season {{season}} episode {{episode}} of {{title}}.",
+    "episodes_watched_batch": "{{username}} watched {{count}} episodes of {{title}}.",
+    "season_completed": "{{username}} completed season {{season}} of {{title}}.",
+    "show_completed": "{{username}} completed {{title}}.",
+    "movie_watched": "{{username}} watched {{title}}.",
+    "rated": "{{username}} rated {{title}} {{rating}}.",
+    "review_added": "{{username}} shared a review for {{title}}.",
+    "game_started": "{{username}} started playing {{title}}.",
+    "game_completed": "{{username}} completed {{title}}.",
+    "book_started": "{{username}} started reading {{title}}.",
+    "book_finished": "{{username}} finished reading {{title}}.",
+    "fallback": "{{username}} shared an update."
+  },
+  "meta": {
+    "season_episode": "Season {{season}} Episode {{episode}}",
+    "season_count": "Season {{season}} · {{count}} episodes",
+    "season_completed": "Season {{season}} completed",
+    "rating": "Rating: {{rating}}/10",
+    "review_with_rating": "Review · {{rating}}/10",
+    "review": "Review"
+  }
+}

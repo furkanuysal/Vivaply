@@ -4,6 +4,7 @@ import {
   HomeIcon,
   FilmIcon,
   BookOpenIcon,
+  NewspaperIcon,
   ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -61,6 +62,12 @@ export default function MainLayout() {
       name: t("menu.dashboard") || "Dashboard",
       path: "/dashboard",
       icon: <Squares2X2Icon className="w-5 h-5 shrink-0" />,
+    },
+    {
+      key: "feed",
+      name: t("menu.feed"),
+      path: "/feed",
+      icon: <NewspaperIcon className="w-5 h-5 shrink-0" />,
     },
     {
       key: "profile",
