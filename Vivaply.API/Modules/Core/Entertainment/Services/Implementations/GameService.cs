@@ -8,17 +8,20 @@ using Vivaply.API.Modules.Core.Entertainment.DTOs.Results;
 using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
+using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 {
     public class GameService(
         VivaplyDbContext dbContext,
         IIgdbService igdbService,
-        IApplicationEventPublisher eventPublisher) : IGameService
+        IApplicationEventPublisher eventPublisher,
+        IActivityCleanupService activityCleanupService) : IGameService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly IIgdbService _igdbService = igdbService;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
+        private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
 
         // Detail
         public async Task<GameContentDto?> GetDetailAsync(Guid? userId, int igdbId)
@@ -256,6 +259,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
             _dbContext.UserGames.Remove(game);
             await _dbContext.SaveChangesAsync();
+            await _activityCleanupService.HideActivitiesForGameAsync(userId, igdbId);
         }
 
         private GameMetadata CreateMetadata(int igdbId, GameContentDto details)

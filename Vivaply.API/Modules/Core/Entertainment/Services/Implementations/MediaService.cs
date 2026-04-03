@@ -13,18 +13,21 @@ using Vivaply.API.Modules.Core.Entertainment.DTOs.Results.Media;
 using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
+using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 {
     public class MediaService(
         VivaplyDbContext dbContext,
         ITmdbService tmdbService,
-        IApplicationEventPublisher eventPublisher
+        IApplicationEventPublisher eventPublisher,
+        IActivityCleanupService activityCleanupService
         ) : IMediaService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly ITmdbService _tmdbService = tmdbService;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
+        private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
@@ -563,17 +566,18 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 ?? throw new KeyNotFoundException("TV show not found in user's library.");
 
                 _dbContext.UserShows.Remove(show);
-            }
-            else // movie
-            {
-                var movie = await _dbContext.UserMovies
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == tmdbId)
-                    ?? throw new KeyNotFoundException("Movie not found in user's library.");
-
-                _dbContext.UserMovies.Remove(movie);
+                await _dbContext.SaveChangesAsync();
+                await _activityCleanupService.HideActivitiesForShowAsync(userId, tmdbId);
+                return;
             }
 
+            var movie = await _dbContext.UserMovies
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.TmdbMovieId == tmdbId)
+                ?? throw new KeyNotFoundException("Movie not found in user's library.");
+
+            _dbContext.UserMovies.Remove(movie);
             await _dbContext.SaveChangesAsync();
+            await _activityCleanupService.HideActivitiesForMovieAsync(userId, tmdbId);
         }
 
         public async Task<ToggleEpisodeResultDto> ToggleEpisodeAsync(

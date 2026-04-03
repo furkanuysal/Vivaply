@@ -43,5 +43,6 @@ namespace Vivaply.API.Entities.Identity
 
         public bool IncludeInFeed { get; set; } = true;
         public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

@@ -7,6 +7,12 @@ namespace Vivaply.API.Infrastructure.Extensions
     {
         public static void UseVivaplyJobs(this IApplicationBuilder app)
         {
+            RecurringJob.AddOrUpdate<ActivityRetentionJob>(
+                "purge-deleted-activities",
+                x => x.PurgeDeletedActivitiesAsync(),
+                Cron.Daily
+            );
+
             RecurringJob.AddOrUpdate<MetadataRefreshJob>(
                 "refresh-movies",
                 x => x.RefreshMoviesAsync(),

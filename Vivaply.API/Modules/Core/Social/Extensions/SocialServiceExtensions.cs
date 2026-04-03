@@ -10,6 +10,7 @@ namespace Vivaply.API.Modules.Core.Social.Extensions
         {
             services.AddScoped<IFollowService, FollowService>();
             services.AddScoped<IActivityService, ActivityService>();
+            services.AddScoped<IActivityCleanupService, ActivityCleanupService>();
             services.AddScoped<ActivityEventHandler>();
             RegisterEventHandler<ActivityEventHandler>(services);
 
