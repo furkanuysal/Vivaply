@@ -132,7 +132,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     appEvent.Title,
                     appEvent.ImageUrl,
                     appEvent.Rating
-                )
+                ),
+                UpsertBySubject = true
             }, cancellationToken);
 
         public Task HandleAsync(MediaReviewAddedEvent appEvent, CancellationToken cancellationToken = default)
@@ -151,7 +152,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     appEvent.ImageUrl,
                     BuildReviewSnippet(appEvent.Review),
                     appEvent.Rating
-                )
+                ),
+                UpsertBySubject = true
             }, cancellationToken);
 
         public Task HandleAsync(GameStartedEvent appEvent, CancellationToken cancellationToken = default)
@@ -190,7 +192,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new RatingPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, appEvent.Rating)
+                Payload = new RatingPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, appEvent.Rating),
+                UpsertBySubject = true
             }, cancellationToken);
 
         public Task HandleAsync(GameReviewAddedEvent appEvent, CancellationToken cancellationToken = default)
@@ -202,7 +205,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new ReviewPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating)
+                Payload = new ReviewPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating),
+                UpsertBySubject = true
             }, cancellationToken);
 
         public Task HandleAsync(BookStartedEvent appEvent, CancellationToken cancellationToken = default)
@@ -241,7 +245,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new RatingPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, appEvent.Rating)
+                Payload = new RatingPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, appEvent.Rating),
+                UpsertBySubject = true
             }, cancellationToken);
 
         public Task HandleAsync(BookReviewAddedEvent appEvent, CancellationToken cancellationToken = default)
@@ -253,7 +258,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new ReviewPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating)
+                Payload = new ReviewPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating),
+                UpsertBySubject = true
             }, cancellationToken);
 
         private static string BuildReviewSnippet(string review)

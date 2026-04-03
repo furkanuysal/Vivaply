@@ -26,5 +26,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
         public bool IncludeInFeed { get; set; } = true;
         public string? AggregateKey { get; set; }
         public TimeSpan? AggregationWindow { get; set; }
+        public bool UpsertBySubject { get; set; }
     }
 }

@@ -35,6 +35,15 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 }
             }
 
+            if (request.UpsertBySubject)
+            {
+                var updated = await TryUpsertBySubjectAsync(request, visibility, cancellationToken);
+                if (updated)
+                {
+                    return;
+                }
+            }
+
             var entity = new UserActivity
             {
                 UserId = request.UserId,
@@ -219,6 +228,44 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             existing.AggregationWindowEndsAt = request.AggregationWindow.HasValue
                 ? request.OccurredAt.Add(request.AggregationWindow.Value)
                 : existing.AggregationWindowEndsAt;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
+        private async Task<bool> TryUpsertBySubjectAsync(
+            ActivityCreateRequest request,
+            ActivityVisibility visibility,
+            CancellationToken cancellationToken)
+        {
+            var existing = await _db.UserActivities
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == request.UserId &&
+                    x.Type == request.Type &&
+                    x.SubjectType == request.SubjectType &&
+                    x.SubjectId == request.SubjectId &&
+                    !x.IsDeleted,
+                    cancellationToken);
+
+            if (existing == null)
+            {
+                return false;
+            }
+
+            existing.Visibility = visibility;
+            existing.ParentEntityType = request.ParentEntityType;
+            existing.ParentEntityId = request.ParentEntityId;
+            existing.SourceEntityType = request.SourceEntityType;
+            existing.SourceEntityId = request.SourceEntityId;
+            existing.PayloadJson = JsonHelper.Serialize(request.Payload) ?? "{}";
+            existing.OccurredAt = request.OccurredAt;
+            existing.IncludeInFeed = request.IncludeInFeed;
+            existing.AggregateKey = request.AggregateKey;
+            existing.AggregationWindowEndsAt = request.AggregationWindow.HasValue
+                ? request.OccurredAt.Add(request.AggregationWindow.Value)
+                : null;
+            existing.IsDeleted = false;
+            existing.DeletedAt = null;
 
             await _db.SaveChangesAsync(cancellationToken);
             return true;
