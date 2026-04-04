@@ -1,6 +1,7 @@
 ﻿using Vivaply.API.Data;
 using Vivaply.API.Entities.Gamification;
 using Microsoft.EntityFrameworkCore;
+using Vivaply.API.Modules.Core.Identity.Enums;
 using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 using Vivaply.API.Modules.Core.Identity.DTOs.Account;
 
@@ -21,6 +22,50 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
 
             if (user == null)
                 throw new KeyNotFoundException("User not found.");
+
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                AvatarUrl = user.AvatarUrl,
+                Bio = user.Profile?.Bio,
+                Location = user.Profile?.Location,
+                Level = user.Profile?.Level ?? 1,
+                CurrentXp = user.Profile?.CurrentXp ?? 0,
+                TotalXp = user.Profile?.TotalXp ?? 0,
+                CurrentStreak = user.Profile?.CurrentStreak ?? 0,
+                Money = user.Wallet?.Balance ?? 0
+            };
+        }
+
+        public async Task<UserProfileDto> GetProfileByUsernameAsync(Guid currentUserId, string username)
+        {
+            var user = await _dbContext.Users
+                .Include(u => u.Profile)
+                .Include(u => u.Wallet)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null)
+                throw new KeyNotFoundException("User not found.");
+
+            var isOwner = user.Id == currentUserId;
+
+            if (!isOwner)
+            {
+                var preferences = await _dbContext.UserPreferences
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.UserId == user.Id);
+
+                var relationStatus = await _dbContext.UserFollows
+                    .Where(x => x.FollowerId == currentUserId && x.FollowingId == user.Id)
+                    .Select(x => (FollowStatus?)x.Status)
+                    .FirstOrDefaultAsync();
+
+                if (!CanViewProfile(preferences?.ProfileVisibility, relationStatus))
+                    throw new UnauthorizedAccessException("You are not allowed to view this profile.");
+            }
 
             return new UserProfileDto
             {
@@ -124,6 +169,16 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             // Delete user (Cascade deletes related data)
             _dbContext.Users.Remove(user);
             await _dbContext.SaveChangesAsync();
+        }
+
+        private static bool CanViewProfile(ProfileVisibility? profileVisibility, FollowStatus? relationStatus)
+        {
+            return profileVisibility switch
+            {
+                ProfileVisibility.Private => false,
+                ProfileVisibility.FollowersOnly => relationStatus == FollowStatus.Accepted,
+                _ => true
+            };
         }
     }
 }

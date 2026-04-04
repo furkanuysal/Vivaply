@@ -20,6 +20,20 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
             return Ok(profile);
         }
 
+        [HttpGet("/api/users/{username}")]
+        public async Task<IActionResult> GetProfileByUsername(string username)
+        {
+            try
+            {
+                var profile = await _accountService.GetProfileByUsernameAsync(CurrentUserId, username);
+                return Ok(profile);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         // Update Profile
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
