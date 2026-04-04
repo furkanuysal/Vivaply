@@ -6,6 +6,25 @@
     "empty_title": "Your feed is quiet for now",
     "empty_subtitle": "Follow people and their latest activity will start showing up here."
   },
+  "profile": {
+    "eyebrow": "Profile Feed",
+    "title": "Recent activity",
+    "subtitle": "A live view of what this person has been watching, rating, reviewing, and finishing lately.",
+    "empty_title": "No activity yet",
+    "empty_subtitle": "When new activity appears, it will show up here.",
+    "stats": {
+      "level": "Level {{level}}",
+      "wallet": "Wallet",
+      "coin": "Viva",
+      "streak": "Streak",
+      "days": "days",
+      "xp_progress": "XP Progress",
+      "total_xp": "Total: {{totalXp}} XP"
+    },
+    "errors": {
+      "load_profile": "Your session has expired."
+    }
+  },
   "buttons": {
     "load_more": "Load more",
     "loading_more": "Loading..."

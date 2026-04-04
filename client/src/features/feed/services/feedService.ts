@@ -16,6 +16,20 @@ export const feedService = {
 
     return response.data;
   },
+
+  async getProfileFeed(
+    username: string,
+    cursor?: string | null,
+  ): Promise<FeedResponseDto> {
+    const response = await api.get<FeedResponseDto>(
+      `/users/${username}/activities`,
+      {
+        params: cursor ? { cursor } : undefined,
+      },
+    );
+
+    return response.data;
+  },
 };
 
 export function getActorAvatarUrl(path?: string): string | null {
@@ -138,13 +152,26 @@ export function getFeedTargetPath(item: FeedItemDto): string | null {
   }
 }
 
-export function getRelativeTime(value: string): string {
+export function getRelativeTime(value: string, locale?: string): string {
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
   const diffSeconds = Math.round(diffMs / 1000);
+  const diffDays = Math.abs(diffSeconds) / (60 * 60 * 24);
 
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  if (diffDays > 7) {
+    return new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  }
+
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
   const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
     ["year", 60 * 60 * 24 * 365],

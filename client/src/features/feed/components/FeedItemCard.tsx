@@ -17,7 +17,7 @@ interface FeedItemCardProps {
 }
 
 export default function FeedItemCard({ item }: FeedItemCardProps) {
-  const { t } = useTranslation("feed");
+  const { t, i18n } = useTranslation("feed");
   const avatarUrl = getActorAvatarUrl(item.actor.avatarUrl);
   const imageUrl = getFeedImageUrl(item);
   const title = getFeedTitle(item);
@@ -52,7 +52,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
               {getActivityLabel(item.type, t)}
             </span>
             <span className="text-xs text-skin-muted">
-              {getRelativeTime(item.occurredAt)}
+              {getRelativeTime(item.occurredAt, i18n.resolvedLanguage)}
             </span>
           </div>
 
