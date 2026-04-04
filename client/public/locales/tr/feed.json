@@ -59,7 +59,7 @@
     "season_count": "{{season}}. sezon · {{count}} bölüm",
     "season_completed": "{{season}}. sezon tamamlandı",
     "rating": "Puan: {{rating}}/10",
-    "review_with_rating": "İnceleme · {{rating}}/10",
+    "review_rating": "İncelemeyle birlikte verilen puan: {{rating}}/10",
     "review": "İnceleme"
   }
 }

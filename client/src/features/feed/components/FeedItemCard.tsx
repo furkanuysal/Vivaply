@@ -3,12 +3,15 @@ import { Link } from "react-router-dom";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 import {
   getActorAvatarUrl,
+  getFeedActivityType,
   getFeedDescription,
   getFeedImageUrl,
   getFeedTargetPath,
+  getFeedTimestamp,
   getFeedTitle,
   getRelativeTime,
   getReviewSnippet,
+  isActivityPost,
 } from "@/features/feed/services/feedService";
 import { FeedActivityType, type FeedItemDto } from "@/features/feed/types";
 
@@ -21,8 +24,11 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
   const avatarUrl = getActorAvatarUrl(item.actor.avatarUrl);
   const imageUrl = getFeedImageUrl(item);
   const title = getFeedTitle(item);
+  const description = getFeedDescription(item, t);
   const reviewSnippet = getReviewSnippet(item);
   const targetPath = getFeedTargetPath(item);
+  const activityType = getFeedActivityType(item);
+  const hasActivity = isActivityPost(item);
   const contentClassName =
     "block rounded-2xl transition hover:text-skin-primary focus:outline-none focus:ring-2 focus:ring-skin-primary/40";
 
@@ -49,15 +55,15 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
               {item.actor.username}
             </span>
             <span className="text-xs uppercase tracking-[0.24em] text-skin-muted/80">
-              {getActivityLabel(item.type, t)}
+              {getActivityLabel(activityType, hasActivity, t)}
             </span>
             <span className="text-xs text-skin-muted">
-              {getRelativeTime(item.occurredAt, i18n.resolvedLanguage)}
+              {getRelativeTime(getFeedTimestamp(item), i18n.resolvedLanguage)}
             </span>
           </div>
 
           <p className="mt-2 text-sm leading-6 text-skin-text/90">
-            {getFeedDescription(item, t)}
+            {renderDescription(description, title, targetPath)}
           </p>
 
           {reviewSnippet ? (
@@ -81,7 +87,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
                 ) : (
                   <UniversalCoverFallback
                     title={title}
-                    type={getFallbackType(item.type)}
+                    type={getFallbackType(activityType)}
                     variant="compact"
                   />
                 )}
@@ -108,7 +114,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
                 ) : (
                   <UniversalCoverFallback
                     title={title}
-                    type={getFallbackType(item.type)}
+                    type={getFallbackType(activityType)}
                     variant="compact"
                   />
                 )}
@@ -130,10 +136,41 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
   );
 }
 
+function renderDescription(
+  description: string,
+  title: string,
+  targetPath: string | null,
+) {
+  if (!targetPath || !title || !description.includes(title)) {
+    return description;
+  }
+
+  const [before, ...afterParts] = description.split(title);
+  const after = afterParts.join(title);
+
+  return (
+    <>
+      {before}
+      <Link
+        to={targetPath}
+        className="font-medium text-skin-primary transition hover:text-skin-secondary"
+      >
+        {title}
+      </Link>
+      {after}
+    </>
+  );
+}
+
 function getActivityLabel(
-  type: FeedActivityType,
+  type: FeedActivityType | null,
+  hasActivity: boolean,
   t: ReturnType<typeof useTranslation<"feed">>["t"],
 ): string {
+  if (!hasActivity || type === null) {
+    return t("labels.shared_in_feed");
+  }
+
   switch (type) {
     case FeedActivityType.EpisodeWatched:
     case FeedActivityType.EpisodesWatchedBatch:
@@ -165,9 +202,14 @@ function getSecondaryMeta(
   item: FeedItemDto,
   t: ReturnType<typeof useTranslation<"feed">>["t"],
 ): string {
-  const payload = item.payload;
+  const payload = item.activity?.payload;
+  const type = item.activity?.type;
 
-  switch (item.type) {
+  if (!payload || type == null) {
+    return t("labels.shared_in_feed");
+  }
+
+  switch (type) {
     case FeedActivityType.EpisodeWatched:
       return t("meta.season_episode", {
         season: getNumber(payload.seasonNumber),
@@ -189,17 +231,19 @@ function getSecondaryMeta(
     case FeedActivityType.MediaReviewAdded:
     case FeedActivityType.GameReviewAdded:
     case FeedActivityType.BookReviewAdded:
-      return getNumber(payload.rating) > 0
-        ? t("meta.review_with_rating", { rating: getNumber(payload.rating) })
-        : t("meta.review");
+      return t("meta.review");
     default:
       return t("labels.shared_in_feed");
   }
 }
 
 function getFallbackType(
-  type: FeedActivityType,
+  type: FeedActivityType | null,
 ): "movie" | "tv" | "game" | "book" | "other" {
+  if (type == null) {
+    return "other";
+  }
+
   switch (type) {
     case FeedActivityType.EpisodeWatched:
     case FeedActivityType.EpisodesWatchedBatch:

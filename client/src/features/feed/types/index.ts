@@ -17,8 +17,16 @@ export const FeedActivityType = {
   BookReviewAdded: 43,
 } as const;
 
+export const FeedPostType = {
+  Standard: 1,
+  Activity: 2,
+  Reply: 3,
+  Quote: 4,
+} as const;
+
 export type FeedActivityType =
   (typeof FeedActivityType)[keyof typeof FeedActivityType];
+export type FeedPostType = (typeof FeedPostType)[keyof typeof FeedPostType];
 
 export interface FeedActorDto {
   id: string;
@@ -26,13 +34,43 @@ export interface FeedActorDto {
   avatarUrl: string;
 }
 
-export interface FeedItemDto {
+export interface FeedActivityDto {
   id: string;
   actor: FeedActorDto;
   type: FeedActivityType;
-  visibility: number;
   occurredAt: string;
   payload: Record<string, unknown>;
+}
+
+export interface FeedAttachmentDto {
+  id: string;
+  type: number;
+  url: string;
+  thumbnailUrl?: string | null;
+  sortOrder: number;
+  width?: number | null;
+  height?: number | null;
+  durationSeconds?: number | null;
+}
+
+export interface FeedStatsDto {
+  replyCount: number;
+  likeCount: number;
+  viewCount: number;
+}
+
+export interface FeedItemDto {
+  id: string;
+  actor: FeedActorDto;
+  type: FeedPostType;
+  publishedAt: string;
+  updatedAt?: string | null;
+  textContent?: string | null;
+  parentPostId?: string | null;
+  quotedPostId?: string | null;
+  activity?: FeedActivityDto | null;
+  attachments: FeedAttachmentDto[];
+  stats: FeedStatsDto;
 }
 
 export interface FeedResponseDto {

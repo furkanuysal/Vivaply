@@ -12,9 +12,9 @@ import { SERVER_URL } from "@/lib/api";
 export default function ProfilePage() {
   const { t } = useTranslation("feed");
   const [user, setUser] = useState<UserProfileDto | null>(null);
-  const [activities, setActivities] = useState<FeedItemDto[]>([]);
+  const [posts, setPosts] = useState<FeedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [postsLoading, setPostsLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export default function ProfilePage() {
       try {
         const data = await accountService.getProfile();
         setUser(data);
-        await loadActivities(data.username);
+        await loadPosts(data.username);
       } catch (error) {
         toast.error(t("profile.errors.load_profile"));
       } finally {
@@ -34,24 +34,24 @@ export default function ProfilePage() {
     void fetchProfile();
   }, []);
 
-  const loadActivities = async (username: string, cursor?: string | null) => {
+  const loadPosts = async (username: string, cursor?: string | null) => {
     try {
       if (cursor) {
         setLoadingMore(true);
       } else {
-        setActivitiesLoading(true);
+        setPostsLoading(true);
       }
 
       const response = await feedService.getProfileFeed(username, cursor);
-      setActivities((prev) =>
+      setPosts((prev) =>
         cursor ? [...prev, ...response.items] : response.items,
       );
       setNextCursor(response.nextCursor);
     } catch (error) {
-      console.error("Profile activities could not be loaded", error);
+      console.error("Profile posts could not be loaded", error);
       toast.error(t("profile.empty_title"));
     } finally {
-      setActivitiesLoading(false);
+      setPostsLoading(false);
       setLoadingMore(false);
     }
   };
@@ -174,11 +174,11 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {activitiesLoading ? (
+        {postsLoading ? (
           <div className="flex h-40 items-center justify-center text-skin-text">
             <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
           </div>
-        ) : activities.length === 0 ? (
+        ) : posts.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-dashed border-skin-border/60 bg-skin-base/40 px-8 py-14 text-center">
             <h3 className="text-xl font-semibold text-skin-text">
               {t("profile.empty_title")}
@@ -189,7 +189,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            {activities.map((item) => (
+            {posts.map((item) => (
               <FeedItemCard key={item.id} item={item} />
             ))}
           </div>
@@ -199,7 +199,7 @@ export default function ProfilePage() {
           <div className="mt-6 flex justify-center">
             <button
               type="button"
-              onClick={() => void loadActivities(user.username, nextCursor)}
+              onClick={() => void loadPosts(user.username, nextCursor)}
               disabled={loadingMore}
               className="inline-flex items-center gap-2 rounded-full border border-skin-border/60 bg-skin-surface px-5 py-3 text-sm font-medium text-skin-text transition hover:border-skin-primary/40 hover:bg-skin-surface/80 disabled:cursor-not-allowed disabled:opacity-70"
             >

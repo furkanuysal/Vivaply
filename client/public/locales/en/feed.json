@@ -59,7 +59,7 @@
     "season_count": "Season {{season}} · {{count}} episodes",
     "season_completed": "Season {{season}} completed",
     "rating": "Rating: {{rating}}/10",
-    "review_with_rating": "Review · {{rating}}/10",
+    "review_rating": "Review with rating: {{rating}}/10",
     "review": "Review"
   }
 }

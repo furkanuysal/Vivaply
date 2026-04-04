@@ -2,6 +2,7 @@ import api, { SERVER_URL } from "@/lib/api";
 import type { TFunction } from "i18next";
 import {
   FeedActivityType,
+  FeedPostType,
   type FeedItemDto,
   type FeedResponseDto,
 } from "@/features/feed/types";
@@ -10,7 +11,7 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 export const feedService = {
   async getFeed(cursor?: string | null): Promise<FeedResponseDto> {
-    const response = await api.get<FeedResponseDto>("/activities/feed", {
+    const response = await api.get<FeedResponseDto>("/feed", {
       params: cursor ? { cursor } : undefined,
     });
 
@@ -21,12 +22,9 @@ export const feedService = {
     username: string,
     cursor?: string | null,
   ): Promise<FeedResponseDto> {
-    const response = await api.get<FeedResponseDto>(
-      `/users/${username}/activities`,
-      {
-        params: cursor ? { cursor } : undefined,
-      },
-    );
+    const response = await api.get<FeedResponseDto>(`/users/${username}/posts`, {
+      params: cursor ? { cursor } : undefined,
+    });
 
     return response.data;
   },
@@ -40,7 +38,10 @@ export function getActorAvatarUrl(path?: string): string | null {
 }
 
 export function getFeedImageUrl(item: FeedItemDto): string | null {
-  const payload = item.payload;
+  const payload = item.activity?.payload;
+  if (!payload) {
+    return null;
+  }
   const posterPath = getString(payload.posterPath);
   const imageUrl = getString(payload.imageUrl);
 
@@ -56,7 +57,11 @@ export function getFeedImageUrl(item: FeedItemDto): string | null {
 }
 
 export function getFeedTitle(item: FeedItemDto): string {
-  const payload = item.payload;
+  const payload = item.activity?.payload;
+
+  if (!payload) {
+    return item.textContent?.trim() || "Untitled post";
+  }
 
   return getString(payload.showName) ?? getString(payload.title) ?? "Unknown item";
 }
@@ -66,10 +71,16 @@ export function getFeedDescription(
   t: TFunction<"feed">,
 ): string {
   const username = item.actor.username || "Someone";
-  const payload = item.payload;
   const title = getFeedTitle(item);
+  const activity = item.activity;
 
-  switch (item.type) {
+  if (!activity) {
+    return item.textContent?.trim() || t("activity.fallback", { username });
+  }
+
+  const payload = activity.payload;
+
+  switch (activity.type) {
     case FeedActivityType.LibraryItemAdded:
       return t("activity.library_item_added", { username, title });
     case FeedActivityType.EpisodeWatched:
@@ -121,11 +132,15 @@ export function getFeedDescription(
 }
 
 export function getReviewSnippet(item: FeedItemDto): string | null {
-  return getString(item.payload.reviewSnippet) ?? null;
+  const payload = item.activity?.payload;
+  return payload ? getString(payload.reviewSnippet) ?? null : null;
 }
 
 export function getFeedTargetPath(item: FeedItemDto): string | null {
-  const payload = item.payload;
+  const payload = item.activity?.payload;
+  if (!payload) {
+    return null;
+  }
   const subjectType = getString(payload.subjectType);
   const subjectId = getString(payload.subjectId);
   const tmdbShowId = getIdentifier(payload.tmdbShowId);
@@ -192,6 +207,14 @@ export function getRelativeTime(value: string, locale?: string): string {
   return "just now";
 }
 
+export function getFeedTimestamp(item: FeedItemDto): string {
+  return item.updatedAt || item.publishedAt;
+}
+
+export function getFeedActivityType(item: FeedItemDto): FeedActivityType | null {
+  return item.activity?.type ?? null;
+}
+
 function getString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
@@ -235,4 +258,8 @@ function resolveImageUrl(value: string): string {
   }
 
   return value;
+}
+
+export function isActivityPost(item: FeedItemDto): boolean {
+  return item.type === FeedPostType.Activity && !!item.activity;
 }
