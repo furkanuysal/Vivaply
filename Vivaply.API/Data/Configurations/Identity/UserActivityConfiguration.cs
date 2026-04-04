@@ -16,6 +16,11 @@ namespace Vivaply.API.Data.Configurations.Identity
             builder.Property(x => x.PayloadJson)
                 .HasColumnType("text");
 
+            builder.HasOne(x => x.Post)
+                .WithOne(x => x.Activity)
+                .HasForeignKey<UserPost>(x => x.ActivityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasIndex(x => new { x.UserId, x.OccurredAt });
             builder.HasIndex(x => x.OccurredAt);
             builder.HasIndex(x => x.AggregateKey);

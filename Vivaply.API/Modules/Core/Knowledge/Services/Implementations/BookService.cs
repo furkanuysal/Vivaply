@@ -16,12 +16,14 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
         VivaplyDbContext db,
         IGoogleBooksService googleBooks,
         IApplicationEventPublisher eventPublisher,
-        IActivityCleanupService activityCleanupService) : IBookService
+        IActivityCleanupService activityCleanupService,
+        IPostCleanupService postCleanupService) : IBookService
     {
         private readonly VivaplyDbContext _db = db;
         private readonly IGoogleBooksService _googleBooks = googleBooks;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
+        private readonly IPostCleanupService _postCleanupService = postCleanupService;
 
         public Task<List<BookContentDto>> SearchAsync(string query)
             => _googleBooks.SearchBooksAsync(query);
@@ -154,6 +156,7 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             _db.UserBooks.Remove(book);
             await _db.SaveChangesAsync();
             await _activityCleanupService.HideActivitiesForBookAsync(userId, googleBookId);
+            await _postCleanupService.HidePostsForBookAsync(userId, googleBookId);
         }
 
         public async Task UpdateStatusAsync(Guid userId, UpdateBookStatusDto request)

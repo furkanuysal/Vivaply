@@ -5,30 +5,26 @@ using Vivaply.API.Entities.Identity;
 using Vivaply.API.Infrastructure.Serialization;
 using Vivaply.API.Modules.Core.Identity.Enums;
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
-using Vivaply.API.Modules.Core.Social.DTOs.Results;
+using Vivaply.API.Modules.Core.Social.DTOs.Mappers;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Activities;
 using Vivaply.API.Modules.Core.Social.Enums;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class ActivityService(VivaplyDbContext db) : IActivityService
+    public class ActivityService(VivaplyDbContext db, IPostService postService) : IActivityService
     {
         private readonly VivaplyDbContext _db = db;
+        private readonly IPostService _postService = postService;
 
         public async Task CreateAsync(ActivityCreateRequest request, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(request);
             ArgumentNullException.ThrowIfNull(request.Payload);
 
-            var visibility = await _db.UserPreferences
-                .Where(x => x.UserId == request.UserId)
-                .Select(x => (ActivityVisibility?)x.ActivityVisibility)
-                .FirstOrDefaultAsync(cancellationToken)
-                ?? ActivityVisibility.Followers;
-
             if (request.Type == ActivityType.EpisodeWatched && !string.IsNullOrWhiteSpace(request.AggregateKey))
             {
-                var merged = await TryAggregateEpisodeWatchAsync(request, visibility, cancellationToken);
+                var merged = await TryAggregateEpisodeWatchAsync(request, cancellationToken);
                 if (merged)
                 {
                     return;
@@ -37,7 +33,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             if (request.UpsertBySubject)
             {
-                var updated = await TryUpsertBySubjectAsync(request, visibility, cancellationToken);
+                var updated = await TryUpsertBySubjectAsync(request, cancellationToken);
                 if (updated)
                 {
                     return;
@@ -48,7 +44,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 UserId = request.UserId,
                 Type = request.Type,
-                Visibility = visibility,
                 SubjectType = request.SubjectType,
                 SubjectId = request.SubjectId,
                 ParentEntityType = request.ParentEntityType,
@@ -60,12 +55,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 AggregationWindowEndsAt = request.AggregationWindow.HasValue
                     ? request.OccurredAt.Add(request.AggregationWindow.Value)
                     : null,
-                OccurredAt = request.OccurredAt,
-                IncludeInFeed = request.IncludeInFeed
+                OccurredAt = request.OccurredAt
             };
 
             _db.UserActivities.Add(entity);
             await _db.SaveChangesAsync(cancellationToken);
+            await _postService.SyncActivityPostAsync(entity, cancellationToken);
         }
 
         public async Task<ActivityFeedDto> GetFeedAsync(
@@ -87,12 +82,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.User)
                 .Where(x =>
                     !x.IsDeleted &&
-                    x.IncludeInFeed &&
-                    (
-                        x.UserId == currentUserId ||
-                        x.Visibility == ActivityVisibility.Public ||
-                        (x.Visibility == ActivityVisibility.Followers && followingIds.Contains(x.UserId))
-                    ));
+                    (x.UserId == currentUserId || followingIds.Contains(x.UserId)));
 
             activities = ApplyCursor(activities, cursor);
 
@@ -143,18 +133,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.User)
                 .Where(x => x.UserId == targetUser.Id && !x.IsDeleted);
 
-            if (!isOwner)
-            {
-                if (relationStatus == FollowStatus.Accepted)
-                {
-                    activities = activities.Where(x => x.Visibility != ActivityVisibility.OnlyMe);
-                }
-                else
-                {
-                    activities = activities.Where(x => x.Visibility == ActivityVisibility.Public);
-                }
-            }
-
             activities = ApplyCursor(activities, cursor);
 
             var items = await activities
@@ -168,7 +146,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
         private async Task<bool> TryAggregateEpisodeWatchAsync(
             ActivityCreateRequest request,
-            ActivityVisibility visibility,
             CancellationToken cancellationToken)
         {
             var existing = await _db.UserActivities
@@ -214,7 +191,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             existing.Type = ActivityType.EpisodesWatchedBatch;
-            existing.Visibility = visibility;
             existing.PayloadJson = JsonHelper.Serialize(new EpisodesWatchedBatchPayload(
                 newEpisode.TmdbShowId,
                 newEpisode.ShowName,
@@ -230,12 +206,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 : existing.AggregationWindowEndsAt;
 
             await _db.SaveChangesAsync(cancellationToken);
+            await _postService.SyncActivityPostAsync(existing, cancellationToken);
             return true;
         }
 
         private async Task<bool> TryUpsertBySubjectAsync(
             ActivityCreateRequest request,
-            ActivityVisibility visibility,
             CancellationToken cancellationToken)
         {
             var existing = await _db.UserActivities
@@ -252,14 +228,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 return false;
             }
 
-            existing.Visibility = visibility;
             existing.ParentEntityType = request.ParentEntityType;
             existing.ParentEntityId = request.ParentEntityId;
             existing.SourceEntityType = request.SourceEntityType;
             existing.SourceEntityId = request.SourceEntityId;
             existing.PayloadJson = JsonHelper.Serialize(request.Payload) ?? "{}";
             existing.OccurredAt = request.OccurredAt;
-            existing.IncludeInFeed = request.IncludeInFeed;
             existing.AggregateKey = request.AggregateKey;
             existing.AggregationWindowEndsAt = request.AggregationWindow.HasValue
                 ? request.OccurredAt.Add(request.AggregationWindow.Value)
@@ -268,6 +242,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             existing.DeletedAt = null;
 
             await _db.SaveChangesAsync(cancellationToken);
+            await _postService.SyncActivityPostAsync(existing, cancellationToken);
             return true;
         }
 
@@ -300,7 +275,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             return new ActivityFeedDto
             {
-                Items = entities.Select(MapToDto).ToList(),
+                Items = entities.Select(ActivityDtoMapper.Map).ToList(),
                 NextCursor = nextCursor
             };
         }
@@ -322,44 +297,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 ProfileVisibility.Private => false,
                 ProfileVisibility.FollowersOnly => relationStatus == FollowStatus.Accepted,
                 _ => true
-            };
-        }
-
-        private static ActivityDto MapToDto(UserActivity entity)
-        {
-            return new ActivityDto
-            {
-                Id = entity.Id,
-                Actor = new ActivityActorDto
-                {
-                    Id = entity.UserId,
-                    Username = entity.User?.Username ?? string.Empty,
-                    AvatarUrl = entity.User?.AvatarUrl ?? string.Empty
-                },
-                Type = entity.Type,
-                Visibility = entity.Visibility,
-                OccurredAt = entity.OccurredAt,
-                Payload = DeserializePayload(entity)
-            };
-        }
-
-        private static object DeserializePayload(UserActivity entity)
-        {
-            return entity.Type switch
-            {
-                ActivityType.LibraryItemAdded => JsonHelper.Deserialize<LibraryItemAddedPayload>(entity.PayloadJson) ?? new LibraryItemAddedPayload(entity.SubjectType, entity.SubjectId, string.Empty, null),
-                ActivityType.EpisodeWatched => JsonHelper.Deserialize<EpisodeWatchedPayload>(entity.PayloadJson) ?? new EpisodeWatchedPayload(0, string.Empty, null, 0, 0),
-                ActivityType.EpisodesWatchedBatch => JsonHelper.Deserialize<EpisodesWatchedBatchPayload>(entity.PayloadJson) ?? new EpisodesWatchedBatchPayload(0, string.Empty, null, 0, []),
-                ActivityType.SeasonCompleted => JsonHelper.Deserialize<SeasonCompletedPayload>(entity.PayloadJson) ?? new SeasonCompletedPayload(0, string.Empty, null, 0, 0),
-                ActivityType.ShowCompleted => JsonHelper.Deserialize<ShowCompletedPayload>(entity.PayloadJson) ?? new ShowCompletedPayload(0, string.Empty, null),
-                ActivityType.MovieWatched => JsonHelper.Deserialize<MovieWatchedPayload>(entity.PayloadJson) ?? new MovieWatchedPayload(0, string.Empty, null),
-                ActivityType.MediaRated or ActivityType.GameRated or ActivityType.BookRated =>
-                    JsonHelper.Deserialize<RatingPayload>(entity.PayloadJson) ?? new RatingPayload(entity.SubjectType, entity.SubjectId, string.Empty, null, 0),
-                ActivityType.MediaReviewAdded or ActivityType.GameReviewAdded or ActivityType.BookReviewAdded =>
-                    JsonHelper.Deserialize<ReviewPayload>(entity.PayloadJson) ?? new ReviewPayload(entity.SubjectType, entity.SubjectId, string.Empty, null, string.Empty, null),
-                ActivityType.GameStarted or ActivityType.GameCompleted or ActivityType.BookStarted or ActivityType.BookFinished =>
-                    JsonHelper.Deserialize<LibraryItemAddedPayload>(entity.PayloadJson) ?? new LibraryItemAddedPayload(entity.SubjectType, entity.SubjectId, string.Empty, null),
-                _ => new { }
             };
         }
 

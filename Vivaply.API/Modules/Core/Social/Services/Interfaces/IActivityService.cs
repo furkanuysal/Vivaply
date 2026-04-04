@@ -1,5 +1,5 @@
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
-using Vivaply.API.Modules.Core.Social.DTOs.Results;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Activities;
 using Vivaply.API.Modules.Core.Social.Enums;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
@@ -23,7 +23,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
         public string? SourceEntityId { get; set; }
         public object Payload { get; set; } = null!;
         public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
-        public bool IncludeInFeed { get; set; } = true;
         public string? AggregateKey { get; set; }
         public TimeSpan? AggregationWindow { get; set; }
         public bool UpsertBySubject { get; set; }

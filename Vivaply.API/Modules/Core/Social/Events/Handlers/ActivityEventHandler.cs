@@ -1,10 +1,9 @@
 using Vivaply.API.Infrastructure.Core;
-using Vivaply.API.Modules.Core.Social.DTOs.Results;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Activities;
 using Vivaply.API.Modules.Core.Social.Enums;
-using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
-namespace Vivaply.API.Modules.Core.Social.Services.Implementations
+namespace Vivaply.API.Modules.Core.Social.Events.Handlers
 {
     public class ActivityEventHandler(IActivityService activityService) :
         IApplicationEventHandler<LibraryItemAddedEvent>,
@@ -39,8 +38,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     appEvent.SubjectId,
                     appEvent.Title,
                     appEvent.ImageUrl
-                ),
-                IncludeInFeed = false
+                )
             }, cancellationToken);
 
         public Task HandleAsync(EpisodeWatchedEvent appEvent, CancellationToken cancellationToken = default)
@@ -166,8 +164,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
                 Payload = new LibraryItemAddedPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl),
-                OccurredAt = appEvent.OccurredAt,
-                IncludeInFeed = false
+                OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 
         public Task HandleAsync(GameCompletedEvent appEvent, CancellationToken cancellationToken = default)
@@ -219,8 +216,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
                 Payload = new LibraryItemAddedPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl),
-                OccurredAt = appEvent.OccurredAt,
-                IncludeInFeed = false
+                OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 
         public Task HandleAsync(BookFinishedEvent appEvent, CancellationToken cancellationToken = default)

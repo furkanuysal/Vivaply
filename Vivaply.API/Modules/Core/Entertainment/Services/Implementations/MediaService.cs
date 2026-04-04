@@ -21,13 +21,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         VivaplyDbContext dbContext,
         ITmdbService tmdbService,
         IApplicationEventPublisher eventPublisher,
-        IActivityCleanupService activityCleanupService
+        IActivityCleanupService activityCleanupService,
+        IPostCleanupService postCleanupService
         ) : IMediaService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly ITmdbService _tmdbService = tmdbService;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
+        private readonly IPostCleanupService _postCleanupService = postCleanupService;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
@@ -568,6 +570,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 _dbContext.UserShows.Remove(show);
                 await _dbContext.SaveChangesAsync();
                 await _activityCleanupService.HideActivitiesForShowAsync(userId, tmdbId);
+                await _postCleanupService.HidePostsForShowAsync(userId, tmdbId);
                 return;
             }
 
@@ -578,6 +581,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             _dbContext.UserMovies.Remove(movie);
             await _dbContext.SaveChangesAsync();
             await _activityCleanupService.HideActivitiesForMovieAsync(userId, tmdbId);
+            await _postCleanupService.HidePostsForMovieAsync(userId, tmdbId);
         }
 
         public async Task<ToggleEpisodeResultDto> ToggleEpisodeAsync(

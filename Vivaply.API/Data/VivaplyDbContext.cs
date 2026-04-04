@@ -20,6 +20,8 @@ namespace Vivaply.API.Data
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public DbSet<UserFollow> UserFollows { get; set; }
         public DbSet<UserActivity> UserActivities { get; set; }
+        public DbSet<UserPost> UserPosts { get; set; }
+        public DbSet<PostAttachment> PostAttachments { get; set; }
 
         // Entertainment Tables
         public DbSet<UserShow> UserShows { get; set; }

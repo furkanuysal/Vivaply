@@ -21,19 +21,28 @@ namespace Vivaply.API.Infrastructure.Jobs
             var db = scope.ServiceProvider.GetRequiredService<VivaplyDbContext>();
             var cutoff = DateTime.UtcNow.AddDays(-_options.DeletedRetentionDays);
 
-            var query = db.UserActivities
+            var deletedPosts = await db.UserPosts
                 .Where(x =>
                     x.IsDeleted &&
                     x.DeletedAt != null &&
                     x.DeletedAt < cutoff)
                 .OrderBy(x => x.DeletedAt)
-                .Take(_options.PurgeBatchSize);
+                .Take(_options.PurgeBatchSize)
+                .ExecuteDeleteAsync();
 
-            var deletedCount = await query.ExecuteDeleteAsync();
+            var deletedActivities = await db.UserActivities
+                .Where(x =>
+                    x.IsDeleted &&
+                    x.DeletedAt != null &&
+                    x.DeletedAt < cutoff)
+                .OrderBy(x => x.DeletedAt)
+                .Take(_options.PurgeBatchSize)
+                .ExecuteDeleteAsync();
 
             _logger.LogInformation(
-                "[ActivityRetention] Purged {Count} deleted activities older than {RetentionDays} days.",
-                deletedCount,
+                "[ActivityRetention] Purged {PostCount} deleted posts and {ActivityCount} deleted activities older than {RetentionDays} days.",
+                deletedPosts,
+                deletedActivities,
                 _options.DeletedRetentionDays);
         }
     }

@@ -1,0 +1,14 @@
+using Vivaply.API.Entities.Identity;
+using Vivaply.API.Modules.Core.Social.DTOs.Queries;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Posts;
+
+namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
+{
+    public interface IPostService
+    {
+        Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default);
+        Task<PostFeedDto> GetFeedAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default);
+        Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default);
+        Task<PostDto?> GetByIdAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default);
+    }
+}

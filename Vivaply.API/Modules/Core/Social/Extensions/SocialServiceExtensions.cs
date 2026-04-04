@@ -1,4 +1,5 @@
 using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Modules.Core.Social.Events.Handlers;
 using Vivaply.API.Modules.Core.Social.Services.Implementations;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -11,6 +12,8 @@ namespace Vivaply.API.Modules.Core.Social.Extensions
             services.AddScoped<IFollowService, FollowService>();
             services.AddScoped<IActivityService, ActivityService>();
             services.AddScoped<IActivityCleanupService, ActivityCleanupService>();
+            services.AddScoped<IPostCleanupService, PostCleanupService>();
+            services.AddScoped<IPostService, PostService>();
             services.AddScoped<ActivityEventHandler>();
             RegisterEventHandler<ActivityEventHandler>(services);
 

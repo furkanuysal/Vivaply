@@ -1,31 +1,5 @@
-using Vivaply.API.Modules.Core.Identity.Enums;
-using Vivaply.API.Modules.Core.Social.Enums;
-
-namespace Vivaply.API.Modules.Core.Social.DTOs.Results
+namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
 {
-    public class ActivityDto
-    {
-        public Guid Id { get; set; }
-        public ActivityActorDto Actor { get; set; } = new();
-        public ActivityType Type { get; set; }
-        public ActivityVisibility Visibility { get; set; }
-        public DateTime OccurredAt { get; set; }
-        public object Payload { get; set; } = null!;
-    }
-
-    public class ActivityActorDto
-    {
-        public Guid Id { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string AvatarUrl { get; set; } = string.Empty;
-    }
-
-    public class ActivityFeedDto
-    {
-        public List<ActivityDto> Items { get; set; } = [];
-        public string? NextCursor { get; set; }
-    }
-
     public sealed record LibraryItemAddedPayload(
         string SubjectType,
         string SubjectId,

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Vivaply.API.Modules.Core.Identity.Enums;
 using Vivaply.API.Modules.Core.Social.Enums;
 
 namespace Vivaply.API.Entities.Identity
@@ -10,9 +9,9 @@ namespace Vivaply.API.Entities.Identity
 
         public Guid UserId { get; set; }
         public User? User { get; set; }
+        public UserPost? Post { get; set; }
 
         public ActivityType Type { get; set; }
-        public ActivityVisibility Visibility { get; set; } = ActivityVisibility.Followers;
 
         [MaxLength(50)]
         public string SubjectType { get; set; } = string.Empty;
@@ -41,7 +40,6 @@ namespace Vivaply.API.Entities.Identity
 
         public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
 
-        public bool IncludeInFeed { get; set; } = true;
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
     }

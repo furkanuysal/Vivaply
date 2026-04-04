@@ -16,12 +16,14 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         VivaplyDbContext dbContext,
         IIgdbService igdbService,
         IApplicationEventPublisher eventPublisher,
-        IActivityCleanupService activityCleanupService) : IGameService
+        IActivityCleanupService activityCleanupService,
+        IPostCleanupService postCleanupService) : IGameService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly IIgdbService _igdbService = igdbService;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
+        private readonly IPostCleanupService _postCleanupService = postCleanupService;
 
         // Detail
         public async Task<GameContentDto?> GetDetailAsync(Guid? userId, int igdbId)
@@ -260,6 +262,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             _dbContext.UserGames.Remove(game);
             await _dbContext.SaveChangesAsync();
             await _activityCleanupService.HideActivitiesForGameAsync(userId, igdbId);
+            await _postCleanupService.HidePostsForGameAsync(userId, igdbId);
         }
 
         private GameMetadata CreateMetadata(int igdbId, GameContentDto details)
