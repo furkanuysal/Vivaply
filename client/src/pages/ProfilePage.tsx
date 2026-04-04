@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { ArrowPathIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { accountService } from "@/features/account/services/accountService";
 import type { UserProfileDto } from "@/features/account/types";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import FeedItemCard from "@/features/feed/components/FeedItemCard";
 import { feedService } from "@/features/feed/services/feedService";
 import type { FeedItemDto } from "@/features/feed/types";
@@ -11,6 +13,9 @@ import { SERVER_URL } from "@/lib/api";
 
 export default function ProfilePage() {
   const { t } = useTranslation("feed");
+  const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [posts, setPosts] = useState<FeedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,10 +25,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!username) {
+        if (currentUser?.username) {
+          navigate(`/${currentUser.username}`, { replace: true });
+        }
+        return;
+      }
+
       try {
-        const data = await accountService.getProfile();
+        const data = await accountService.getProfileByUsername(username);
         setUser(data);
-        await loadPosts(data.username);
+        await loadPosts(username);
       } catch (error) {
         toast.error(t("profile.errors.load_profile"));
       } finally {
@@ -32,7 +44,7 @@ export default function ProfilePage() {
     };
 
     void fetchProfile();
-  }, []);
+  }, [username, currentUser?.username, navigate, t]);
 
   const loadPosts = async (username: string, cursor?: string | null) => {
     try {

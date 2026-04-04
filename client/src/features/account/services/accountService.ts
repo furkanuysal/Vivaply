@@ -23,6 +23,11 @@ export const accountService = {
     return response.data;
   },
 
+  getProfileByUsername: async (username: string) => {
+    const response = await api.get<UserProfileDto>(`/users/${username}`);
+    return response.data;
+  },
+
   // Upload Avatar (Special Case: FormData)
   uploadAvatar: async (file: File) => {
     const formData = new FormData();

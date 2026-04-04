@@ -21,7 +21,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 
 export default function MainLayout() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([
@@ -72,7 +72,7 @@ export default function MainLayout() {
     {
       key: "profile",
       name: t("menu.profile"),
-      path: "/profile",
+      path: user?.username ? `/${user.username}` : "/dashboard",
       icon: <HomeIcon className="w-5 h-5 shrink-0" />,
     },
     {

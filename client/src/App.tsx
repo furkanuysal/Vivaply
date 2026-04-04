@@ -68,7 +68,8 @@ function AppRoutes() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/feed" element={<FeedPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/:username" element={<ProfilePage />} />
 
         {/* Entertainment */}
         <Route path="/entertainment" element={<EntertainmentPage />} />
