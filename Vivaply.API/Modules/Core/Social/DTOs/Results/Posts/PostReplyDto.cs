@@ -3,7 +3,7 @@ using Vivaply.API.Modules.Core.Social.Enums;
 
 namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
 {
-    public class PostDto
+    public class PostReplyDto
     {
         public Guid Id { get; set; }
         public PostActorDto Actor { get; set; } = new();
@@ -15,7 +15,6 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
         public Guid? QuotedPostId { get; set; }
         public ActivityDto? Activity { get; set; }
         public List<PostAttachmentDto> Attachments { get; set; } = [];
-        public List<PostReplyDto> Replies { get; set; } = [];
         public PostStatsDto Stats { get; set; } = new();
     }
 }

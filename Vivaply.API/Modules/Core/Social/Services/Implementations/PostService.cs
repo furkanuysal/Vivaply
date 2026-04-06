@@ -3,6 +3,7 @@ using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Identity.Enums;
+using Vivaply.API.Modules.Core.Social.DTOs.Commands.Posts;
 using Vivaply.API.Modules.Core.Social.DTOs.Mappers;
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
 using Vivaply.API.Modules.Core.Social.DTOs.Results.Posts;
@@ -151,6 +152,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
                 .Include(x => x.Replies.Where(r => !r.IsDeleted))
+                    .ThenInclude(x => x.User)
+                .Include(x => x.Replies.Where(r => !r.IsDeleted))
+                    .ThenInclude(x => x.Attachments)
                 .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
 
             if (post == null)
@@ -176,6 +180,59 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             return MapToDto(post);
+        }
+
+        public async Task<PostReplyDto?> CreateReplyAsync(
+            Guid currentUserId,
+            Guid parentPostId,
+            CreateReplyPostRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var parentPost = await _db.UserPosts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == parentPostId && !x.IsDeleted, cancellationToken);
+
+            if (parentPost == null)
+            {
+                return null;
+            }
+
+            var isOwner = parentPost.UserId == currentUserId;
+            var preferences = await _db.UserPreferences
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.UserId == parentPost.UserId, cancellationToken);
+
+            var relationStatus = isOwner
+                ? FollowStatus.Accepted
+                : await _db.UserFollows
+                    .Where(x => x.FollowerId == currentUserId && x.FollowingId == parentPost.UserId)
+                    .Select(x => (FollowStatus?)x.Status)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+            if (!CanViewProfile(isOwner, preferences?.ProfileVisibility, relationStatus))
+            {
+                return null;
+            }
+
+            var reply = new UserPost
+            {
+                UserId = currentUserId,
+                Type = PostType.Reply,
+                ParentPostId = parentPostId,
+                TextContent = request.TextContent.Trim(),
+                PublishedAt = DateTime.UtcNow
+            };
+
+            _db.UserPosts.Add(reply);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            var createdReply = await _db.UserPosts
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Attachments)
+                .FirstAsync(x => x.Id == reply.Id, cancellationToken);
+
+            return MapToReplyDto(createdReply);
         }
 
         private static IQueryable<UserPost> ApplyCursor(
@@ -233,6 +290,51 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         private static PostDto MapToDto(UserPost entity)
         {
             return new PostDto
+            {
+                Id = entity.Id,
+                Actor = new PostActorDto
+                {
+                    Id = entity.UserId,
+                    Username = entity.User?.Username ?? string.Empty,
+                    AvatarUrl = entity.User?.AvatarUrl ?? string.Empty
+                },
+                Type = entity.Type,
+                PublishedAt = entity.PublishedAt,
+                UpdatedAt = entity.UpdatedAt,
+                TextContent = entity.TextContent,
+                ParentPostId = entity.ParentPostId,
+                QuotedPostId = entity.QuotedPostId,
+                Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
+                Attachments = entity.Attachments
+                    .OrderBy(x => x.SortOrder)
+                    .Select(x => new PostAttachmentDto
+                    {
+                        Id = x.Id,
+                        Type = x.Type,
+                        Url = x.Url,
+                        ThumbnailUrl = x.ThumbnailUrl,
+                        SortOrder = x.SortOrder,
+                        Width = x.Width,
+                        Height = x.Height,
+                        DurationSeconds = x.DurationSeconds
+                    })
+                    .ToList(),
+                Replies = entity.Replies
+                    .Where(x => !x.IsDeleted)
+                    .OrderBy(x => x.PublishedAt)
+                    .ThenBy(x => x.Id)
+                    .Select(MapToReplyDto)
+                    .ToList(),
+                Stats = new PostStatsDto
+                {
+                    ReplyCount = entity.Replies.Count(x => !x.IsDeleted)
+                }
+            };
+        }
+
+        private static PostReplyDto MapToReplyDto(UserPost entity)
+        {
+            return new PostReplyDto
             {
                 Id = entity.Id,
                 Actor = new PostActorDto

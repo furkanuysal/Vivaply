@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Modules.Core.Social.DTOs.Commands.Posts;
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -32,6 +33,21 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.GetByIdAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost("api/posts/{id:guid}/reply")]
+        public async Task<IActionResult> Reply(
+            Guid id,
+            [FromBody] CreateReplyPostRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.TextContent))
+            {
+                return BadRequest("Reply text is required.");
+            }
+
+            var result = await _postService.CreateReplyAsync(CurrentUserId, id, request, cancellationToken);
             return result == null ? NotFound() : Ok(result);
         }
     }
