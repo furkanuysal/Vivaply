@@ -61,7 +61,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     request.Review,
                     show.UserRating,
                     "UserShow",
-                    show.Id.ToString()
+                    show.Id.ToString(),
+                    GetMediaGenres(show.Metadata?.GenresJson)
                 ));
 
                 return;
@@ -87,7 +88,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 request.Review,
                 movie.UserRating,
                 "UserMovie",
-                movie.Id.ToString()
+                movie.Id.ToString(),
+                GetMediaGenres(movie.Metadata?.GenresJson)
             ));
         }
 
@@ -532,7 +534,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     show.Metadata?.PosterPath,
                     request.Rating,
                     "UserShow",
-                    show.Id.ToString()
+                    show.Id.ToString(),
+                    GetMediaGenres(show.Metadata?.GenresJson)
                 ));
 
                 return;
@@ -551,7 +554,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 movie.Metadata?.PosterPath,
                 request.Rating,
                 "UserMovie",
-                movie.Id.ToString()
+                movie.Id.ToString(),
+                GetMediaGenres(movie.Metadata?.GenresJson)
             ));
         }
 
@@ -706,7 +710,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         show.Metadata?.PosterPath,
                         request.Rating.Value,
                         "UserShow",
-                        show.Id.ToString()
+                        show.Id.ToString(),
+                        GetMediaGenres(show.Metadata?.GenresJson)
                     ));
                 }
 
@@ -721,7 +726,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         request.Review,
                         show.UserRating,
                         "UserShow",
-                        show.Id.ToString()
+                        show.Id.ToString(),
+                        GetMediaGenres(show.Metadata?.GenresJson)
                     ));
                 }
 
@@ -774,7 +780,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     movie.Metadata?.PosterPath,
                     request.Rating.Value,
                     "UserMovie",
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    GetMediaGenres(movie.Metadata?.GenresJson)
                 ));
             }
 
@@ -789,7 +796,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     request.Review,
                     movie.UserRating,
                     "UserMovie",
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    GetMediaGenres(movie.Metadata?.GenresJson)
                 ));
             }
 
@@ -1331,6 +1339,17 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 return null;
 
             return parsed.ToUniversalTime();
+        }
+
+        private static List<string>? GetMediaGenres(string? genresJson)
+        {
+            var genres = JsonHelper.DeserializeList<TmdbGenreDto>(genresJson)?
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => x.Name.Trim())
+                .Take(2)
+                .ToList() ?? [];
+
+            return genres.Count > 0 ? genres : null;
         }
     }
 }

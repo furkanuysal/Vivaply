@@ -272,7 +272,8 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                 book.Metadata?.Title ?? "Unknown",
                 book.Metadata?.CoverUrl,
                 request.Rating,
-                book.Id.ToString()
+                book.Id.ToString(),
+                GetBookAuthors(book.Metadata)
             ));
         }
 
@@ -289,8 +290,23 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                 book.Metadata?.CoverUrl,
                 request.Review,
                 book.UserRating,
-                book.Id.ToString()
+                book.Id.ToString(),
+                GetBookAuthors(book.Metadata)
             ));
+        }
+
+        private static List<string>? GetBookAuthors(BookMetadata? metadata)
+        {
+            if (metadata == null)
+                return null;
+
+            var authors = JsonHelper.DeserializeList<string>(metadata.AuthorsJson)?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Take(2)
+                .ToList() ?? [];
+
+            return authors.Count > 0 ? authors : null;
         }
 
         private async Task<UserBook> GetUserBook(Guid userId, string googleBookId)

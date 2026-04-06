@@ -48,7 +48,10 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string SubjectId,
         string Title,
         string? ImageUrl,
-        double Rating
+        double Rating,
+        List<string>? Developers = null,
+        List<string>? Genres = null,
+        List<string>? Authors = null
     );
 
     public sealed record ReviewPayload(
@@ -57,6 +60,9 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string Title,
         string? ImageUrl,
         string ReviewSnippet,
-        double? Rating
+        double? Rating,
+        List<string>? Developers = null,
+        List<string>? Genres = null,
+        List<string>? Authors = null
     );
 }

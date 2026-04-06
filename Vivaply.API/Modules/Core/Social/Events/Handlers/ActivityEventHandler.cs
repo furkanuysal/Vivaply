@@ -129,7 +129,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                     appEvent.SubjectId,
                     appEvent.Title,
                     appEvent.ImageUrl,
-                    appEvent.Rating
+                    appEvent.Rating,
+                    Genres: appEvent.Genres
                 ),
                 UpsertBySubject = true
             }, cancellationToken);
@@ -149,7 +150,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                     appEvent.Title,
                     appEvent.ImageUrl,
                     BuildReviewSnippet(appEvent.Review),
-                    appEvent.Rating
+                    appEvent.Rating,
+                    Genres: appEvent.Genres
                 ),
                 UpsertBySubject = true
             }, cancellationToken);
@@ -189,7 +191,15 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new RatingPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, appEvent.Rating),
+                Payload = new RatingPayload(
+                    "game",
+                    appEvent.IgdbId.ToString(),
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    appEvent.Rating,
+                    Developers: appEvent.Developers,
+                    Genres: appEvent.Genres
+                ),
                 UpsertBySubject = true
             }, cancellationToken);
 
@@ -202,7 +212,16 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new ReviewPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating),
+                Payload = new ReviewPayload(
+                    "game",
+                    appEvent.IgdbId.ToString(),
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    BuildReviewSnippet(appEvent.Review),
+                    appEvent.Rating,
+                    Developers: appEvent.Developers,
+                    Genres: appEvent.Genres
+                ),
                 UpsertBySubject = true
             }, cancellationToken);
 
@@ -241,7 +260,14 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new RatingPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, appEvent.Rating),
+                Payload = new RatingPayload(
+                    "book",
+                    appEvent.GoogleBookId,
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    appEvent.Rating,
+                    Authors: appEvent.Authors
+                ),
                 UpsertBySubject = true
             }, cancellationToken);
 
@@ -254,7 +280,15 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new ReviewPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl, BuildReviewSnippet(appEvent.Review), appEvent.Rating),
+                Payload = new ReviewPayload(
+                    "book",
+                    appEvent.GoogleBookId,
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    BuildReviewSnippet(appEvent.Review),
+                    appEvent.Rating,
+                    Authors: appEvent.Authors
+                ),
                 UpsertBySubject = true
             }, cancellationToken);
 

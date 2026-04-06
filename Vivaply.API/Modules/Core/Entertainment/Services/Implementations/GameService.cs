@@ -188,7 +188,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     game.Metadata?.Title ?? "Unknown",
                     game.Metadata?.CoverUrl,
                     request.UserRating.Value,
-                    game.Id.ToString()
+                    game.Id.ToString(),
+                    GetGameDevelopers(game.Metadata),
+                    GetGameGenres(game.Metadata)
                 ));
             }
         }
@@ -228,7 +230,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 game.Metadata?.Title ?? "Unknown",
                 game.Metadata?.CoverUrl,
                 request.Rating,
-                game.Id.ToString()
+                game.Id.ToString(),
+                GetGameDevelopers(game.Metadata),
+                GetGameGenres(game.Metadata)
             ));
         }
 
@@ -249,7 +253,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 game.Metadata?.CoverUrl,
                 request.Review,
                 game.UserRating,
-                game.Id.ToString()
+                game.Id.ToString(),
+                GetGameDevelopers(game.Metadata),
+                GetGameGenres(game.Metadata)
             ));
         }
 
@@ -291,6 +297,33 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 VoteAverage = details.VoteAverage,
                 LastFetchedAt = DateTime.UtcNow
             };
+        }
+
+        private static List<string>? GetGameDevelopers(GameMetadata? metadata)
+        {
+            if (metadata == null)
+                return null;
+
+            return NormalizeMetadataList(JsonHelper.DeserializeList<string>(metadata.DevelopersJson), take: 1);
+        }
+
+        private static List<string>? GetGameGenres(GameMetadata? metadata)
+        {
+            if (metadata == null)
+                return null;
+
+            return NormalizeMetadataList(JsonHelper.DeserializeList<string>(metadata.GenresJson), take: 2);
+        }
+
+        private static List<string>? NormalizeMetadataList(IEnumerable<string>? items, int take)
+        {
+            var normalized = items?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Take(take)
+                .ToList() ?? [];
+
+            return normalized.Count > 0 ? normalized : null;
         }
 
         private async Task<GameMetadata> GetOrCreateMetadataAsync(int igdbId)

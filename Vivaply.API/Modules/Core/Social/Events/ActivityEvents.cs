@@ -58,7 +58,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string? ImageUrl,
         double Rating,
         string? SourceEntityType,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record MediaReviewAddedEvent(
@@ -70,7 +71,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Review,
         double? Rating,
         string? SourceEntityType,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record GameStartedEvent(
@@ -97,7 +99,9 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         double Rating,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Developers = null,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record GameReviewAddedEvent(
@@ -107,7 +111,9 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string? CoverUrl,
         string Review,
         double? Rating,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Developers = null,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record BookStartedEvent(
@@ -134,7 +140,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         double Rating,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Authors = null
     ) : IApplicationEvent;
 
     public sealed record BookReviewAddedEvent(
@@ -144,6 +151,7 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string? CoverUrl,
         string Review,
         double? Rating,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Authors = null
     ) : IApplicationEvent;
 }
