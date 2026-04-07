@@ -15,6 +15,7 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
         public Guid? QuotedPostId { get; set; }
         public ActivityDto? Activity { get; set; }
         public List<PostAttachmentDto> Attachments { get; set; } = [];
+        public List<PostReplyDto> Children { get; set; } = [];
         public PostStatsDto Stats { get; set; } = new();
     }
 }

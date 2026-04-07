@@ -89,7 +89,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Take(take + 1)
                 .ToListAsync(cancellationToken);
 
-            return BuildFeedResponse(items, take);
+            return await BuildFeedResponseAsync(items, take, cancellationToken);
         }
 
         public async Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default)
@@ -140,7 +140,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Take(take + 1)
                 .ToListAsync(cancellationToken);
 
-            return BuildFeedResponse(items, take);
+            return await BuildFeedResponseAsync(items, take, cancellationToken);
         }
 
         public async Task<PostDto?> GetByIdAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
@@ -151,10 +151,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
-                .Include(x => x.Replies.Where(r => !r.IsDeleted))
-                    .ThenInclude(x => x.User)
-                .Include(x => x.Replies.Where(r => !r.IsDeleted))
-                    .ThenInclude(x => x.Attachments)
                 .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
 
             if (post == null)
@@ -179,7 +175,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 return null;
             }
 
-            return MapToDto(post);
+            var dto = MapToDto(post);
+            dto.Replies = await BuildReplyThreadAsync(post.Id, cancellationToken);
+            dto.Stats.ReplyCount = dto.Replies.Count;
+
+            return dto;
         }
 
         public async Task<PostReplyDto?> CreateReplyAsync(
@@ -269,7 +269,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             };
         }
 
-        private static PostFeedDto BuildFeedResponse(List<UserPost> entities, int take)
+        private async Task<PostFeedDto> BuildFeedResponseAsync(
+            List<UserPost> entities,
+            int take,
+            CancellationToken cancellationToken)
         {
             string? nextCursor = null;
 
@@ -280,9 +283,23 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 entities = entities.Take(take).ToList();
             }
 
+            var postIds = entities.Select(x => x.Id).ToList();
+            var replyCounts = postIds.Count == 0
+                ? new Dictionary<Guid, int>()
+                : await _db.UserPosts
+                    .AsNoTracking()
+                    .Where(x => x.ParentPostId.HasValue && postIds.Contains(x.ParentPostId.Value) && !x.IsDeleted)
+                    .GroupBy(x => x.ParentPostId!.Value)
+                    .ToDictionaryAsync(x => x.Key, x => x.Count(), cancellationToken);
+
             return new PostFeedDto
             {
-                Items = entities.Select(MapToDto).ToList(),
+                Items = entities.Select(entity =>
+                {
+                    var dto = MapToDto(entity);
+                    dto.Stats.ReplyCount = replyCounts.GetValueOrDefault(entity.Id);
+                    return dto;
+                }).ToList(),
                 NextCursor = nextCursor
             };
         }
@@ -369,6 +386,71 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     ReplyCount = entity.Replies.Count(x => !x.IsDeleted)
                 }
             };
+        }
+
+        private async Task<List<PostReplyDto>> BuildReplyThreadAsync(Guid postId, CancellationToken cancellationToken)
+        {
+            const int childPreviewTake = 3;
+
+            var rootReplies = await BuildReplyQuery()
+                .Where(x => x.ParentPostId == postId && !x.IsDeleted)
+                .OrderBy(x => x.PublishedAt)
+                .ThenBy(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            if (rootReplies.Count == 0)
+            {
+                return [];
+            }
+
+            var rootIds = rootReplies.Select(x => x.Id).ToList();
+            var childReplies = await BuildReplyQuery()
+                .Where(x => x.ParentPostId.HasValue && rootIds.Contains(x.ParentPostId.Value) && !x.IsDeleted)
+                .OrderBy(x => x.PublishedAt)
+                .ThenBy(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            var childIds = childReplies.Select(x => x.Id).ToList();
+            var grandchildCounts = childIds.Count == 0
+                ? new Dictionary<Guid, int>()
+                : await _db.UserPosts
+                    .AsNoTracking()
+                    .Where(x => x.ParentPostId.HasValue && childIds.Contains(x.ParentPostId.Value) && !x.IsDeleted)
+                    .GroupBy(x => x.ParentPostId!.Value)
+                    .ToDictionaryAsync(x => x.Key, x => x.Count(), cancellationToken);
+
+            var childGroups = childReplies
+                .GroupBy(x => x.ParentPostId!.Value)
+                .ToDictionary(x => x.Key, x => x.ToList());
+
+            return rootReplies.Select(reply =>
+            {
+                var dto = MapToReplyDto(reply);
+                var children = childGroups.GetValueOrDefault(reply.Id) ?? [];
+
+                dto.Stats.ReplyCount = children.Count;
+                dto.Children = children
+                    .Take(childPreviewTake)
+                    .Select(child =>
+                    {
+                        var childDto = MapToReplyDto(child);
+                        childDto.Stats.ReplyCount = grandchildCounts.GetValueOrDefault(child.Id);
+                        return childDto;
+                    })
+                    .ToList();
+
+                return dto;
+            }).ToList();
+        }
+
+        private IQueryable<UserPost> BuildReplyQuery()
+        {
+            return _db.UserPosts
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Activity)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.Attachments);
         }
 
         private static bool ShouldCreatePost(ActivityType type)
