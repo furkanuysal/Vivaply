@@ -28,6 +28,19 @@ export const feedService = {
 
     return response.data;
   },
+
+  async getPostById(postId: string): Promise<FeedItemDto> {
+    const response = await api.get<FeedItemDto>(`/posts/${postId}`);
+    return response.data;
+  },
+
+  async replyToPost(postId: string, textContent: string): Promise<FeedItemDto> {
+    const response = await api.post<FeedItemDto>(`/posts/${postId}/reply`, {
+      textContent,
+    });
+
+    return response.data;
+  },
 };
 
 export function getActorAvatarUrl(path?: string): string | null {

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { accountService } from "@/features/account/services/accountService";
 import type { UserProfileDto } from "@/features/account/types";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import FeedItemCard from "@/features/feed/components/FeedItemCard";
+import PostCard from "@/features/feed/components/PostCard";
 import { feedService } from "@/features/feed/services/feedService";
 import type { FeedItemDto } from "@/features/feed/types";
 import { SERVER_URL } from "@/lib/api";
@@ -202,7 +202,7 @@ export default function ProfilePage() {
         ) : (
           <div className="mt-6 space-y-4">
             {posts.map((item) => (
-              <FeedItemCard key={item.id} item={item} />
+              <PostCard key={item.id} item={item} />
             ))}
           </div>
         )}

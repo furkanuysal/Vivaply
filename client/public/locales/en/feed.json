@@ -6,6 +6,33 @@
     "empty_title": "Your feed is quiet for now",
     "empty_subtitle": "Follow people and their latest activity will start showing up here."
   },
+  "post": {
+    "eyebrow": "Post",
+    "title": "Conversation",
+    "subtitle": "See the full post and follow the thread as this social layer grows.",
+    "replies_title": "Replies",
+    "replies_subtitle": "Join the conversation with reply posts.",
+    "reply_box_title": "Reply to this post",
+    "reply_box_subtitle": "Your reply will appear here as its own post.",
+    "reply_compact_placeholder": "Open the composer to share a reply.",
+    "reply_placeholder": "Share your thoughts...",
+    "reply_count_hint": "{{count}} / 4000",
+    "reply_cancel": "Cancel",
+    "reply_submit": "Reply",
+    "reply_submitting": "Sending...",
+    "reply_total": "{{count}} replies",
+    "view_more_replies": "See {{count}} more replies",
+    "no_replies_title": "No replies yet",
+    "no_replies_subtitle": "Start the conversation with the first reply.",
+    "not_found_title": "Post not found",
+    "not_found_subtitle": "This post may have been removed or is no longer available.",
+    "back": "Go back",
+    "close": "Close post",
+    "errors": {
+      "load": "The post could not be loaded.",
+      "reply": "Your reply could not be posted."
+    }
+  },
   "profile": {
     "eyebrow": "Profile Feed",
     "title": "Recent activity",
@@ -29,6 +56,16 @@
     "load_more": "Load more",
     "loading_more": "Loading..."
   },
+  "actions": {
+    "reply": "Reply",
+    "like": "Like",
+    "view": "View",
+    "media": "Add media",
+    "emoji": "Add emoji",
+    "location": "Add location",
+    "save": "Save",
+    "share": "Share"
+  },
   "labels": {
     "watching": "Watching",
     "movie": "Movie",
@@ -37,6 +74,8 @@
     "gaming": "Gaming",
     "reading": "Reading",
     "library": "Library",
+    "reply": "Reply",
+    "quote": "Quote",
     "shared_in_feed": "Shared in feed"
   },
   "activity": {

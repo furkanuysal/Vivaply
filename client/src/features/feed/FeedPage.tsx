@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import FeedItemCard from "@/features/feed/components/FeedItemCard";
+import PostCard from "@/features/feed/components/PostCard";
 import { feedService } from "@/features/feed/services/feedService";
 import type { FeedItemDto } from "@/features/feed/types";
 
@@ -72,7 +72,7 @@ export default function FeedPage() {
       ) : (
         <div className="space-y-4">
           {items.map((item) => (
-            <FeedItemCard key={item.id} item={item} />
+            <PostCard key={item.id} item={item} />
           ))}
         </div>
       )}

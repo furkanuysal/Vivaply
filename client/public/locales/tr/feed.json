@@ -2,9 +2,36 @@
   "page": {
     "eyebrow": "Takip Akışı",
     "title": "Akış",
-    "subtitle": "Takip ettiğin kişilerin neler izlediğini, puanladığını, inceleyip bitirdiğini burada görebilirsin.",
+    "subtitle": "Takip ettiğin kişilerin neler izlediğini, puanladığını, incelediğini ve bitirdiğini burada görebilirsin.",
     "empty_title": "Akışında henüz bir şey yok",
     "empty_subtitle": "Kişileri takip etmeye başladığında en son aktiviteleri burada görünecek."
+  },
+  "post": {
+    "eyebrow": "Gönderi",
+    "title": "Konuşma",
+    "subtitle": "Gönderinin tamamını gör ve bu sosyal katman büyüdükçe konuşma akışını takip et.",
+    "replies_title": "Yanıtlar",
+    "replies_subtitle": "Yanıt gönderileriyle konuşmaya katıl.",
+    "reply_box_title": "Bu gönderiye yanıt ver",
+    "reply_box_subtitle": "Yanıtın burada kendi gönderisi olarak görünecek.",
+    "reply_compact_placeholder": "Yanıt yazmak için düzenleyiciyi aç.",
+    "reply_placeholder": "Düşüncelerini paylaş...",
+    "reply_count_hint": "{{count}} / 4000",
+    "reply_cancel": "Vazgeç",
+    "reply_submit": "Yanıtla",
+    "reply_submitting": "Gönderiliyor...",
+    "reply_total": "{{count}} yanıt",
+    "view_more_replies": "{{count}} yanıtı gör",
+    "no_replies_title": "Henüz yanıt yok",
+    "no_replies_subtitle": "İlk yanıtı gönderip konuşmayı başlatabilirsin.",
+    "not_found_title": "Gönderi bulunamadı",
+    "not_found_subtitle": "Bu gönderi kaldırılmış olabilir ya da artık erişilebilir değil.",
+    "back": "Geri dön",
+    "close": "Gönderiyi kapat",
+    "errors": {
+      "load": "Gönderi yüklenemedi.",
+      "reply": "Yanıtın gönderilemedi."
+    }
   },
   "profile": {
     "eyebrow": "Profil Akışı",
@@ -29,6 +56,16 @@
     "load_more": "Daha fazla yükle",
     "loading_more": "Yükleniyor..."
   },
+  "actions": {
+    "reply": "Yanıt",
+    "like": "Beğen",
+    "view": "Görüntüle",
+    "media": "Medya ekle",
+    "emoji": "Emoji ekle",
+    "location": "Konum ekle",
+    "save": "Kaydet",
+    "share": "Paylaş"
+  },
   "labels": {
     "watching": "İzliyor",
     "movie": "Film",
@@ -37,6 +74,8 @@
     "gaming": "Oyun",
     "reading": "Okuma",
     "library": "Kütüphane",
+    "reply": "Yanıt",
+    "quote": "Alıntı",
     "shared_in_feed": "Akışta paylaşıldı"
   },
   "activity": {

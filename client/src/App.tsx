@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  type Location,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ToastContainer } from "react-toastify";
@@ -9,6 +16,8 @@ import LandingPage from "@/pages/LandingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DashboardPage from "@/pages/DashboardPage";
 import FeedPage from "@/features/feed/FeedPage";
+import PostModal from "@/features/feed/components/PostModal";
+import PostPage from "@/features/feed/PostPage";
 import MainLayout from "@/components/MainLayout";
 import SettingsPage from "@/pages/SettingsPage";
 
@@ -34,6 +43,9 @@ const LoadingScreen = () => (
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const state = location.state as { backgroundLocation?: Location } | null;
+  const backgroundLocation = state?.backgroundLocation;
 
   // Wait for "Token valid?" answer from Backend
   // If you don't wait, the user will see the Dashboard when they have the right permissions but are on the Landing Page (flicker).
@@ -42,54 +54,65 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      {/* Public Routes (Only for non-logged in users) */}
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/dashboard" replace /> // Can't access public routes
-          ) : (
-            <LandingPage />
-          )
-        }
-      />
-
-      {/* Protected Routes (Only for logged in users) */}
-      {/* Using MainLayout as a security barrier */}
-      <Route
-        element={
-          isAuthenticated ? (
-            <MainLayout />
-          ) : (
-            <Navigate to="/" replace /> // Can't access protected routes
-          )
-        }
-      >
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/feed" element={<FeedPage />} />
-        <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/:username" element={<ProfilePage />} />
-
-        {/* Entertainment */}
-        <Route path="/entertainment" element={<EntertainmentPage />} />
+    <>
+      <Routes location={backgroundLocation || location}>
+        {/* Public Routes (Only for non-logged in users) */}
         <Route
-          path="/entertainment/:type/:id"
-          element={<EntertainmentDetailPage />}
-        />
-        <Route
-          path="/entertainment/library"
-          element={<EntertainmentLibraryPage />}
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace /> // Can't access public routes
+            ) : (
+              <LandingPage />
+            )
+          }
         />
 
-        {/* Knowledge */}
-        <Route path="/knowledge" element={<KnowledgePage />} />
-        <Route path="/knowledge/library/book" element={<BookLibraryPage />} />
-        <Route path="/knowledge/book/:id" element={<BookDetailPage />} />
-        {/* Settings */}
-        <Route path="/settings" element={<SettingsPage />} />
-      </Route>
-    </Routes>
+        {/* Protected Routes (Only for logged in users) */}
+        {/* Using MainLayout as a security barrier */}
+        <Route
+          element={
+            isAuthenticated ? (
+              <MainLayout />
+            ) : (
+              <Navigate to="/" replace /> // Can't access protected routes
+            )
+          }
+        >
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/feed/:postId" element={<PostPage />} />
+          <Route path="/post/:postId" element={<PostPage />} />
+          <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/:username" element={<ProfilePage />} />
+
+          {/* Entertainment */}
+          <Route path="/entertainment" element={<EntertainmentPage />} />
+          <Route
+            path="/entertainment/:type/:id"
+            element={<EntertainmentDetailPage />}
+          />
+          <Route
+            path="/entertainment/library"
+            element={<EntertainmentLibraryPage />}
+          />
+
+          {/* Knowledge */}
+          <Route path="/knowledge" element={<KnowledgePage />} />
+          <Route path="/knowledge/library/book" element={<BookLibraryPage />} />
+          <Route path="/knowledge/book/:id" element={<BookDetailPage />} />
+          {/* Settings */}
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+
+      {backgroundLocation ? (
+        <Routes>
+          <Route path="/feed/:postId" element={<PostModal />} />
+          <Route path="/post/:postId" element={<PostModal />} />
+        </Routes>
+      ) : null}
+    </>
   );
 }
 

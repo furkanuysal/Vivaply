@@ -70,6 +70,8 @@ export interface FeedItemDto {
   quotedPostId?: string | null;
   activity?: FeedActivityDto | null;
   attachments: FeedAttachmentDto[];
+  children?: FeedItemDto[];
+  replies?: FeedItemDto[];
   stats: FeedStatsDto;
 }
 
