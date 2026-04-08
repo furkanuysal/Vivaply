@@ -17,5 +17,6 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
         public List<PostAttachmentDto> Attachments { get; set; } = [];
         public List<PostReplyDto> Children { get; set; } = [];
         public PostStatsDto Stats { get; set; } = new();
+        public PostViewerStateDto Viewer { get; set; } = new();
     }
 }

@@ -45,6 +45,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 };
 
                 _db.UserPosts.Add(existing);
+                _db.PostStats.Add(new PostStats
+                {
+                    Post = existing
+                });
             }
             else
             {
@@ -76,6 +80,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.Stats)
                 .Where(x =>
                     !x.IsDeleted &&
                     x.ParentPostId == null &&
@@ -89,7 +94,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Take(take + 1)
                 .ToListAsync(cancellationToken);
 
-            return await BuildFeedResponseAsync(items, take, cancellationToken);
+            return await BuildFeedResponseAsync(currentUserId, items, take, cancellationToken);
         }
 
         public async Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default)
@@ -127,6 +132,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.Stats)
                 .Where(x =>
                     x.UserId == targetUser.Id &&
                     !x.IsDeleted &&
@@ -140,7 +146,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Take(take + 1)
                 .ToListAsync(cancellationToken);
 
-            return await BuildFeedResponseAsync(items, take, cancellationToken);
+            return await BuildFeedResponseAsync(currentUserId, items, take, cancellationToken);
         }
 
         public async Task<PostDto?> GetByIdAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
@@ -151,6 +157,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.Stats)
                 .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
 
             if (post == null)
@@ -177,7 +184,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             var dto = MapToDto(post);
             dto.Replies = await BuildReplyThreadAsync(post.Id, cancellationToken);
-            dto.Stats.ReplyCount = dto.Replies.Count;
+            await EnrichPostDtosAsync(currentUserId, [dto], cancellationToken);
 
             return dto;
         }
@@ -224,15 +231,83 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             };
 
             _db.UserPosts.Add(reply);
+            _db.PostStats.Add(new PostStats
+            {
+                Post = reply
+            });
+
+            await EnsurePostStatsAsync(parentPostId, cancellationToken);
+            await _db.PostStats
+                .Where(x => x.PostId == parentPostId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.ReplyCount, x => x.ReplyCount + 1)
+                    .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+
             await _db.SaveChangesAsync(cancellationToken);
 
             var createdReply = await _db.UserPosts
                 .AsNoTracking()
                 .Include(x => x.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.Stats)
                 .FirstAsync(x => x.Id == reply.Id, cancellationToken);
 
             return MapToReplyDto(createdReply);
+        }
+
+        public async Task<PostStatsDto?> LikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
+        {
+            if (!await CanViewPostAsync(currentUserId, postId, cancellationToken))
+            {
+                return null;
+            }
+
+            var exists = await _db.PostLikes
+                .AnyAsync(x => x.PostId == postId && x.UserId == currentUserId, cancellationToken);
+
+            if (!exists)
+            {
+                _db.PostLikes.Add(new PostLike
+                {
+                    PostId = postId,
+                    UserId = currentUserId
+                });
+
+                await _db.SaveChangesAsync(cancellationToken);
+                await EnsurePostStatsAsync(postId, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == postId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.LikeCount, x => x.LikeCount + 1)
+                        .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+            }
+
+            return await BuildPostStatsAsync(postId, cancellationToken);
+        }
+
+        public async Task<PostStatsDto?> UnlikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
+        {
+            if (!await CanViewPostAsync(currentUserId, postId, cancellationToken))
+            {
+                return null;
+            }
+
+            var like = await _db.PostLikes
+                .FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == currentUserId, cancellationToken);
+
+            if (like != null)
+            {
+                _db.PostLikes.Remove(like);
+                await _db.SaveChangesAsync(cancellationToken);
+                await EnsurePostStatsAsync(postId, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == postId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.LikeCount, x => Math.Max(0, x.LikeCount - 1))
+                        .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+            }
+
+            return await BuildPostStatsAsync(postId, cancellationToken);
         }
 
         private static IQueryable<UserPost> ApplyCursor(
@@ -270,6 +345,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         }
 
         private async Task<PostFeedDto> BuildFeedResponseAsync(
+            Guid currentUserId,
             List<UserPost> entities,
             int take,
             CancellationToken cancellationToken)
@@ -283,23 +359,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 entities = entities.Take(take).ToList();
             }
 
-            var postIds = entities.Select(x => x.Id).ToList();
-            var replyCounts = postIds.Count == 0
-                ? new Dictionary<Guid, int>()
-                : await _db.UserPosts
-                    .AsNoTracking()
-                    .Where(x => x.ParentPostId.HasValue && postIds.Contains(x.ParentPostId.Value) && !x.IsDeleted)
-                    .GroupBy(x => x.ParentPostId!.Value)
-                    .ToDictionaryAsync(x => x.Key, x => x.Count(), cancellationToken);
+            var dtos = entities.Select(MapToDto).ToList();
+            await EnrichPostDtosAsync(currentUserId, dtos, cancellationToken);
 
             return new PostFeedDto
             {
-                Items = entities.Select(entity =>
-                {
-                    var dto = MapToDto(entity);
-                    dto.Stats.ReplyCount = replyCounts.GetValueOrDefault(entity.Id);
-                    return dto;
-                }).ToList(),
+                Items = dtos,
                 NextCursor = nextCursor
             };
         }
@@ -342,10 +407,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .ThenBy(x => x.Id)
                     .Select(MapToReplyDto)
                     .ToList(),
-                Stats = new PostStatsDto
-                {
-                    ReplyCount = entity.Replies.Count(x => !x.IsDeleted)
-                }
+                Stats = MapStats(entity.Stats)
             };
         }
 
@@ -381,10 +443,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                         DurationSeconds = x.DurationSeconds
                     })
                     .ToList(),
-                Stats = new PostStatsDto
-                {
-                    ReplyCount = entity.Replies.Count(x => !x.IsDeleted)
-                }
+                Stats = MapStats(entity.Stats)
             };
         }
 
@@ -410,15 +469,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .ThenBy(x => x.Id)
                 .ToListAsync(cancellationToken);
 
-            var childIds = childReplies.Select(x => x.Id).ToList();
-            var grandchildCounts = childIds.Count == 0
-                ? new Dictionary<Guid, int>()
-                : await _db.UserPosts
-                    .AsNoTracking()
-                    .Where(x => x.ParentPostId.HasValue && childIds.Contains(x.ParentPostId.Value) && !x.IsDeleted)
-                    .GroupBy(x => x.ParentPostId!.Value)
-                    .ToDictionaryAsync(x => x.Key, x => x.Count(), cancellationToken);
-
             var childGroups = childReplies
                 .GroupBy(x => x.ParentPostId!.Value)
                 .ToDictionary(x => x.Key, x => x.ToList());
@@ -428,15 +478,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 var dto = MapToReplyDto(reply);
                 var children = childGroups.GetValueOrDefault(reply.Id) ?? [];
 
-                dto.Stats.ReplyCount = children.Count;
                 dto.Children = children
                     .Take(childPreviewTake)
-                    .Select(child =>
-                    {
-                        var childDto = MapToReplyDto(child);
-                        childDto.Stats.ReplyCount = grandchildCounts.GetValueOrDefault(child.Id);
-                        return childDto;
-                    })
+                    .Select(MapToReplyDto)
                     .ToList();
 
                 return dto;
@@ -450,7 +494,121 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.User)
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
-                .Include(x => x.Attachments);
+                .Include(x => x.Attachments)
+                .Include(x => x.Stats);
+        }
+
+        private async Task EnrichPostDtosAsync(Guid currentUserId, IEnumerable<PostDto> posts, CancellationToken cancellationToken)
+        {
+            var allPosts = FlattenPostStates(posts).ToList();
+            if (allPosts.Count == 0)
+            {
+                return;
+            }
+
+            var postIds = allPosts.Select(x => x.Id).Distinct().ToList();
+
+            var likedPostIds = await _db.PostLikes
+                .AsNoTracking()
+                .Where(x => x.UserId == currentUserId && postIds.Contains(x.PostId))
+                .Select(x => x.PostId)
+                .ToHashSetAsync(cancellationToken);
+
+            foreach (var post in allPosts)
+            {
+                post.Viewer.HasLiked = likedPostIds.Contains(post.Id);
+            }
+        }
+
+        private static IEnumerable<PostStateTarget> FlattenPostStates(IEnumerable<PostDto> posts)
+        {
+            foreach (var post in posts)
+            {
+                yield return new PostStateTarget(post.Id, post.Stats, post.Viewer);
+
+                foreach (var reply in FlattenReplyStates(post.Replies))
+                {
+                    yield return reply;
+                }
+            }
+        }
+
+        private static IEnumerable<PostStateTarget> FlattenReplyStates(IEnumerable<PostReplyDto> replies)
+        {
+            foreach (var reply in replies)
+            {
+                yield return new PostStateTarget(reply.Id, reply.Stats, reply.Viewer);
+
+                foreach (var child in FlattenReplyStates(reply.Children))
+                {
+                    yield return child;
+                }
+            }
+        }
+
+        private sealed record PostStateTarget(Guid Id, PostStatsDto Stats, PostViewerStateDto Viewer);
+
+        private async Task<bool> CanViewPostAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken)
+        {
+            var post = await _db.UserPosts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
+
+            if (post == null)
+            {
+                return false;
+            }
+
+            var isOwner = post.UserId == currentUserId;
+            var preferences = await _db.UserPreferences
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.UserId == post.UserId, cancellationToken);
+
+            var relationStatus = isOwner
+                ? FollowStatus.Accepted
+                : await _db.UserFollows
+                    .Where(x => x.FollowerId == currentUserId && x.FollowingId == post.UserId)
+                    .Select(x => (FollowStatus?)x.Status)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+            return CanViewProfile(isOwner, preferences?.ProfileVisibility, relationStatus);
+        }
+
+        private async Task<PostStatsDto> BuildPostStatsAsync(Guid postId, CancellationToken cancellationToken)
+        {
+            var stats = await _db.PostStats
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.PostId == postId, cancellationToken);
+
+            return MapStats(stats);
+        }
+
+        private static PostStatsDto MapStats(PostStats? stats)
+        {
+            return new PostStatsDto
+            {
+                ReplyCount = stats?.ReplyCount ?? 0,
+                LikeCount = stats?.LikeCount ?? 0,
+                ViewCount = stats?.ViewCount ?? 0
+            };
+        }
+
+        private async Task EnsurePostStatsAsync(Guid postId, CancellationToken cancellationToken)
+        {
+            var exists = await _db.PostStats
+                .AnyAsync(x => x.PostId == postId, cancellationToken);
+
+            if (exists)
+            {
+                return;
+            }
+
+            _db.PostStats.Add(new PostStats
+            {
+                PostId = postId
+            });
+
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
         private static bool ShouldCreatePost(ActivityType type)

@@ -22,6 +22,8 @@ namespace Vivaply.API.Data
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<UserPost> UserPosts { get; set; }
         public DbSet<PostAttachment> PostAttachments { get; set; }
+        public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<PostStats> PostStats { get; set; }
 
         // Entertainment Tables
         public DbSet<UserShow> UserShows { get; set; }

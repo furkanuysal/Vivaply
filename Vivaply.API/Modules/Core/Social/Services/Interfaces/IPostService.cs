@@ -12,5 +12,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
         Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default);
         Task<PostDto?> GetByIdAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default);
         Task<PostReplyDto?> CreateReplyAsync(Guid currentUserId, Guid parentPostId, CreateReplyPostRequest request, CancellationToken cancellationToken = default);
+        Task<PostStatsDto?> LikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default);
+        Task<PostStatsDto?> UnlikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default);
     }
 }

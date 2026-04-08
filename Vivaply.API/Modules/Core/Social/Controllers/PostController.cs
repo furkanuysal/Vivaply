@@ -50,5 +50,19 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
             var result = await _postService.CreateReplyAsync(CurrentUserId, id, request, cancellationToken);
             return result == null ? NotFound() : Ok(result);
         }
+
+        [HttpPost("api/posts/{id:guid}/like")]
+        public async Task<IActionResult> Like(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _postService.LikeAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpDelete("api/posts/{id:guid}/like")]
+        public async Task<IActionResult> Unlike(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _postService.UnlikeAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
     }
 }
