@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import PostCard from "@/features/feed/components/PostCard";
 import { feedService } from "@/features/feed/services/feedService";
+import {
+  applyPostUpdateToList,
+  subscribeToPostUpdates,
+} from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
 
 export default function FeedPage() {
@@ -16,6 +20,14 @@ export default function FeedPage() {
   useEffect(() => {
     void loadFeed();
   }, []);
+
+  useEffect(
+    () =>
+      subscribeToPostUpdates((update) => {
+        setItems((current) => applyPostUpdateToList(current, update));
+      }),
+    [],
+  );
 
   const loadFeed = async (cursor?: string | null) => {
     try {

@@ -5,6 +5,7 @@ import {
   FeedPostType,
   type FeedItemDto,
   type FeedResponseDto,
+  type FeedStatsDto,
 } from "@/features/feed/types";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
@@ -39,6 +40,16 @@ export const feedService = {
       textContent,
     });
 
+    return response.data;
+  },
+
+  async likePost(postId: string): Promise<FeedStatsDto> {
+    const response = await api.post<FeedStatsDto>(`/posts/${postId}/like`);
+    return response.data;
+  },
+
+  async unlikePost(postId: string): Promise<FeedStatsDto> {
+    const response = await api.delete<FeedStatsDto>(`/posts/${postId}/like`);
     return response.data;
   },
 };

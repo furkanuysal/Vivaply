@@ -2,10 +2,10 @@ import {
   BookmarkIcon,
   ChatBubbleLeftRightIcon,
   EyeIcon,
-  HeartIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, type Location, useLocation, useNavigate } from "react-router-dom";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
@@ -20,7 +20,9 @@ import {
   getRelativeTime,
   getReviewSnippet,
   isActivityPost,
+  feedService,
 } from "@/features/feed/services/feedService";
+import { publishPostUpdate } from "@/features/feed/services/postUpdateEvents";
 import {
   FeedActivityType,
   FeedPostType,
@@ -62,9 +64,16 @@ export default function PostCard({
   const isDetailMain = variant === "detailMain";
   const isThreadReply = variant === "threadReply";
   const isFlat = isDetailMain || isThreadReply;
+  const [likeCount, setLikeCount] = useState(item.stats?.likeCount ?? 0);
+  const [hasLiked, setHasLiked] = useState(item.viewer?.hasLiked ?? false);
   const interactionProps = {
     onClick: (event: MouseEvent<HTMLElement>) => event.stopPropagation(),
   };
+
+  useEffect(() => {
+    setLikeCount(item.stats?.likeCount ?? 0);
+    setHasLiked(item.viewer?.hasLiked ?? false);
+  }, [item.id, item.stats?.likeCount, item.viewer?.hasLiked]);
 
   const openPost = () => {
     if (disablePostNavigation) {
@@ -91,6 +100,34 @@ export default function PostCard({
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       openPost();
+    }
+  };
+
+  const handleLikeToggle = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    const previousLiked = hasLiked;
+    const previousCount = likeCount;
+    const nextLiked = !previousLiked;
+
+    setHasLiked(nextLiked);
+    setLikeCount((current) => Math.max(0, current + (nextLiked ? 1 : -1)));
+
+    try {
+      const stats = nextLiked
+        ? await feedService.likePost(item.id)
+        : await feedService.unlikePost(item.id);
+
+      setLikeCount(stats.likeCount);
+      publishPostUpdate({
+        postId: item.id,
+        stats,
+        viewer: { hasLiked: nextLiked },
+      });
+    } catch (error) {
+      console.error("Post like state could not be updated", error);
+      setHasLiked(previousLiked);
+      setLikeCount(previousCount);
     }
   };
 
@@ -206,9 +243,11 @@ export default function PostCard({
                 count={item.stats?.replyCount ?? 0}
               />
               <PostAction
-                icon={<HeartIcon className="h-4 w-4" />}
+                icon={<HeartSolidIcon className="h-4 w-4" />}
                 label={t("actions.like")}
-                count={item.stats?.likeCount ?? 0}
+                count={likeCount}
+                active={hasLiked}
+                onClick={handleLikeToggle}
               />
               <PostAction
                 icon={<EyeIcon className="h-4 w-4" />}
@@ -310,16 +349,22 @@ function PostAction({
   icon,
   label,
   count,
+  active = false,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
   count?: number;
+  active?: boolean;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={(event) => event.stopPropagation()}
-      className="inline-flex items-center gap-1.5 text-xs font-medium text-skin-muted transition hover:text-skin-text"
+      onClick={onClick ?? ((event) => event.stopPropagation())}
+      className={`inline-flex items-center gap-1.5 text-xs font-medium transition hover:text-skin-text ${
+        active ? "text-skin-primary" : "text-skin-muted"
+      }`}
       aria-label={label}
     >
       {icon}

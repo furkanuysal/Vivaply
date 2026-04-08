@@ -59,6 +59,10 @@ export interface FeedStatsDto {
   viewCount: number;
 }
 
+export interface FeedViewerStateDto {
+  hasLiked: boolean;
+}
+
 export interface FeedItemDto {
   id: string;
   actor: FeedActorDto;
@@ -73,6 +77,7 @@ export interface FeedItemDto {
   children?: FeedItemDto[];
   replies?: FeedItemDto[];
   stats: FeedStatsDto;
+  viewer: FeedViewerStateDto;
 }
 
 export interface FeedResponseDto {

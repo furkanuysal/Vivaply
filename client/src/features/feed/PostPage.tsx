@@ -12,6 +12,11 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import { feedService, getActorAvatarUrl } from "@/features/feed/services/feedService";
+import {
+  applyPostUpdate,
+  publishPostUpdate,
+  subscribeToPostUpdates,
+} from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
 
 interface PostPageProps {
@@ -73,6 +78,14 @@ export default function PostPage({ isModal = false }: PostPageProps) {
     void loadPost();
   }, [postId, t]);
 
+  useEffect(
+    () =>
+      subscribeToPostUpdates((update) => {
+        setItem((current) => (current ? applyPostUpdate(current, update) : current));
+      }),
+    [],
+  );
+
   const replies = useMemo(
     () =>
       [...(item?.replies ?? [])]
@@ -104,6 +117,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
     try {
       setSubmittingReply(true);
       const reply = await feedService.replyToPost(postId, value);
+      const nextReplyCount = (item?.stats?.replyCount ?? 0) + 1;
 
       setItem((current) =>
         current
@@ -117,6 +131,11 @@ export default function PostPage({ isModal = false }: PostPageProps) {
             }
           : current,
       );
+
+      publishPostUpdate({
+        postId,
+        stats: { replyCount: nextReplyCount },
+      });
 
       setReplyText("");
       setIsReplyComposerOpen(false);

@@ -8,6 +8,10 @@ import type { UserProfileDto } from "@/features/account/types";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import { feedService } from "@/features/feed/services/feedService";
+import {
+  applyPostUpdateToList,
+  subscribeToPostUpdates,
+} from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
 import { SERVER_URL } from "@/lib/api";
 
@@ -45,6 +49,14 @@ export default function ProfilePage() {
 
     void fetchProfile();
   }, [username, currentUser?.username, navigate, t]);
+
+  useEffect(
+    () =>
+      subscribeToPostUpdates((update) => {
+        setPosts((current) => applyPostUpdateToList(current, update));
+      }),
+    [],
+  );
 
   const loadPosts = async (username: string, cursor?: string | null) => {
     try {
