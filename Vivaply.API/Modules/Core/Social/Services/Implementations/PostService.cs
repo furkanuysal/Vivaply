@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
@@ -12,9 +13,11 @@ using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class PostService(VivaplyDbContext db) : IPostService
+    public class PostService(VivaplyDbContext db, IMemoryCache cache) : IPostService
     {
+        private const int ViewCooldownHours = 6;
         private readonly VivaplyDbContext _db = db;
+        private readonly IMemoryCache _cache = cache;
 
         public async Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default)
         {
@@ -182,7 +185,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 return null;
             }
 
+            var viewTracked = await TrackViewAsync(currentUserId, post, cancellationToken);
             var dto = MapToDto(post);
+            if (viewTracked)
+            {
+                dto.Stats.ViewCount += 1;
+            }
+
             dto.Replies = await BuildReplyThreadAsync(post.Id, cancellationToken);
             await EnrichPostDtosAsync(currentUserId, [dto], cancellationToken);
 
@@ -581,6 +590,37 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .FirstOrDefaultAsync(x => x.PostId == postId, cancellationToken);
 
             return MapStats(stats);
+        }
+
+        private async Task<bool> TrackViewAsync(Guid currentUserId, UserPost post, CancellationToken cancellationToken)
+        {
+            if (post.UserId == currentUserId)
+            {
+                return false;
+            }
+
+            var cacheKey = $"post-view:{post.Id:D}:{currentUserId:D}";
+            if (_cache.TryGetValue(cacheKey, out _))
+            {
+                return false;
+            }
+
+            await EnsurePostStatsAsync(post.Id, cancellationToken);
+            await _db.PostStats
+                .Where(x => x.PostId == post.Id)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.ViewCount, x => x.ViewCount + 1)
+                    .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+
+            _cache.Set(
+                cacheKey,
+                true,
+                new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(ViewCooldownHours)
+                });
+
+            return true;
         }
 
         private static PostStatsDto MapStats(PostStats? stats)
