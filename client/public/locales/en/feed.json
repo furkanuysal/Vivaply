@@ -3,6 +3,13 @@
     "eyebrow": "Following Feed",
     "title": "Feed",
     "subtitle": "Keep up with the people you follow, see what they watched, rated, reviewed, and finished most recently.",
+    "composer": {
+      "placeholder": "What do you want to share?",
+      "count": "{{count}} / 4000",
+      "submit": "Post",
+      "submitting": "Posting...",
+      "error": "Your post could not be published."
+    },
     "empty_title": "Your feed is quiet for now",
     "empty_subtitle": "Follow people and their latest activity will start showing up here."
   },

@@ -3,6 +3,13 @@
     "eyebrow": "Takip Akışı",
     "title": "Akış",
     "subtitle": "Takip ettiğin kişilerin neler izlediğini, puanladığını, incelediğini ve bitirdiğini burada görebilirsin.",
+    "composer": {
+      "placeholder": "Ne paylaşmak istiyorsun?",
+      "count": "{{count}} / 4000",
+      "submit": "Gönder",
+      "submitting": "Gönderiliyor...",
+      "error": "Gönderin paylaşılamadı."
+    },
     "empty_title": "Akışında henüz bir şey yok",
     "empty_subtitle": "Kişileri takip etmeye başladığında en son aktiviteleri burada görünecek."
   },

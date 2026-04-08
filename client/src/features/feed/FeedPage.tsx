@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, FaceSmileIcon, MapPinIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
-import { feedService } from "@/features/feed/services/feedService";
+import { feedService, getActorAvatarUrl } from "@/features/feed/services/feedService";
 import {
   applyPostUpdateToList,
   subscribeToPostUpdates,
@@ -12,10 +13,14 @@ import type { FeedItemDto } from "@/features/feed/types";
 
 export default function FeedPage() {
   const { t } = useTranslation("feed");
+  const { user } = useAuth();
   const [items, setItems] = useState<FeedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [postText, setPostText] = useState("");
+  const [submittingPost, setSubmittingPost] = useState(false);
+  const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
 
   useEffect(() => {
     void loadFeed();
@@ -50,6 +55,25 @@ export default function FeedPage() {
     }
   };
 
+  const handleCreatePost = async () => {
+    const value = postText.trim();
+    if (!value) {
+      return;
+    }
+
+    try {
+      setSubmittingPost(true);
+      const createdPost = await feedService.createPost(value);
+      setItems((current) => [createdPost, ...current]);
+      setPostText("");
+    } catch (error) {
+      console.error("Post could not be created", error);
+      toast.error(t("page.composer.error"));
+    } finally {
+      setSubmittingPost(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center text-skin-text">
@@ -71,6 +95,77 @@ export default function FeedPage() {
           {t("page.subtitle")}
         </p>
       </div>
+
+      <section className="rounded-3xl border border-skin-border/50 bg-skin-surface/90 p-5 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-skin-base">
+            {currentUserAvatarUrl ? (
+              <img
+                src={currentUserAvatarUrl}
+                alt={user?.username ?? t("page.composer.submit")}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-skin-primary/20 to-skin-secondary/20 text-lg font-bold text-skin-primary">
+                {user?.username?.charAt(0).toUpperCase() ?? "U"}
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <textarea
+              value={postText}
+              onChange={(event) => setPostText(event.target.value)}
+              rows={3}
+              maxLength={4000}
+              placeholder={t("page.composer.placeholder")}
+              className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
+            />
+
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-skin-muted">
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
+                  aria-label={t("actions.media")}
+                >
+                  <PhotoIcon className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
+                  aria-label={t("actions.emoji")}
+                >
+                  <FaceSmileIcon className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
+                  aria-label={t("actions.location")}
+                >
+                  <MapPinIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-skin-muted">
+                  {t("page.composer.count", { count: postText.trim().length })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleCreatePost()}
+                  disabled={submittingPost || !postText.trim()}
+                  className="inline-flex items-center justify-center rounded-full bg-skin-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submittingPost
+                    ? t("page.composer.submitting")
+                    : t("page.composer.submit")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {items.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-skin-border/60 bg-skin-surface/70 px-8 py-14 text-center">

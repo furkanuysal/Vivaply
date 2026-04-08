@@ -19,6 +19,14 @@ export const feedService = {
     return response.data;
   },
 
+  async createPost(textContent: string): Promise<FeedItemDto> {
+    const response = await api.post<FeedItemDto>("/posts", {
+      textContent,
+    });
+
+    return response.data;
+  },
+
   async getProfileFeed(
     username: string,
     cursor?: string | null,
