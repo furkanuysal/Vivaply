@@ -19,6 +19,20 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
             return Ok(result);
         }
 
+        [HttpPost("api/posts")]
+        public async Task<IActionResult> Create(
+            [FromBody] CreatePostRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.TextContent))
+            {
+                return BadRequest("Post text is required.");
+            }
+
+            var result = await _postService.CreateAsync(CurrentUserId, request, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpGet("api/users/{username}/posts")]
         public async Task<IActionResult> GetProfilePosts(
             string username,

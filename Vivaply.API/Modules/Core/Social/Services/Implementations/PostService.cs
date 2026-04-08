@@ -66,6 +66,42 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             await _db.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task<PostDto> CreateAsync(Guid currentUserId, CreatePostRequest request, CancellationToken cancellationToken = default)
+        {
+            var now = DateTime.UtcNow;
+
+            var post = new UserPost
+            {
+                UserId = currentUserId,
+                Type = PostType.Standard,
+                TextContent = request.TextContent.Trim(),
+                PublishedAt = now
+            };
+
+            _db.UserPosts.Add(post);
+            _db.PostStats.Add(new PostStats
+            {
+                Post = post,
+                UpdatedAt = now
+            });
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            var createdPost = await _db.UserPosts
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Activity)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.Attachments)
+                .Include(x => x.Stats)
+                .FirstAsync(x => x.Id == post.Id, cancellationToken);
+
+            var dto = MapToDto(createdPost);
+            await EnrichPostDtosAsync(currentUserId, [dto], cancellationToken);
+
+            return dto;
+        }
+
         public async Task<PostFeedDto> GetFeedAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default)
         {
             query ??= new PostQuery();
