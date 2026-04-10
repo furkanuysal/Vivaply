@@ -14,6 +14,8 @@ export interface TmdbContentDto {
   user_status: WatchStatus;
   user_rating?: number;
   user_review?: string;
+  viva_rating?: number;
+  viva_rating_count?: number;
   tagline?: string;
   last_watched_season?: number;
   last_watched_episode?: number;
@@ -116,6 +118,8 @@ export interface GameContentDto {
   userPlaytime?: number;
   userRating?: number;
   userReview?: string;
+  vivaRating?: number;
+  vivaRatingCount?: number;
 }
 
 // Track Game

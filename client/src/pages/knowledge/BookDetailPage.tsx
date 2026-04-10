@@ -257,10 +257,10 @@ export default function BookDetailPage() {
         rating,
       });
       toast.success(t("common:messages.rate_success", { rating }));
+      setData((prev: any) => ({ ...prev, userRating: rating }));
     } catch (error: any) {
       toast.error(t("common:messages.rate_error"));
     }
-    setData((prev: any) => ({ ...prev, userRating: rating }));
   };
 
   // Progress
@@ -445,11 +445,73 @@ export default function BookDetailPage() {
                 t("knowledge:books.detail.unknown_author")}
             </p>
 
-            <div className="flex items-center gap-4 mb-6 flex-wrap">
+            {false && (
+            <div className="mb-3 flex flex-wrap gap-2.5">
+              <RatingStatCard
+                label="Google Books"
+                value={Number(data.averageRating || 0).toFixed(1)}
+                tone="accent"
+              />
+              <RatingStatCard
+                label="Viva"
+                value={
+                  data.vivaRatingCount > 0
+                    ? Number(data.vivaRating || 0).toFixed(1)
+                    : undefined
+                }
+                meta={
+                  data.vivaRatingCount > 0
+                    ? `${data.vivaRatingCount} ${t("knowledge:books.detail.rating_votes")}`
+                    : t("knowledge:books.detail.no_viva_rating")
+                }
+                tone="secondary"
+              />
+              {false && (
+                <span
+                  className="min-w-[112px] rounded-lg border border-skin-secondary/20 bg-skin-secondary/8 px-3 py-2 text-[0px] leading-none text-skin-secondary"
+                  title={t("knowledge:books.detail.viva_rating", {
+                    count: data.vivaRatingCount,
+                  })}
+                >
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-skin-muted">
+                    Viva
+                  </span>
+                  <span className="mt-1.5 block text-base font-semibold leading-none text-skin-secondary">
+                    {Number(data.vivaRating || 0).toFixed(1)}
+                  </span>
+                  <span className="mt-1 block text-[11px] leading-4 text-skin-muted">
+                    {data.vivaRatingCount} {t("knowledge:books.detail.rating_votes")}
+                  </span>
+                  Viva {Number(data.vivaRating || 0).toFixed(1)} ·{" "}
+                  {data.vivaRatingCount}
+                </span>
+              )}
               <div className="relative group">
-                <span className="bg-skin-primary/20 text-skin-primary px-3 py-1 rounded-lg font-bold border border-skin-primary/40 cursor-pointer flex items-center gap-2">
+                <RatingStatCard
+                  label={t("knowledge:books.library.personal_rating")}
+                  value={data.userRating ? Number(data.userRating).toFixed(1) : undefined}
+                  meta={
+                    data.userRating
+                      ? undefined
+                      : t("knowledge:books.detail.rate_hint")
+                  }
+                  tone="primary"
+                  interactive
+                />
+                {false && (
+                <span className="min-w-[112px] rounded-lg border border-skin-primary/20 bg-skin-primary/8 px-3 py-2 text-[0px] leading-none text-skin-primary cursor-pointer block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-skin-muted">
+                    {t("knowledge:books.library.personal_rating")}
+                  </span>
+                  <span className="mt-1.5 block text-base font-semibold leading-none text-skin-primary">
+                    {data.userRating ? Number(data.userRating).toFixed(1) : "-"}
+                  </span>
+                  <span className="mt-1 block text-[11px] leading-4 text-skin-muted">
+                    {t("knowledge:books.detail.rate_hint")}
+                  </span>
                   ★ {data.userRating || 0}
                 </span>
+                )}
                 <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
                   <StarRating
                     currentRating={data.userRating}
@@ -457,12 +519,66 @@ export default function BookDetailPage() {
                   />
                 </div>
               </div>
+            </div>
+            )}
+
+            <div className="mb-6 flex items-center gap-4 flex-wrap">
               <span className="text-skin-muted">
                 {data.publishedDate?.split("-")[0]}
               </span>
-              <span className="text-skin-muted font-mono text-sm border border-skin-border px-2 py-0.5 rounded">
+              <span className="inline-flex h-9 min-w-[88px] items-center justify-center rounded border border-skin-border px-2 text-skin-muted font-mono text-sm">
                 {data.pageCount} {t("knowledge:books.detail.page_suffix")}
               </span>
+            </div>
+
+            <div className="mb-6 inline-flex w-fit flex-wrap items-center gap-0 rounded-xl border border-skin-border/60 bg-skin-surface/35 px-4 py-3">
+              <RatingInlineStat
+                label="Google Books"
+                value={Number(data.averageRating || 0).toFixed(1)}
+                tone="accent"
+              />
+              <RatingInlineSeparator />
+              <div className="relative group">
+                <RatingInlineStat
+                  label="Viva"
+                  value={
+                    data.vivaRatingCount > 0
+                      ? Number(data.vivaRating || 0).toFixed(1)
+                      : undefined
+                  }
+                  fallback={t("knowledge:books.detail.no_viva_rating")}
+                  tone="secondary"
+                  interactive
+                />
+                <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-skin-muted">
+                    Viva
+                  </p>
+                  <p className="mt-1 text-sm text-skin-text">
+                    {data.vivaRatingCount > 0
+                      ? t("knowledge:books.detail.total_votes", {
+                          count: data.vivaRatingCount,
+                        })
+                      : t("knowledge:books.detail.no_viva_rating")}
+                  </p>
+                </div>
+              </div>
+              <RatingInlineSeparator />
+              <div className="relative group">
+                <RatingInlineStat
+                  label={t("knowledge:books.library.personal_rating")}
+                  value={data.userRating ? Number(data.userRating).toFixed(1) : undefined}
+                  fallback={t("knowledge:books.detail.rate_hint")}
+                  tone="primary"
+                  interactive
+                />
+                <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
+                  <StarRating
+                    currentRating={data.userRating}
+                    onRate={handleRate}
+                  />
+                </div>
+              </div>
             </div>
 
             <h3 className="text-xl font-bold mb-2">
@@ -570,5 +686,73 @@ export default function BookDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RatingInlineStat({
+  label,
+  value,
+  fallback,
+  tone,
+  interactive = false,
+}: {
+  label: string;
+  value?: string;
+  fallback?: string;
+  tone: "accent" | "secondary" | "primary";
+  interactive?: boolean;
+}) {
+  const toneClass =
+    tone === "accent"
+      ? "text-skin-accent"
+      : tone === "secondary"
+        ? "text-skin-secondary"
+        : "text-skin-primary";
+
+  return (
+    <div
+      className={`flex min-h-11 items-center gap-2 pr-4 transition ${
+        interactive ? "cursor-pointer" : ""
+      }`}
+    >
+      {value ? (
+        <>
+          <span className={`text-2xl font-semibold leading-none ${toneClass}`}>
+            {value}
+          </span>
+          <span className="text-sm text-skin-muted">{label}</span>
+        </>
+      ) : (
+        <span className="text-sm text-skin-muted">{fallback ?? label}</span>
+      )}
+    </div>
+  );
+}
+
+function RatingInlineSeparator() {
+  return <span className="mx-4 h-6 w-px bg-skin-border/70" aria-hidden="true" />;
+}
+
+function RatingStatCard({
+  label,
+  value,
+  meta,
+  tone,
+  interactive = false,
+}: {
+  label: string;
+  value?: string;
+  meta?: string;
+  tone: "accent" | "secondary" | "primary";
+  interactive?: boolean;
+}) {
+  return (
+    <RatingInlineStat
+      label={label}
+      value={value}
+      fallback={meta}
+      tone={tone}
+      interactive={interactive}
+    />
   );
 }

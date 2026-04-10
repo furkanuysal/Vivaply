@@ -53,9 +53,14 @@ export default function ProfilePage() {
   useEffect(
     () =>
       subscribeToPostUpdates((update) => {
-        setPosts((current) => applyPostUpdateToList(current, update));
+        const nextUpdate =
+          update.createdPost && update.createdPost.actor.username !== username
+            ? { ...update, createdPost: undefined }
+            : update;
+
+        setPosts((current) => applyPostUpdateToList(current, nextUpdate));
       }),
-    [],
+    [username],
   );
 
   const loadPosts = async (username: string, cursor?: string | null) => {

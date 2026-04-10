@@ -23,10 +23,14 @@
     "reply_box_subtitle": "Your reply will appear here as its own post.",
     "reply_compact_placeholder": "Open the composer to share a reply.",
     "reply_placeholder": "Share your thoughts...",
+    "quote_placeholder": "Add your perspective...",
+    "quote_preview_label": "Quoted post",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Cancel",
     "reply_submit": "Reply",
     "reply_submitting": "Sending...",
+    "quote_submit": "Quote",
+    "quote_submitting": "Quoting...",
     "reply_total": "{{count}} replies",
     "view_more_replies": "See {{count}} more replies",
     "no_replies_title": "No replies yet",
@@ -37,8 +41,10 @@
     "close": "Close post",
     "errors": {
       "load": "The post could not be loaded.",
-      "reply": "Your reply could not be posted."
-    }
+      "reply": "Your reply could not be posted.",
+      "quote": "Your quote post could not be published."
+    },
+    "delete_confirm": "Do you want to delete this post?"
   },
   "profile": {
     "eyebrow": "Profile Feed",
@@ -70,8 +76,13 @@
     "media": "Add media",
     "emoji": "Add emoji",
     "location": "Add location",
+    "delete": "Delete",
+    "quote": "Quote",
+    "more": "More actions",
     "save": "Save",
-    "share": "Share"
+    "share": "Share",
+    "share_copied": "Post link copied.",
+    "share_failed": "Post link could not be copied."
   },
   "labels": {
     "watching": "Watching",

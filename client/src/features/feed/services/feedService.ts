@@ -3,7 +3,10 @@ import type { TFunction } from "i18next";
 import {
   FeedActivityType,
   FeedPostType,
+  type DeletePostResponseDto,
+  type FeedActorDto,
   type FeedItemDto,
+  type FeedQuotedPostDto,
   type FeedResponseDto,
   type FeedStatsDto,
 } from "@/features/feed/types";
@@ -21,6 +24,14 @@ export const feedService = {
 
   async createPost(textContent: string): Promise<FeedItemDto> {
     const response = await api.post<FeedItemDto>("/posts", {
+      textContent,
+    });
+
+    return response.data;
+  },
+
+  async quotePost(postId: string, textContent: string): Promise<FeedItemDto> {
+    const response = await api.post<FeedItemDto>(`/posts/${postId}/quote`, {
       textContent,
     });
 
@@ -56,6 +67,21 @@ export const feedService = {
     return response.data;
   },
 
+  async deletePost(postId: string): Promise<DeletePostResponseDto> {
+    const response = await api.delete<DeletePostResponseDto>(`/posts/${postId}`);
+    return response.data;
+  },
+
+  async bookmarkPost(postId: string): Promise<FeedStatsDto> {
+    const response = await api.post<FeedStatsDto>(`/posts/${postId}/bookmark`);
+    return response.data;
+  },
+
+  async removeBookmark(postId: string): Promise<FeedStatsDto> {
+    const response = await api.delete<FeedStatsDto>(`/posts/${postId}/bookmark`);
+    return response.data;
+  },
+
   async unlikePost(postId: string): Promise<FeedStatsDto> {
     const response = await api.delete<FeedStatsDto>(`/posts/${postId}/like`);
     return response.data;
@@ -69,7 +95,18 @@ export function getActorAvatarUrl(path?: string): string | null {
   return `${SERVER_URL}${path}`;
 }
 
-export function getFeedImageUrl(item: FeedItemDto): string | null {
+type FeedRenderablePost = {
+  actor: FeedActorDto;
+  type: FeedPostType;
+  textContent?: string | null;
+  activity?: FeedItemDto["activity"] | FeedQuotedPostDto["activity"];
+};
+
+type FeedContentPreviewSource = FeedRenderablePost & {
+  attachments?: FeedItemDto["attachments"] | FeedQuotedPostDto["attachments"];
+};
+
+export function getFeedImageUrl(item: FeedContentPreviewSource): string | null {
   const payload = item.activity?.payload;
   if (!payload) {
     return null;
@@ -88,7 +125,7 @@ export function getFeedImageUrl(item: FeedItemDto): string | null {
   return null;
 }
 
-export function getFeedTitle(item: FeedItemDto): string {
+export function getFeedTitle(item: FeedRenderablePost): string {
   const payload = item.activity?.payload;
 
   if (!payload) {
@@ -99,7 +136,7 @@ export function getFeedTitle(item: FeedItemDto): string {
 }
 
 export function getFeedDescription(
-  item: FeedItemDto,
+  item: FeedRenderablePost,
   t: TFunction<"feed">,
 ): string {
   const username = item.actor.username || "Someone";
@@ -107,7 +144,7 @@ export function getFeedDescription(
   const activity = item.activity;
 
   if (!activity) {
-    return item.textContent?.trim() || t("activity.fallback", { username });
+    return item.textContent?.trim() || "";
   }
 
   const payload = activity.payload;
@@ -168,7 +205,7 @@ export function getReviewSnippet(item: FeedItemDto): string | null {
   return payload ? getString(payload.reviewSnippet) ?? null : null;
 }
 
-export function getFeedTargetPath(item: FeedItemDto): string | null {
+export function getFeedTargetPath(item: FeedRenderablePost): string | null {
   const payload = item.activity?.payload;
   if (!payload) {
     return null;
@@ -243,7 +280,7 @@ export function getFeedTimestamp(item: FeedItemDto): string {
   return item.updatedAt || item.publishedAt;
 }
 
-export function getFeedActivityType(item: FeedItemDto): FeedActivityType | null {
+export function getFeedActivityType(item: FeedRenderablePost): FeedActivityType | null {
   return item.activity?.type ?? null;
 }
 
@@ -292,6 +329,6 @@ function resolveImageUrl(value: string): string {
   return value;
 }
 
-export function isActivityPost(item: FeedItemDto): boolean {
+export function isActivityPost(item: FeedRenderablePost): boolean {
   return item.type === FeedPostType.Activity && !!item.activity;
 }

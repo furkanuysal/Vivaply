@@ -53,14 +53,36 @@ export interface FeedAttachmentDto {
   durationSeconds?: number | null;
 }
 
+export interface FeedQuotedPostDto {
+  id: string;
+  actor: FeedActorDto;
+  type: FeedPostType;
+  publishedAt: string;
+  updatedAt?: string | null;
+  textContent?: string | null;
+  activity?: FeedActivityDto | null;
+  attachments: FeedAttachmentDto[];
+}
+
 export interface FeedStatsDto {
   replyCount: number;
   likeCount: number;
+  quoteCount: number;
   viewCount: number;
+  bookmarkCount: number;
 }
 
 export interface FeedViewerStateDto {
   hasLiked: boolean;
+  hasBookmarked: boolean;
+}
+
+export interface DeletePostResponseDto {
+  id: string;
+  parentPostId?: string | null;
+  parentReplyCount?: number | null;
+  quotedPostId?: string | null;
+  quotedPostQuoteCount?: number | null;
 }
 
 export interface FeedItemDto {
@@ -72,6 +94,7 @@ export interface FeedItemDto {
   textContent?: string | null;
   parentPostId?: string | null;
   quotedPostId?: string | null;
+  quotedPost?: FeedQuotedPostDto | null;
   activity?: FeedActivityDto | null;
   attachments: FeedAttachmentDto[];
   children?: FeedItemDto[];

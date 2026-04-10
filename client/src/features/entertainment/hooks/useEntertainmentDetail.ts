@@ -38,6 +38,8 @@ export function useEntertainmentDetail(
             poster_path: gameResult.coverUrl,
             display_date: gameResult.releaseDate,
             vote_average: gameResult.voteAverage,
+            viva_rating: gameResult.vivaRating,
+            viva_rating_count: gameResult.vivaRatingCount,
           };
         }
         setData(result);

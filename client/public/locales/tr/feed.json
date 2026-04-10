@@ -23,10 +23,14 @@
     "reply_box_subtitle": "Yanıtın burada kendi gönderisi olarak görünecek.",
     "reply_compact_placeholder": "Yanıt yazmak için düzenleyiciyi aç.",
     "reply_placeholder": "Düşüncelerini paylaş...",
+    "quote_placeholder": "Kendi yorumunu ekle...",
+    "quote_preview_label": "Alıntılanan gönderi",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Vazgeç",
     "reply_submit": "Yanıtla",
     "reply_submitting": "Gönderiliyor...",
+    "quote_submit": "Alıntıla",
+    "quote_submitting": "Alıntılanıyor...",
     "reply_total": "{{count}} yanıt",
     "view_more_replies": "{{count}} yanıtı gör",
     "no_replies_title": "Henüz yanıt yok",
@@ -37,8 +41,10 @@
     "close": "Gönderiyi kapat",
     "errors": {
       "load": "Gönderi yüklenemedi.",
-      "reply": "Yanıtın gönderilemedi."
-    }
+      "reply": "Yanıtın gönderilemedi.",
+      "quote": "Alıntı gönderin paylaşılamadı."
+    },
+    "delete_confirm": "Bu gönderiyi silmek istiyor musun?"
   },
   "profile": {
     "eyebrow": "Profil Akışı",
@@ -70,8 +76,13 @@
     "media": "Medya ekle",
     "emoji": "Emoji ekle",
     "location": "Konum ekle",
+    "delete": "Sil",
+    "quote": "Alıntıla",
+    "more": "Daha fazla işlem",
     "save": "Kaydet",
-    "share": "Paylaş"
+    "share": "Paylaş",
+    "share_copied": "Gönderi bağlantısı kopyalandı.",
+    "share_failed": "Gönderi bağlantısı kopyalanamadı."
   },
   "labels": {
     "watching": "İzliyor",

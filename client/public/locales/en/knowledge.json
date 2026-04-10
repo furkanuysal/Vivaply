@@ -13,6 +13,12 @@
     "detail": {
       "unknown_author": "Unknown Author",
       "page_suffix": "Page",
+      "external_rating": "External Rating",
+      "viva_rating": "Viva Rating ({{count}} ratings)",
+      "no_viva_rating": "No Viva ratings yet",
+      "rating_votes": "ratings",
+      "total_votes": "{{count}} total ratings",
+      "rate_hint": "Rate this book",
       "summary_title": "Summary",
       "no_summary": "No summary available.",
       "personal_notes": "Personal Notes",

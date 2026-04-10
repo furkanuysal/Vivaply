@@ -7,9 +7,11 @@ import type {
 const POST_UPDATED_EVENT = "vivaply:post-updated";
 
 export interface PostUpdatePayload {
-  postId: string;
+  postId?: string;
   stats?: Partial<FeedStatsDto>;
   viewer?: Partial<FeedViewerStateDto>;
+  remove?: boolean;
+  createdPost?: FeedItemDto;
 }
 
 export function publishPostUpdate(payload: PostUpdatePayload) {
@@ -35,11 +37,26 @@ export function applyPostUpdateToList(
   update: PostUpdatePayload,
 ): FeedItemDto[] {
   let changed = false;
+  let nextItems = items;
 
-  const nextItems = items.map((item) => {
+  if (update.createdPost && !items.some((item) => item.id === update.createdPost?.id)) {
+    nextItems = [update.createdPost, ...items];
+    changed = true;
+  }
+
+  if (!update.postId) {
+    return changed ? nextItems : items;
+  }
+
+  nextItems = nextItems.flatMap((item) => {
+    if (update.remove && item.id == update.postId) {
+      changed = true;
+      return [];
+    }
+
     const nextItem = applyPostUpdate(item, update);
     changed ||= nextItem !== item;
-    return nextItem;
+    return [nextItem];
   });
 
   return changed ? nextItems : items;
@@ -49,22 +66,20 @@ export function applyPostUpdate(
   item: FeedItemDto,
   update: PostUpdatePayload,
 ): FeedItemDto {
-  let changed = false;
+  if (!update.postId) {
+    return item;
+  }
 
-  const children = item.children?.map((child) => {
-    const nextChild = applyPostUpdate(child, update);
-    changed ||= nextChild !== child;
-    return nextChild;
-  });
-
-  const replies = item.replies?.map((reply) => {
-    const nextReply = applyPostUpdate(reply, update);
-    changed ||= nextReply !== reply;
-    return nextReply;
-  });
+  const children = item.children
+    ? applyPostUpdateToList(item.children, update)
+    : item.children;
+  const replies = item.replies
+    ? applyPostUpdateToList(item.replies, update)
+    : item.replies;
+  const nestedChanged = children !== item.children || replies !== item.replies;
 
   if (item.id !== update.postId) {
-    return changed ? { ...item, children, replies } : item;
+    return nestedChanged ? { ...item, children, replies } : item;
   }
 
   return {

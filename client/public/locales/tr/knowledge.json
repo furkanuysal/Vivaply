@@ -13,6 +13,12 @@
     "detail": {
       "unknown_author": "Bilinmeyen Yazar",
       "page_suffix": "Sayfa",
+      "external_rating": "Dış Kaynak Puanı",
+      "viva_rating": "Viva Puanı ({{count}} oy)",
+      "no_viva_rating": "Henüz Viva puanı yok",
+      "rating_votes": "oy",
+      "total_votes": "Toplam {{count}} oy",
+      "rate_hint": "Bu kitabı puanla",
       "summary_title": "Özet",
       "no_summary": "Özet bilgisi bulunmuyor.",
       "personal_notes": "Kişisel Notlarım",

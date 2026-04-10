@@ -1,14 +1,26 @@
 import {
+  ArrowPathRoundedSquareIcon,
   BookmarkIcon,
   ChatBubbleLeftRightIcon,
+  EllipsisHorizontalIcon,
   EyeIcon,
   ShareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Link, type Location, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   getActorAvatarUrl,
   getFeedActivityType,
@@ -27,25 +39,32 @@ import {
   FeedActivityType,
   FeedPostType,
   type FeedItemDto,
+  type FeedQuotedPostDto,
 } from "@/features/feed/types";
 
 interface PostCardProps {
   item: FeedItemDto;
   disablePostNavigation?: boolean;
   variant?: "default" | "detailMain" | "threadReply";
+  onDeleted?: () => void;
+  onRequestQuote?: () => void;
 }
 
 interface ModalNavigationState {
   backgroundLocation?: Location;
   modalDepth?: number;
+  composerMode?: "reply" | "quote";
 }
 
 export default function PostCard({
   item,
   disablePostNavigation = false,
   variant = "default",
+  onDeleted,
+  onRequestQuote,
 }: PostCardProps) {
   const { t, i18n } = useTranslation("feed");
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const avatarUrl = getActorAvatarUrl(item.actor.avatarUrl);
@@ -64,8 +83,16 @@ export default function PostCard({
   const isDetailMain = variant === "detailMain";
   const isThreadReply = variant === "threadReply";
   const isFlat = isDetailMain || isThreadReply;
+  const quotedPost = item.quotedPost;
   const [likeCount, setLikeCount] = useState(item.stats?.likeCount ?? 0);
   const [hasLiked, setHasLiked] = useState(item.viewer?.hasLiked ?? false);
+  const [bookmarkCount, setBookmarkCount] = useState(item.stats?.bookmarkCount ?? 0);
+  const [hasBookmarked, setHasBookmarked] = useState(item.viewer?.hasBookmarked ?? false);
+  const [deleting, setDeleting] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const canDelete = user?.id === item.actor.id;
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const interactionProps = {
     onClick: (event: MouseEvent<HTMLElement>) => event.stopPropagation(),
   };
@@ -73,7 +100,30 @@ export default function PostCard({
   useEffect(() => {
     setLikeCount(item.stats?.likeCount ?? 0);
     setHasLiked(item.viewer?.hasLiked ?? false);
-  }, [item.id, item.stats?.likeCount, item.viewer?.hasLiked]);
+    setBookmarkCount(item.stats?.bookmarkCount ?? 0);
+    setHasBookmarked(item.viewer?.hasBookmarked ?? false);
+  }, [
+    item.id,
+    item.stats?.likeCount,
+    item.stats?.bookmarkCount,
+    item.viewer?.hasLiked,
+    item.viewer?.hasBookmarked,
+  ]);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent | globalThis.MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
 
   const openPost = () => {
     if (disablePostNavigation) {
@@ -131,12 +181,148 @@ export default function PostCard({
     }
   };
 
+  const handleDelete = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (!canDelete || deleting) {
+      return;
+    }
+
+    const confirmed = window.confirm(t("post.delete_confirm"));
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const result = await feedService.deletePost(item.id);
+
+      publishPostUpdate({
+        postId: result.id,
+        remove: true,
+      });
+
+      if (result.parentPostId && typeof result.parentReplyCount === "number") {
+        publishPostUpdate({
+          postId: result.parentPostId,
+          stats: { replyCount: result.parentReplyCount },
+        });
+      }
+
+      if (result.quotedPostId && typeof result.quotedPostQuoteCount === "number") {
+        publishPostUpdate({
+          postId: result.quotedPostId,
+          stats: { quoteCount: result.quotedPostQuoteCount },
+        });
+      }
+
+      onDeleted?.();
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error("Post could not be deleted", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleBookmarkToggle = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (bookmarking) {
+      return;
+    }
+
+    const previousBookmarked = hasBookmarked;
+    const previousCount = bookmarkCount;
+    const nextBookmarked = !previousBookmarked;
+
+    setHasBookmarked(nextBookmarked);
+    setBookmarkCount((current) => Math.max(0, current + (nextBookmarked ? 1 : -1)));
+    setBookmarking(true);
+
+    try {
+      const stats = nextBookmarked
+        ? await feedService.bookmarkPost(item.id)
+        : await feedService.removeBookmark(item.id);
+
+      setBookmarkCount(stats.bookmarkCount);
+      publishPostUpdate({
+        postId: item.id,
+        stats,
+        viewer: { hasBookmarked: nextBookmarked },
+      });
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error("Post bookmark state could not be updated", error);
+      setHasBookmarked(previousBookmarked);
+      setBookmarkCount(previousCount);
+    } finally {
+      setBookmarking(false);
+    }
+  };
+
+  const handleQuote = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    if (onRequestQuote) {
+      onRequestQuote();
+      return;
+    }
+
+    const state = location.state as ModalNavigationState | null;
+    const backgroundLocation = state?.backgroundLocation ?? location;
+    const modalDepth = (state?.modalDepth ?? 0) + 1;
+
+    navigate(postPath, {
+      state: {
+        backgroundLocation,
+        modalDepth,
+        composerMode: "quote",
+      },
+    });
+  };
+
+  const handleMenuToggle = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setIsMenuOpen((current) => !current);
+  };
+
+  const handleShare = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    const shareUrl = `${window.location.origin}/feed/${item.id}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.setAttribute("readonly", "");
+        textArea.style.position = "absolute";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      toast.success(t("actions.share_copied"));
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error("Post link could not be copied", error);
+      toast.error(t("actions.share_failed"));
+    }
+  };
+
   return (
     <article
       className={`${
         isFlat
-          ? "p-0"
-          : "rounded-3xl border border-skin-border/50 bg-skin-surface/90 p-5 shadow-sm backdrop-blur-sm transition hover:border-skin-primary/30 hover:shadow-lg hover:shadow-skin-primary/10"
+          ? "relative p-0"
+          : `relative ${
+              isMenuOpen ? "z-20" : ""
+            } rounded-3xl border border-skin-border/50 bg-skin-surface/90 p-5 shadow-sm backdrop-blur-sm transition hover:border-skin-primary/30 hover:shadow-lg hover:shadow-skin-primary/10`
       } ${disablePostNavigation ? "" : "cursor-pointer"}`}
       onClick={openPost}
       onKeyDown={handleCardKeyDown}
@@ -146,7 +332,6 @@ export default function PostCard({
       <div className="flex items-start gap-4">
         <Link
           to={profilePath}
-          state={{ backgroundLocation: location }}
           className={`block shrink-0 overflow-hidden bg-skin-base transition hover:ring-2 hover:ring-skin-primary/30 focus:outline-none focus:ring-2 focus:ring-skin-primary/40 ${
             isFlat ? "h-11 w-11 rounded-full" : "h-12 w-12 rounded-2xl"
           }`}
@@ -169,7 +354,6 @@ export default function PostCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Link
               to={profilePath}
-              state={{ backgroundLocation: location }}
               className="text-[15px] font-semibold text-skin-text transition hover:text-skin-primary focus:outline-none focus:ring-2 focus:ring-skin-primary/40"
               {...interactionProps}
             >
@@ -189,13 +373,15 @@ export default function PostCard({
             </span>
           </div>
 
-          <p
-            className={`${shouldRenderContentPreview ? "mb-3" : ""} mt-2 text-skin-text/90 ${
-              isFlat ? "text-base leading-8" : "text-sm leading-6"
-            }`}
-          >
-            {renderDescription(description, title, targetPath)}
-          </p>
+          {description ? (
+            <p
+              className={`${shouldRenderContentPreview || quotedPost ? "mb-3" : ""} mt-2 text-skin-text/90 ${
+                isFlat ? "text-base leading-8" : "text-sm leading-6"
+              }`}
+            >
+              {renderDescription(description, title, targetPath)}
+            </p>
+          ) : null}
 
           {reviewSnippet ? (
             <blockquote
@@ -235,6 +421,10 @@ export default function PostCard({
             </Link>
           ) : null}
 
+          {quotedPost ? (
+            <QuotedPostPreview item={quotedPost} isFlat={isFlat} />
+          ) : null}
+
           <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center gap-4 text-skin-muted">
               <PostAction
@@ -250,21 +440,59 @@ export default function PostCard({
                 onClick={handleLikeToggle}
               />
               <PostAction
-                icon={<EyeIcon className="h-4 w-4" />}
-                label={t("actions.view")}
-                count={item.stats?.viewCount ?? 0}
+                icon={<ArrowPathRoundedSquareIcon className="h-4 w-4" />}
+                label={t("actions.quote")}
+                count={item.stats?.quoteCount ?? 0}
+                onClick={handleQuote}
               />
             </div>
 
-            <div className="flex items-center gap-3 text-skin-muted">
-              <PostAction
-                icon={<BookmarkIcon className="h-4 w-4" />}
-                label={t("actions.save")}
-              />
-              <PostAction
-                icon={<ShareIcon className="h-4 w-4" />}
-                label={t("actions.share")}
-              />
+            <div className="relative flex items-center gap-3 text-skin-muted" ref={menuRef}>
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-skin-muted"
+                aria-label={t("actions.view")}
+              >
+                <EyeIcon className="h-4 w-4" />
+                <span>{item.stats?.viewCount ?? 0}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleMenuToggle}
+                className="inline-flex items-center justify-center rounded-full p-1 text-skin-muted transition hover:text-skin-text"
+                aria-label={t("actions.more")}
+              >
+                <EllipsisHorizontalIcon className="h-5 w-5" />
+              </button>
+
+              {isMenuOpen ? (
+                <div
+                  className="absolute right-0 top-full z-20 mt-2 min-w-[12rem] rounded-2xl border border-skin-border/60 bg-skin-surface p-2 shadow-lg shadow-black/10"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <DropdownAction
+                    icon={<BookmarkIcon className="h-4 w-4" />}
+                    label={t("actions.save")}
+                    meta={bookmarkCount > 0 ? String(bookmarkCount) : undefined}
+                    active={hasBookmarked}
+                    disabled={bookmarking}
+                    onClick={handleBookmarkToggle}
+                  />
+                  <DropdownAction
+                    icon={<ShareIcon className="h-4 w-4" />}
+                    label={t("actions.share")}
+                    onClick={handleShare}
+                  />
+                  {canDelete ? (
+                    <DropdownAction
+                      icon={<TrashIcon className="h-4 w-4" />}
+                      label={t("actions.delete")}
+                      disabled={deleting}
+                      onClick={handleDelete}
+                      tone="danger"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -300,9 +528,11 @@ function CardContentPreview({
 
       <div className="flex min-w-0 flex-col justify-center">
         <h3 className="truncate text-sm font-medium text-skin-text">{title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-skin-muted">
-          {secondaryMeta}
-        </p>
+        {secondaryMeta ? (
+          <p className="mt-1 line-clamp-2 text-sm text-skin-muted">
+            {secondaryMeta}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -337,11 +567,68 @@ function FlatContentPreview({
         <h3 className="line-clamp-2 text-base font-semibold text-skin-text">
           {title}
         </h3>
-        <p className="mt-1 line-clamp-2 text-sm text-skin-muted">
-          {secondaryMeta}
-        </p>
+        {secondaryMeta ? (
+          <p className="mt-1 line-clamp-2 text-sm text-skin-muted">
+            {secondaryMeta}
+          </p>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+function QuotedPostPreview({
+  item,
+  isFlat,
+}: {
+  item: FeedQuotedPostDto;
+  isFlat: boolean;
+}) {
+  const { t } = useTranslation("feed");
+  const imageUrl = getFeedImageUrl(item);
+  const title = getFeedTitle(item);
+  const targetPath = getFeedTargetPath(item);
+  const activityType = getFeedActivityType(item);
+  const fallbackType = getFallbackType(activityType);
+  const quotedText = item.textContent?.trim() || title;
+
+  return (
+    <Link
+      to={`/feed/${item.id}`}
+      onClick={(event) => event.stopPropagation()}
+      className={`mt-4 block rounded-2xl border border-skin-border/50 bg-skin-base/60 p-4 transition hover:border-skin-primary/30 ${
+        isFlat ? "rounded-xl" : ""
+      }`}
+    >
+      <div className="flex items-center gap-2 text-xs text-skin-muted">
+        <span className="font-semibold text-skin-text">{item.actor.username}</span>
+        <span>·</span>
+        <span>
+          {item.type === FeedPostType.Quote
+            ? t("actions.quote")
+            : item.activity
+              ? t("labels.shared_in_feed")
+              : t("post.eyebrow")}
+        </span>
+      </div>
+
+      {item.textContent ? (
+        <p className="mt-2 text-sm leading-6 text-skin-text/90">{item.textContent}</p>
+      ) : null}
+
+      {targetPath ? (
+        <div className="mt-3 rounded-xl border border-skin-border/40 bg-skin-surface px-3 py-3">
+          <CardContentPreview
+            imageUrl={imageUrl}
+            title={quotedText}
+            secondaryMeta=""
+            fallbackType={fallbackType}
+          />
+        </div>
+      ) : !item.textContent ? (
+        <p className="mt-2 text-sm leading-6 text-skin-text/90">{quotedText}</p>
+      ) : null}
+    </Link>
   );
 }
 
@@ -351,24 +638,66 @@ function PostAction({
   count,
   active = false,
   onClick,
+  disabled = false,
 }: {
   icon: ReactNode;
   label: string;
   count?: number;
   active?: boolean;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick ?? ((event) => event.stopPropagation())}
-      className={`inline-flex items-center gap-1.5 text-xs font-medium transition hover:text-skin-text ${
+      className={`inline-flex items-center gap-1.5 text-xs font-medium transition hover:text-skin-text disabled:cursor-not-allowed disabled:opacity-60 ${
         active ? "text-skin-primary" : "text-skin-muted"
       }`}
       aria-label={label}
     >
       {icon}
       {typeof count === "number" ? <span>{count}</span> : null}
+    </button>
+  );
+}
+
+function DropdownAction({
+  icon,
+  label,
+  meta,
+  active = false,
+  disabled = false,
+  tone = "default",
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  meta?: string;
+  active?: boolean;
+  disabled?: boolean;
+  tone?: "default" | "danger";
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition hover:bg-skin-base disabled:cursor-not-allowed disabled:opacity-60 ${
+        tone === "danger"
+          ? "text-rose-500 hover:text-rose-600"
+          : active
+            ? "text-skin-primary"
+            : "text-skin-text"
+      }`}
+    >
+      <span className="inline-flex items-center gap-2">
+        {icon}
+        <span>{label}</span>
+      </span>
+      {meta ? <span className="text-xs text-skin-muted">{meta}</span> : null}
     </button>
   );
 }

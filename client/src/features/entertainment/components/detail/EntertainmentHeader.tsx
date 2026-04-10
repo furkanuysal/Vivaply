@@ -48,6 +48,9 @@ export default function EntertainmentHeader({
     game: "entertainment:common.game",
   } as const;
 
+  const externalSourceLabel =
+    type === "game" ? "IGDB" : "TMDB";
+
   return (
     <>
       <ConfirmDialog
@@ -59,7 +62,6 @@ export default function EntertainmentHeader({
       />
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Poster */}
         <div className="w-full md:w-1/3 shrink-0">
           {data.poster_path ? (
             <img
@@ -81,27 +83,13 @@ export default function EntertainmentHeader({
           )}
         </div>
 
-        {/* Details */}
         <div className="flex-1">
           <h1 className="text-4xl font-bold mb-2 text-skin-primary">
             {data.display_name}
           </h1>
           <p className="text-skin-muted italic mb-6 text-lg">{data.tagline}</p>
 
-          <div className="flex items-center gap-4 mb-6">
-            <span className="bg-skin-accent/10 text-skin-accent px-3 py-1 rounded-lg font-bold border border-skin-accent/30 shadow-sm">
-              ★ {(data.vote_average || 0).toFixed(1)}
-            </span>
-
-            {/* User Rating */}
-            <div className="relative group">
-              <span className="bg-skin-primary/20 text-skin-primary px-3 py-1 rounded-lg font-bold border border-skin-primary/40 cursor-pointer flex items-center gap-2">
-                ★ {data.user_rating || 0}
-              </span>
-              <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
-                <StarRating currentRating={data.user_rating} onRate={onRate} />
-              </div>
-            </div>
+          <div className="flex items-center gap-4 mb-6 flex-wrap">
             <span className="text-skin-muted">
               {data.display_date?.split("-")[0]}
             </span>
@@ -115,7 +103,7 @@ export default function EntertainmentHeader({
           </div>
 
           {type !== "game" && data.genres && data.genres.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-4">
               {data.genres.map((g: any) => (
                 <span
                   key={g.id}
@@ -126,6 +114,53 @@ export default function EntertainmentHeader({
               ))}
             </div>
           )}
+
+          <div className="mb-6 inline-flex w-fit flex-wrap items-center gap-0 rounded-xl border border-skin-border/60 bg-skin-surface/35 px-4 py-3">
+            <RatingInlineStat
+              label={externalSourceLabel}
+              value={Number(data.vote_average || 0).toFixed(1)}
+              tone="accent"
+            />
+            <RatingInlineSeparator />
+            <div className="relative group">
+              <RatingInlineStat
+                label="Viva"
+                value={
+                  data.viva_rating_count > 0
+                    ? Number(data.viva_rating || 0).toFixed(1)
+                    : undefined
+                }
+                tone="secondary"
+                fallback={t("entertainment:detail.no_viva_rating")}
+                interactive
+              />
+              <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-skin-muted">
+                  Viva
+                </p>
+                <p className="mt-1 text-sm text-skin-text">
+                  {data.viva_rating_count > 0
+                    ? t("entertainment:detail.total_votes", {
+                        count: data.viva_rating_count,
+                      })
+                    : t("entertainment:detail.no_viva_rating")}
+                </p>
+              </div>
+            </div>
+            <RatingInlineSeparator />
+            <div className="relative group">
+              <RatingInlineStat
+                label={t("entertainment:library.table.personal_rating")}
+                value={data.user_rating ? Number(data.user_rating).toFixed(1) : undefined}
+                tone="primary"
+                fallback={t("entertainment:detail.rate_hint")}
+                interactive
+              />
+              <div className="absolute top-full left-0 mt-2 bg-skin-surface border border-skin-border p-3 rounded-xl shadow-xl z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max">
+                <StarRating currentRating={data.user_rating} onRate={onRate} />
+              </div>
+            </div>
+          </div>
 
           <h3 className="text-xl font-bold mb-2">
             {t("entertainment:detail.overview")}
@@ -179,7 +214,7 @@ export default function EntertainmentHeader({
                   <div className="flex items-center gap-2">
                     {statusConfig.label}
                   </div>
-                  <span className="text-xs opacity-70 ml-2">▼</span>
+                  <span className="text-xs opacity-70 ml-2">v</span>
                 </button>
 
                 {isDropdownOpen && (
@@ -210,8 +245,7 @@ export default function EntertainmentHeader({
                             onClick={handleRemoveClick}
                             className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 hover:text-red-400 transition flex items-center gap-2"
                           >
-                            <span>🗑️</span>{" "}
-                            {t("common:buttons.remove_from_library")}
+                            <span>x</span> {t("common:buttons.remove_from_library")}
                           </button>
                         </>
                       )}
@@ -219,11 +253,54 @@ export default function EntertainmentHeader({
                 )}
               </div>
             </div>
-            {/* Review Section or other children */}
             {children}
           </div>
         </div>
       </div>
     </>
   );
+}
+
+function RatingInlineStat({
+  label,
+  value,
+  fallback,
+  tone,
+  interactive = false,
+}: {
+  label: string;
+  value?: string;
+  fallback?: string;
+  tone: "accent" | "secondary" | "primary";
+  interactive?: boolean;
+}) {
+  const valueClass =
+    tone === "accent"
+      ? "text-skin-accent"
+      : tone === "secondary"
+        ? "text-skin-secondary"
+        : "text-skin-primary";
+
+  return (
+    <div
+      className={`flex min-h-11 items-center gap-2 pr-4 transition ${
+        interactive ? "cursor-pointer" : ""
+      }`}
+    >
+      {value ? (
+        <>
+          <span className={`text-2xl font-semibold leading-none ${valueClass}`}>
+            {value}
+          </span>
+          <span className="text-sm text-skin-muted">{label}</span>
+        </>
+      ) : (
+        <span className="text-sm text-skin-muted">{fallback ?? label}</span>
+      )}
+    </div>
+  );
+}
+
+function RatingInlineSeparator() {
+  return <span className="mx-4 h-6 w-px bg-skin-border/70" aria-hidden="true" />;
 }

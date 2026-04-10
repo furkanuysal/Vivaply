@@ -25,6 +25,8 @@ export interface BookContentDto {
   currentPage: number;
   userRating?: number;
   userReview?: string;
+  vivaRating?: number;
+  vivaRatingCount?: number;
 }
 
 // Book Add Request
