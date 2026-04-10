@@ -65,6 +65,23 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
             return result == null ? NotFound() : Ok(result);
         }
 
+        [HttpPost("api/posts/{id:guid}/quote")]
+        public async Task<IActionResult> Quote(
+            Guid id,
+            [FromBody] CreateQuotePostRequest request,
+            CancellationToken cancellationToken)
+        {
+            var result = await _postService.CreateQuoteAsync(CurrentUserId, id, request, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpDelete("api/posts/{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _postService.DeleteAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
         [HttpPost("api/posts/{id:guid}/like")]
         public async Task<IActionResult> Like(Guid id, CancellationToken cancellationToken)
         {
@@ -76,6 +93,20 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         public async Task<IActionResult> Unlike(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.UnlikeAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpPost("api/posts/{id:guid}/bookmark")]
+        public async Task<IActionResult> Bookmark(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _postService.BookmarkAsync(CurrentUserId, id, cancellationToken);
+            return result == null ? NotFound() : Ok(result);
+        }
+
+        [HttpDelete("api/posts/{id:guid}/bookmark")]
+        public async Task<IActionResult> RemoveBookmark(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _postService.RemoveBookmarkAsync(CurrentUserId, id, cancellationToken);
             return result == null ? NotFound() : Ok(result);
         }
     }

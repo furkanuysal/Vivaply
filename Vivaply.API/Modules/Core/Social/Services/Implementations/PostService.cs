@@ -119,6 +119,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.Stats)
                 .Where(x =>
                     !x.IsDeleted &&
@@ -171,6 +178,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.Stats)
                 .Where(x =>
                     x.UserId == targetUser.Id &&
@@ -196,6 +210,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.Stats)
                 .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
 
@@ -300,6 +321,128 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             return MapToReplyDto(createdReply);
         }
 
+        public async Task<PostDto?> CreateQuoteAsync(
+            Guid currentUserId,
+            Guid quotedPostId,
+            CreateQuotePostRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            if (!await CanViewPostAsync(currentUserId, quotedPostId, cancellationToken))
+            {
+                return null;
+            }
+
+            var quote = new UserPost
+            {
+                UserId = currentUserId,
+                Type = PostType.Quote,
+                QuotedPostId = quotedPostId,
+                TextContent = string.IsNullOrWhiteSpace(request.TextContent)
+                    ? null
+                    : request.TextContent.Trim(),
+                PublishedAt = DateTime.UtcNow
+            };
+
+            _db.UserPosts.Add(quote);
+            _db.PostStats.Add(new PostStats
+            {
+                Post = quote
+            });
+
+            await EnsurePostStatsAsync(quotedPostId, cancellationToken);
+            await _db.PostStats
+                .Where(x => x.PostId == quotedPostId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.QuoteCount, x => x.QuoteCount + 1)
+                    .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            var createdQuote = await _db.UserPosts
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Activity)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
+                .Include(x => x.Stats)
+                .FirstAsync(x => x.Id == quote.Id, cancellationToken);
+
+            var dto = MapToDto(createdQuote);
+            await EnrichPostDtosAsync(currentUserId, [dto], cancellationToken);
+
+            return dto;
+        }
+
+        public async Task<PostDeletionDto?> DeleteAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
+        {
+            var post = await _db.UserPosts
+                .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
+
+            if (post == null || post.UserId != currentUserId)
+            {
+                return null;
+            }
+
+            var now = DateTime.UtcNow;
+            var parentPostId = post.ParentPostId;
+            var quotedPostId = post.QuotedPostId;
+
+            post.IsDeleted = true;
+            post.DeletedAt = now;
+            post.UpdatedAt = now;
+
+            int? parentReplyCount = null;
+            int? quotedPostQuoteCount = null;
+
+            if (parentPostId.HasValue)
+            {
+                await EnsurePostStatsAsync(parentPostId.Value, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == parentPostId.Value)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.ReplyCount, x => Math.Max(0, x.ReplyCount - 1))
+                        .SetProperty(x => x.UpdatedAt, now), cancellationToken);
+
+                parentReplyCount = await _db.PostStats
+                    .Where(x => x.PostId == parentPostId.Value)
+                    .Select(x => (int?)x.ReplyCount)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            if (quotedPostId.HasValue && post.Type == PostType.Quote)
+            {
+                await EnsurePostStatsAsync(quotedPostId.Value, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == quotedPostId.Value)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.QuoteCount, x => Math.Max(0, x.QuoteCount - 1))
+                        .SetProperty(x => x.UpdatedAt, now), cancellationToken);
+
+                quotedPostQuoteCount = await _db.PostStats
+                    .Where(x => x.PostId == quotedPostId.Value)
+                    .Select(x => (int?)x.QuoteCount)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return new PostDeletionDto
+            {
+                Id = postId,
+                ParentPostId = parentPostId,
+                ParentReplyCount = parentReplyCount,
+                QuotedPostId = quotedPostId,
+                QuotedPostQuoteCount = quotedPostQuoteCount
+            };
+        }
+
         public async Task<PostStatsDto?> LikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
         {
             if (!await CanViewPostAsync(currentUserId, postId, cancellationToken))
@@ -349,6 +492,61 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .Where(x => x.PostId == postId)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(x => x.LikeCount, x => Math.Max(0, x.LikeCount - 1))
+                        .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+            }
+
+            return await BuildPostStatsAsync(postId, cancellationToken);
+        }
+
+        public async Task<PostStatsDto?> BookmarkAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
+        {
+            if (!await CanViewPostAsync(currentUserId, postId, cancellationToken))
+            {
+                return null;
+            }
+
+            var exists = await _db.PostBookmarks
+                .AnyAsync(x => x.PostId == postId && x.UserId == currentUserId, cancellationToken);
+
+            if (!exists)
+            {
+                _db.PostBookmarks.Add(new PostBookmark
+                {
+                    PostId = postId,
+                    UserId = currentUserId
+                });
+
+                await _db.SaveChangesAsync(cancellationToken);
+                await EnsurePostStatsAsync(postId, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == postId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.BookmarkCount, x => x.BookmarkCount + 1)
+                        .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+            }
+
+            return await BuildPostStatsAsync(postId, cancellationToken);
+        }
+
+        public async Task<PostStatsDto?> RemoveBookmarkAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
+        {
+            if (!await CanViewPostAsync(currentUserId, postId, cancellationToken))
+            {
+                return null;
+            }
+
+            var bookmark = await _db.PostBookmarks
+                .FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == currentUserId, cancellationToken);
+
+            if (bookmark != null)
+            {
+                _db.PostBookmarks.Remove(bookmark);
+                await _db.SaveChangesAsync(cancellationToken);
+                await EnsurePostStatsAsync(postId, cancellationToken);
+                await _db.PostStats
+                    .Where(x => x.PostId == postId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.BookmarkCount, x => Math.Max(0, x.BookmarkCount - 1))
                         .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
             }
 
@@ -431,6 +629,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 TextContent = entity.TextContent,
                 ParentPostId = entity.ParentPostId,
                 QuotedPostId = entity.QuotedPostId,
+                QuotedPost = MapQuotedDto(entity.QuotedPost),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
                 Attachments = entity.Attachments
                     .OrderBy(x => x.SortOrder)
@@ -473,6 +672,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 TextContent = entity.TextContent,
                 ParentPostId = entity.ParentPostId,
                 QuotedPostId = entity.QuotedPostId,
+                QuotedPost = MapQuotedDto(entity.QuotedPost),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
                 Attachments = entity.Attachments
                     .OrderBy(x => x.SortOrder)
@@ -489,6 +689,44 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     })
                     .ToList(),
                 Stats = MapStats(entity.Stats)
+            };
+        }
+
+        private static PostQuotedDto? MapQuotedDto(UserPost? entity)
+        {
+            if (entity == null || entity.IsDeleted)
+            {
+                return null;
+            }
+
+            return new PostQuotedDto
+            {
+                Id = entity.Id,
+                Actor = new PostActorDto
+                {
+                    Id = entity.UserId,
+                    Username = entity.User?.Username ?? string.Empty,
+                    AvatarUrl = entity.User?.AvatarUrl ?? string.Empty
+                },
+                Type = entity.Type,
+                PublishedAt = entity.PublishedAt,
+                UpdatedAt = entity.UpdatedAt,
+                TextContent = entity.TextContent,
+                Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
+                Attachments = entity.Attachments
+                    .OrderBy(x => x.SortOrder)
+                    .Select(x => new PostAttachmentDto
+                    {
+                        Id = x.Id,
+                        Type = x.Type,
+                        Url = x.Url,
+                        ThumbnailUrl = x.ThumbnailUrl,
+                        SortOrder = x.SortOrder,
+                        Width = x.Width,
+                        Height = x.Height,
+                        DurationSeconds = x.DurationSeconds
+                    })
+                    .ToList()
             };
         }
 
@@ -540,6 +778,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.Stats);
         }
 
@@ -559,9 +804,16 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Select(x => x.PostId)
                 .ToHashSetAsync(cancellationToken);
 
+            var bookmarkedPostIds = await _db.PostBookmarks
+                .AsNoTracking()
+                .Where(x => x.UserId == currentUserId && postIds.Contains(x.PostId))
+                .Select(x => x.PostId)
+                .ToHashSetAsync(cancellationToken);
+
             foreach (var post in allPosts)
             {
                 post.Viewer.HasLiked = likedPostIds.Contains(post.Id);
+                post.Viewer.HasBookmarked = bookmarkedPostIds.Contains(post.Id);
             }
         }
 
@@ -665,7 +917,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 ReplyCount = stats?.ReplyCount ?? 0,
                 LikeCount = stats?.LikeCount ?? 0,
-                ViewCount = stats?.ViewCount ?? 0
+                QuoteCount = stats?.QuoteCount ?? 0,
+                ViewCount = stats?.ViewCount ?? 0,
+                BookmarkCount = stats?.BookmarkCount ?? 0
             };
         }
 

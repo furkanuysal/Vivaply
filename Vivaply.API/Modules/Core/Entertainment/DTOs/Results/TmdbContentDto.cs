@@ -67,5 +67,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
 
         [JsonPropertyName("user_review")]
         public string? UserReview { get; set; }
+
+        [JsonPropertyName("viva_rating")]
+        public double? VivaRating { get; set; }
+
+        [JsonPropertyName("viva_rating_count")]
+        public int VivaRatingCount { get; set; }
     }
 }

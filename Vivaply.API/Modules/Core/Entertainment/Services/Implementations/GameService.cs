@@ -7,6 +7,8 @@ using Vivaply.API.Modules.Core.Entertainment.DTOs.Commands.Games;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.Results;
 using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
+using Vivaply.API.Modules.Core.Ratings.Enums;
+using Vivaply.API.Modules.Core.Ratings.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -17,19 +19,27 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         IIgdbService igdbService,
         IApplicationEventPublisher eventPublisher,
         IActivityCleanupService activityCleanupService,
-        IPostCleanupService postCleanupService) : IGameService
+        IPostCleanupService postCleanupService,
+        IContentRatingService contentRatingService) : IGameService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly IIgdbService _igdbService = igdbService;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
         private readonly IPostCleanupService _postCleanupService = postCleanupService;
+        private readonly IContentRatingService _contentRatingService = contentRatingService;
 
         // Detail
         public async Task<GameContentDto?> GetDetailAsync(Guid? userId, int igdbId)
         {
             var game = await _igdbService.GetGameDetailAsync(igdbId);
             if (game == null) return null;
+
+            var stats = await _contentRatingService.GetStatsAsync(
+                ContentSourceType.Game,
+                igdbId.ToString());
+            game.VivaRating = stats?.AverageRating;
+            game.VivaRatingCount = stats?.RatingCount ?? 0;
 
             if (!userId.HasValue)
                 return game;
@@ -179,6 +189,14 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 game.UserRating = request.UserRating == 0 ? null : request.UserRating;
 
             await _dbContext.SaveChangesAsync();
+            if (request.UserRating.HasValue)
+            {
+                await _contentRatingService.SetRatingAsync(
+                    userId,
+                    ContentSourceType.Game,
+                    request.IgdbId.ToString(),
+                    game.UserRating);
+            }
 
             if (request.UserRating.HasValue && request.UserRating.Value > 0)
             {
@@ -223,6 +241,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             game.UserRating = request.Rating;
 
             await _dbContext.SaveChangesAsync();
+            await _contentRatingService.SetRatingAsync(
+                userId,
+                ContentSourceType.Game,
+                request.IgdbId.ToString(),
+                request.Rating);
 
             await _eventPublisher.PublishAsync(new GameRatedEvent(
                 userId,

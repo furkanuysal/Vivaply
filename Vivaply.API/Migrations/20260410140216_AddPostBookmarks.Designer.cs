@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vivaply.API.Data;
@@ -11,9 +12,11 @@ using Vivaply.API.Data;
 namespace Vivaply.API.Migrations
 {
     [DbContext(typeof(VivaplyDbContext))]
-    partial class VivaplyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410140216_AddPostBookmarks")]
+    partial class AddPostBookmarks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -473,9 +476,6 @@ namespace Vivaply.API.Migrations
                     b.Property<int>("LikeCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuoteCount")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ReplyCount")
                         .HasColumnType("integer");
 
@@ -831,73 +831,6 @@ namespace Vivaply.API.Migrations
                     b.ToTable("UserBooks");
                 });
 
-            modelBuilder.Entity("Vivaply.API.Entities.Ratings.ContentRating", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("Rating")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("SourceId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<int>("SourceType")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SourceType", "SourceId");
-
-                    b.HasIndex("UserId", "SourceType", "SourceId")
-                        .IsUnique();
-
-                    b.ToTable("ContentRatings");
-                });
-
-            modelBuilder.Entity("Vivaply.API.Entities.Ratings.ContentRatingStats", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<double>("AverageRating")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("RatingCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SourceId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<int>("SourceType")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SourceType", "SourceId")
-                        .IsUnique();
-
-                    b.ToTable("ContentRatingStats");
-                });
-
             modelBuilder.Entity("Vivaply.API.Entities.Entertainment.Igdb.UserGame", b =>
                 {
                     b.HasOne("Vivaply.API.Entities.Entertainment.Igdb.GameMetadata", "Metadata")
@@ -1147,17 +1080,6 @@ namespace Vivaply.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Metadata");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Vivaply.API.Entities.Ratings.ContentRating", b =>
-                {
-                    b.HasOne("Vivaply.API.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });

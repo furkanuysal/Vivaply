@@ -7,6 +7,8 @@ using Vivaply.API.Modules.Core.Knowledge.DTOs.Commands.Book;
 using Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks;
 using Vivaply.API.Modules.Core.Knowledge.Enums;
 using Vivaply.API.Modules.Core.Knowledge.Services.Interfaces;
+using Vivaply.API.Modules.Core.Ratings.Enums;
+using Vivaply.API.Modules.Core.Ratings.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -17,13 +19,15 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
         IGoogleBooksService googleBooks,
         IApplicationEventPublisher eventPublisher,
         IActivityCleanupService activityCleanupService,
-        IPostCleanupService postCleanupService) : IBookService
+        IPostCleanupService postCleanupService,
+        IContentRatingService contentRatingService) : IBookService
     {
         private readonly VivaplyDbContext _db = db;
         private readonly IGoogleBooksService _googleBooks = googleBooks;
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
         private readonly IPostCleanupService _postCleanupService = postCleanupService;
+        private readonly IContentRatingService _contentRatingService = contentRatingService;
 
         public Task<List<BookContentDto>> SearchAsync(string query)
             => _googleBooks.SearchBooksAsync(query);
@@ -56,6 +60,12 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
         {
             var book = await _googleBooks.GetBookDetailsAsync(googleBookId);
             if (book == null) return null;
+
+            var stats = await _contentRatingService.GetStatsAsync(
+                ContentSourceType.Book,
+                googleBookId);
+            book.VivaRating = stats?.AverageRating;
+            book.VivaRatingCount = stats?.RatingCount ?? 0;
 
             var userBook = await _db.UserBooks
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.GoogleBookId == googleBookId);
@@ -265,6 +275,11 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
             book.UserRating = request.Rating;
 
             await _db.SaveChangesAsync();
+            await _contentRatingService.SetRatingAsync(
+                userId,
+                ContentSourceType.Book,
+                request.GoogleBookId,
+                request.Rating);
 
             await _eventPublisher.PublishAsync(new BookRatedEvent(
                 userId,

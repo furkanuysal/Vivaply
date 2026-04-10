@@ -6,6 +6,7 @@ using Vivaply.API.Entities.Finance;
 using Vivaply.API.Entities.Gamification;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Entities.Knowledge;
+using Vivaply.API.Entities.Ratings;
 
 namespace Vivaply.API.Data
 {
@@ -23,7 +24,10 @@ namespace Vivaply.API.Data
         public DbSet<UserPost> UserPosts { get; set; }
         public DbSet<PostAttachment> PostAttachments { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<PostBookmark> PostBookmarks { get; set; }
         public DbSet<PostStats> PostStats { get; set; }
+        public DbSet<ContentRating> ContentRatings { get; set; }
+        public DbSet<ContentRatingStats> ContentRatingStats { get; set; }
 
         // Entertainment Tables
         public DbSet<UserShow> UserShows { get; set; }

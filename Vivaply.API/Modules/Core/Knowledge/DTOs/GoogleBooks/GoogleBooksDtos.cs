@@ -77,5 +77,7 @@ namespace Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks
         public int CurrentPage { get; set; } // Kaldığı sayfa
         public double? UserRating { get; set; }
         public string? UserReview { get; set; }
+        public double? VivaRating { get; set; }
+        public int VivaRatingCount { get; set; }
     }
 }

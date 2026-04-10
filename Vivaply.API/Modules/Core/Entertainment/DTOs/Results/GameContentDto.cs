@@ -25,5 +25,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
         public string? UserPlatform { get; set; }
         public double UserPlaytime { get; set; }
         public GameCompletionType CompletionType { get; set; } = GameCompletionType.None;
+        public double? VivaRating { get; set; }
+        public int VivaRatingCount { get; set; }
     }
 }

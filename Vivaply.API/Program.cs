@@ -17,6 +17,7 @@ using Vivaply.API.Modules.Core.Identity.Extensions;
 using Vivaply.API.Modules.Core.Identity.Services.Implementations;
 using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 using Vivaply.API.Modules.Core.Knowledge.Extensions;
+using Vivaply.API.Modules.Core.Ratings.Extensions;
 using Vivaply.API.Modules.Core.Social.Extensions;
 using Vivaply.API.Modules.Features.Location.Extensions;
 
@@ -51,6 +52,7 @@ builder.Services.AddLocationServices();
 builder.Services.AddAccountServices();
 builder.Services.AddEntertainmentServices();
 builder.Services.AddKnowledgeServices();
+builder.Services.AddRatingServices();
 builder.Services.AddSocialServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 

@@ -12,6 +12,8 @@ using Vivaply.API.Modules.Core.Entertainment.DTOs.Results.Library;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.Results.Media;
 using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
+using Vivaply.API.Modules.Core.Ratings.Enums;
+using Vivaply.API.Modules.Core.Ratings.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -22,7 +24,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         ITmdbService tmdbService,
         IApplicationEventPublisher eventPublisher,
         IActivityCleanupService activityCleanupService,
-        IPostCleanupService postCleanupService
+        IPostCleanupService postCleanupService,
+        IContentRatingService contentRatingService
         ) : IMediaService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
@@ -30,6 +33,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         private readonly IApplicationEventPublisher _eventPublisher = eventPublisher;
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
         private readonly IPostCleanupService _postCleanupService = postCleanupService;
+        private readonly IContentRatingService _contentRatingService = contentRatingService;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
@@ -200,6 +204,12 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             var result = await _tmdbService.GetMovieDetailsAsync(tmdbId, language);
             if (result == null) return null;
 
+            var movieStats = await _contentRatingService.GetStatsAsync(
+                ContentSourceType.Movie,
+                tmdbId.ToString());
+            result.VivaRating = movieStats?.AverageRating;
+            result.VivaRatingCount = movieStats?.RatingCount ?? 0;
+
             if (userId.HasValue)
             {
                 var movie = await _dbContext.UserMovies
@@ -224,6 +234,12 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
             var result = await _tmdbService.GetTvShowDetailsAsync(tmdbId, language);
             if (result == null) return null;
+
+            var showStats = await _contentRatingService.GetStatsAsync(
+                ContentSourceType.TvShow,
+                tmdbId.ToString());
+            result.VivaRating = showStats?.AverageRating;
+            result.VivaRatingCount = showStats?.RatingCount ?? 0;
 
             if (!userId.HasValue)
                 return result;
@@ -525,6 +541,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 show.UserRating = request.Rating;
 
                 await _dbContext.SaveChangesAsync();
+                await _contentRatingService.SetRatingAsync(
+                    userId,
+                    ContentSourceType.TvShow,
+                    request.TmdbId.ToString(),
+                    request.Rating);
 
                 await _eventPublisher.PublishAsync(new MediaRatedEvent(
                     userId,
@@ -545,6 +566,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             movie.UserRating = request.Rating;
 
             await _dbContext.SaveChangesAsync();
+            await _contentRatingService.SetRatingAsync(
+                userId,
+                ContentSourceType.Movie,
+                request.TmdbId.ToString(),
+                request.Rating);
 
             await _eventPublisher.PublishAsync(new MediaRatedEvent(
                 userId,
@@ -699,6 +725,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 }
 
                 await _dbContext.SaveChangesAsync();
+                await _contentRatingService.SetRatingAsync(
+                    userId,
+                    ContentSourceType.TvShow,
+                    request.TmdbId.ToString(),
+                    show.UserRating);
 
                 if (request.Rating.HasValue && request.Rating.Value > 0)
                 {
@@ -769,6 +800,11 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 movie.Review = request.Review;
 
             await _dbContext.SaveChangesAsync();
+            await _contentRatingService.SetRatingAsync(
+                userId,
+                ContentSourceType.Movie,
+                request.TmdbId.ToString(),
+                movie.UserRating);
 
             if (request.Rating.HasValue && request.Rating.Value > 0)
             {
