@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Identity.Enums;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Follows;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
@@ -96,19 +97,65 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             await _db.SaveChangesAsync();
         }
 
-        public async Task<List<Guid>> GetFollowersAsync(Guid userId)
+        public async Task<List<FollowUserDto>> GetFollowersAsync(Guid currentUserId, Guid userId)
         {
-            return await _db.UserFollows
+            var followerIds = await _db.UserFollows
                 .Where(x => x.FollowingId == userId && x.Status == FollowStatus.Accepted)
                 .Select(x => x.FollowerId)
                 .ToListAsync();
+
+            var followsCurrentUserIds = await _db.UserFollows
+                .Where(x =>
+                    x.FollowingId == currentUserId &&
+                    x.Status == FollowStatus.Accepted &&
+                    followerIds.Contains(x.FollowerId))
+                .Select(x => x.FollowerId)
+                .ToListAsync();
+
+            var followsCurrentUserSet = followsCurrentUserIds.ToHashSet();
+
+            return await _db.UserFollows
+                .Where(x => x.FollowingId == userId && x.Status == FollowStatus.Accepted)
+                .Select(x => new FollowUserDto
+                {
+                    Id = x.Follower.Id,
+                    Username = x.Follower.Username,
+                    AvatarUrl = x.Follower.AvatarUrl,
+                    IsFollowingCurrentUser =
+                        x.Follower.Id != currentUserId &&
+                        followsCurrentUserSet.Contains(x.Follower.Id)
+                })
+                .ToListAsync();
         }
 
-        public async Task<List<Guid>> GetFollowingAsync(Guid userId)
+        public async Task<List<FollowUserDto>> GetFollowingAsync(Guid currentUserId, Guid userId)
         {
-            return await _db.UserFollows
+            var followingIds = await _db.UserFollows
                 .Where(x => x.FollowerId == userId && x.Status == FollowStatus.Accepted)
                 .Select(x => x.FollowingId)
+                .ToListAsync();
+
+            var followsCurrentUserIds = await _db.UserFollows
+                .Where(x =>
+                    x.FollowingId == currentUserId &&
+                    x.Status == FollowStatus.Accepted &&
+                    followingIds.Contains(x.FollowerId))
+                .Select(x => x.FollowerId)
+                .ToListAsync();
+
+            var followsCurrentUserSet = followsCurrentUserIds.ToHashSet();
+
+            return await _db.UserFollows
+                .Where(x => x.FollowerId == userId && x.Status == FollowStatus.Accepted)
+                .Select(x => new FollowUserDto
+                {
+                    Id = x.Following.Id,
+                    Username = x.Following.Username,
+                    AvatarUrl = x.Following.AvatarUrl,
+                    IsFollowingCurrentUser =
+                        x.Following.Id != currentUserId &&
+                        followsCurrentUserSet.Contains(x.Following.Id)
+                })
                 .ToListAsync();
         }
 

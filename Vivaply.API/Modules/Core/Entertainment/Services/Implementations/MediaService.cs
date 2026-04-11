@@ -138,7 +138,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     metadata.Name,
                     metadata.PosterPath,
                     "UserShow",
-                    show.Id.ToString()
+                    show.Id.ToString(),
+                    Genres: GetMediaGenres(metadata.GenresJson)
                 ));
 
                 return;
@@ -175,7 +176,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     movieMetadata.Title,
                     movieMetadata.PosterPath,
                     movie.WatchedAt ?? DateTime.UtcNow,
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    Genres: GetMediaGenres(movieMetadata.GenresJson)
                 ));
             }
             else
@@ -187,7 +189,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     movieMetadata.Title,
                     movieMetadata.PosterPath,
                     "UserMovie",
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    Genres: GetMediaGenres(movieMetadata.GenresJson)
                 ));
             }
         }
@@ -501,7 +504,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     userShow.Metadata?.PosterPath,
                     seasonNumber,
                     episodesToAdd.Count,
-                    now
+                    now,
+                    GetMediaGenres(userShow.Metadata?.GenresJson)
                 ));
 
                 return new MarkSeasonResultDto
@@ -677,7 +681,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 seasonNumber,
                 episodeNumber,
                 now,
-                watchedEpisode.Id.ToString()
+                watchedEpisode.Id.ToString(),
+                GetMediaGenres(userShow.Metadata?.GenresJson)
             ));
 
             return new ToggleEpisodeResultDto
@@ -769,7 +774,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         request.TmdbId,
                         show.Metadata?.Name ?? "Unknown",
                         show.Metadata?.PosterPath,
-                        DateTime.UtcNow
+                        DateTime.UtcNow,
+                        GetMediaGenres(show.Metadata?.GenresJson)
                     ));
                 }
 
@@ -845,7 +851,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     movie.Metadata?.Title ?? "Unknown",
                     movie.Metadata?.PosterPath,
                     movie.WatchedAt ?? DateTime.UtcNow,
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    GetMediaGenres(movie.Metadata?.GenresJson)
                 ));
             }
         }
@@ -884,7 +891,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         request.TmdbId,
                         show.Metadata?.Name ?? "Unknown",
                         show.Metadata?.PosterPath,
-                        DateTime.UtcNow
+                        DateTime.UtcNow,
+                        GetMediaGenres(show.Metadata?.GenresJson)
                     ));
                 }
 
@@ -918,7 +926,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     movie.Metadata?.Title ?? "Unknown",
                     movie.Metadata?.PosterPath,
                     movie.WatchedAt ?? DateTime.UtcNow,
-                    movie.Id.ToString()
+                    movie.Id.ToString(),
+                    GetMediaGenres(movie.Metadata?.GenresJson)
                 ));
             }
         }
@@ -988,7 +997,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         targetSeason,
                         nextEpisode.EpisodeNumber,
                         now,
-                        watchedEpisode.Id.ToString()
+                        watchedEpisode.Id.ToString(),
+                        GetMediaGenres(metadata?.GenresJson)
                     ));
 
                     if (userShow.Status == WatchStatus.Completed)
@@ -998,7 +1008,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                             tmdbShowId,
                             metadata?.Name ?? "Unknown",
                             metadata?.PosterPath,
-                            now
+                            now,
+                            GetMediaGenres(metadata?.GenresJson)
                         ));
                     }
 
@@ -1051,7 +1062,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     nextSeasonNumber,
                     firstEpisode.EpisodeNumber,
                     now,
-                    watchedEpisode.Id.ToString()
+                    watchedEpisode.Id.ToString(),
+                    GetMediaGenres(metadata?.GenresJson)
                 ));
 
                 if (userShow.Status == WatchStatus.Completed)
@@ -1061,7 +1073,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                         tmdbShowId,
                         metadata?.Name ?? "Unknown",
                         metadata?.PosterPath,
-                        now
+                        now,
+                        GetMediaGenres(metadata?.GenresJson)
                     ));
                 }
 

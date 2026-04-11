@@ -196,7 +196,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 newEpisode.ShowName,
                 newEpisode.PosterPath,
                 newEpisode.SeasonNumber,
-                episodeNumbers.Distinct().OrderBy(x => x).ToList()
+                episodeNumbers.Distinct().OrderBy(x => x).ToList(),
+                existing.Type == ActivityType.EpisodesWatchedBatch
+                    ? JsonHelper.Deserialize<EpisodesWatchedBatchPayload>(existing.PayloadJson)?.Genres ?? newEpisode.Genres
+                    : newEpisode.Genres
             )) ?? "{}";
             existing.SourceEntityType = request.SourceEntityType;
             existing.SourceEntityId = request.SourceEntityId;

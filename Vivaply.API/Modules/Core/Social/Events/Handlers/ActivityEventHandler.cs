@@ -37,7 +37,10 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                     appEvent.SubjectType,
                     appEvent.SubjectId,
                     appEvent.Title,
-                    appEvent.ImageUrl
+                    appEvent.ImageUrl,
+                    Developers: appEvent.Developers,
+                    Genres: appEvent.Genres,
+                    Authors: appEvent.Authors
                 )
             }, cancellationToken);
 
@@ -57,7 +60,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                     appEvent.ShowName,
                     appEvent.PosterPath,
                     appEvent.SeasonNumber,
-                    appEvent.EpisodeNumber
+                    appEvent.EpisodeNumber,
+                    Genres: appEvent.Genres
                 ),
                 OccurredAt = appEvent.OccurredAt,
                 AggregateKey = $"episode-watch:{appEvent.UserId}:show:{appEvent.TmdbShowId}",
@@ -78,7 +82,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                     appEvent.ShowName,
                     appEvent.PosterPath,
                     appEvent.SeasonNumber,
-                    appEvent.EpisodeCount
+                    appEvent.EpisodeCount,
+                    Genres: appEvent.Genres
                 ),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
@@ -93,7 +98,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 Payload = new ShowCompletedPayload(
                     appEvent.TmdbShowId,
                     appEvent.ShowName,
-                    appEvent.PosterPath
+                    appEvent.PosterPath,
+                    Genres: appEvent.Genres
                 ),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
@@ -110,7 +116,8 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 Payload = new MovieWatchedPayload(
                     appEvent.TmdbMovieId,
                     appEvent.Title,
-                    appEvent.PosterPath
+                    appEvent.PosterPath,
+                    Genres: appEvent.Genres
                 ),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
@@ -165,7 +172,13 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new LibraryItemAddedPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl),
+                Payload = new LibraryItemAddedPayload(
+                    "game",
+                    appEvent.IgdbId.ToString(),
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    Developers: appEvent.Developers,
+                    Genres: appEvent.Genres),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 
@@ -178,7 +191,13 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.IgdbId.ToString(),
                 SourceEntityType = "UserGame",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new LibraryItemAddedPayload("game", appEvent.IgdbId.ToString(), appEvent.Title, appEvent.CoverUrl),
+                Payload = new LibraryItemAddedPayload(
+                    "game",
+                    appEvent.IgdbId.ToString(),
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    Developers: appEvent.Developers,
+                    Genres: appEvent.Genres),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 
@@ -234,7 +253,12 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new LibraryItemAddedPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl),
+                Payload = new LibraryItemAddedPayload(
+                    "book",
+                    appEvent.GoogleBookId,
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    Authors: appEvent.Authors),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 
@@ -247,7 +271,12 @@ namespace Vivaply.API.Modules.Core.Social.Events.Handlers
                 SubjectId = appEvent.GoogleBookId,
                 SourceEntityType = "UserBook",
                 SourceEntityId = appEvent.SourceEntityId,
-                Payload = new LibraryItemAddedPayload("book", appEvent.GoogleBookId, appEvent.Title, appEvent.CoverUrl),
+                Payload = new LibraryItemAddedPayload(
+                    "book",
+                    appEvent.GoogleBookId,
+                    appEvent.Title,
+                    appEvent.CoverUrl,
+                    Authors: appEvent.Authors),
                 OccurredAt = appEvent.OccurredAt
             }, cancellationToken);
 

@@ -121,7 +121,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     metadata.Title,
                     metadata.CoverUrl,
                     game.DateAdded,
-                    game.Id.ToString()
+                    game.Id.ToString(),
+                    GetGameDevelopers(game.Metadata),
+                    GetGameGenres(game.Metadata)
                 ));
             }
             else
@@ -133,7 +135,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     metadata.Title,
                     metadata.CoverUrl,
                     "UserGame",
-                    game.Id.ToString()
+                    game.Id.ToString(),
+                    Developers: GetGameDevelopers(game.Metadata),
+                    Genres: GetGameGenres(game.Metadata)
                 ));
             }
         }
@@ -167,7 +171,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     game.Metadata?.Title ?? "Unknown",
                     game.Metadata?.CoverUrl,
                     game.DateFinished ?? DateTime.UtcNow,
-                    game.Id.ToString()
+                    game.Id.ToString(),
+                    GetGameDevelopers(game.Metadata),
+                    GetGameGenres(game.Metadata)
                 ));
             }
         }

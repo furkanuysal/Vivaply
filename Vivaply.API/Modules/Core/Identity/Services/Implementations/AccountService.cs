@@ -17,11 +17,20 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             var user = await _dbContext.Users
                 .Include(u => u.Profile) // Gamification profile
                 .Include(u => u.Wallet)  // Wallet
+                .Include(u => u.Preferences)
                 .AsNoTracking()          // For fast reading
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found.");
+
+            var followersCount = await _dbContext.UserFollows
+                .CountAsync(x => x.FollowingId == user.Id && x.Status == FollowStatus.Accepted);
+
+            var followingCount = await _dbContext.UserFollows
+                .CountAsync(x => x.FollowerId == user.Id && x.Status == FollowStatus.Accepted);
+
+            var isFollowingCurrentUser = false;
 
             return new UserProfileDto
             {
@@ -35,7 +44,13 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 CurrentXp = user.Profile?.CurrentXp ?? 0,
                 TotalXp = user.Profile?.TotalXp ?? 0,
                 CurrentStreak = user.Profile?.CurrentStreak ?? 0,
-                Money = user.Wallet?.Balance ?? 0
+                Money = user.Wallet?.Balance ?? 0,
+                IsCurrentUser = true,
+                RelationStatus = FollowStatus.Accepted,
+                FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                IsFollowingCurrentUser = isFollowingCurrentUser,
+                FollowersCount = followersCount,
+                FollowingCount = followingCount
             };
         }
 
@@ -44,11 +59,18 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             var user = await _dbContext.Users
                 .Include(u => u.Profile)
                 .Include(u => u.Wallet)
+                .Include(u => u.Preferences)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Username == username);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found.");
+
+            var followersCount = await _dbContext.UserFollows
+                .CountAsync(x => x.FollowingId == user.Id && x.Status == FollowStatus.Accepted);
+
+            var followingCount = await _dbContext.UserFollows
+                .CountAsync(x => x.FollowerId == user.Id && x.Status == FollowStatus.Accepted);
 
             var isOwner = user.Id == currentUserId;
 
@@ -67,6 +89,19 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                     throw new UnauthorizedAccessException("You are not allowed to view this profile.");
             }
 
+            var relationStatusForDto = isOwner
+                ? FollowStatus.Accepted
+                : await _dbContext.UserFollows
+                    .Where(x => x.FollowerId == currentUserId && x.FollowingId == user.Id)
+                    .Select(x => (FollowStatus?)x.Status)
+                    .FirstOrDefaultAsync();
+
+            var isFollowingCurrentUser = !isOwner && await _dbContext.UserFollows
+                .AnyAsync(x =>
+                    x.FollowerId == user.Id &&
+                    x.FollowingId == currentUserId &&
+                    x.Status == FollowStatus.Accepted);
+
             return new UserProfileDto
             {
                 Id = user.Id,
@@ -79,7 +114,13 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 CurrentXp = user.Profile?.CurrentXp ?? 0,
                 TotalXp = user.Profile?.TotalXp ?? 0,
                 CurrentStreak = user.Profile?.CurrentStreak ?? 0,
-                Money = user.Wallet?.Balance ?? 0
+                Money = user.Wallet?.Balance ?? 0,
+                IsCurrentUser = isOwner,
+                RelationStatus = relationStatusForDto,
+                FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                IsFollowingCurrentUser = isFollowingCurrentUser,
+                FollowersCount = followersCount,
+                FollowingCount = followingCount
             };
         }
 

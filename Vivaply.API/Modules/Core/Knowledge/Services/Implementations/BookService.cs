@@ -138,7 +138,8 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                     metadata.Title,
                     metadata.CoverUrl,
                     book.DateAdded,
-                    book.Id.ToString()
+                    book.Id.ToString(),
+                    GetBookAuthors(book.Metadata)
                 ));
             }
             else
@@ -150,7 +151,8 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                     metadata.Title,
                     metadata.CoverUrl,
                     "UserBook",
-                    book.Id.ToString()
+                    book.Id.ToString(),
+                    Authors: GetBookAuthors(book.Metadata)
                 ));
             }
         }
@@ -198,7 +200,8 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                     book.Metadata?.Title ?? "Unknown",
                     book.Metadata?.CoverUrl,
                     book.DateFinished ?? DateTime.UtcNow,
-                    book.Id.ToString()
+                    book.Id.ToString(),
+                    GetBookAuthors(book.Metadata)
                 ));
             }
         }
@@ -233,7 +236,8 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                     book.Metadata?.Title ?? "Unknown",
                     book.Metadata?.CoverUrl,
                     book.DateFinished ?? DateTime.UtcNow,
-                    book.Id.ToString()
+                    book.Id.ToString(),
+                    GetBookAuthors(book.Metadata)
                 ));
             }
         }

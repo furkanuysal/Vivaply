@@ -9,7 +9,10 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? ImageUrl,
         string? SourceEntityType,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Developers = null,
+        List<string>? Genres = null,
+        List<string>? Authors = null
     ) : IApplicationEvent;
 
     public sealed record EpisodeWatchedEvent(
@@ -20,7 +23,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         int SeasonNumber,
         int EpisodeNumber,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record SeasonCompletedEvent(
@@ -30,7 +34,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string? PosterPath,
         int SeasonNumber,
         int EpisodeCount,
-        DateTime OccurredAt
+        DateTime OccurredAt,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record ShowCompletedEvent(
@@ -38,7 +43,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         int TmdbShowId,
         string ShowName,
         string? PosterPath,
-        DateTime OccurredAt
+        DateTime OccurredAt,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record MovieWatchedEvent(
@@ -47,7 +53,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? PosterPath,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record MediaRatedEvent(
@@ -81,7 +88,9 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Developers = null,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record GameCompletedEvent(
@@ -90,7 +99,9 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Developers = null,
+        List<string>? Genres = null
     ) : IApplicationEvent;
 
     public sealed record GameRatedEvent(
@@ -122,7 +133,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Authors = null
     ) : IApplicationEvent;
 
     public sealed record BookFinishedEvent(
@@ -131,7 +143,8 @@ namespace Vivaply.API.Modules.Core.Social.Events
         string Title,
         string? CoverUrl,
         DateTime OccurredAt,
-        string? SourceEntityId
+        string? SourceEntityId,
+        List<string>? Authors = null
     ) : IApplicationEvent;
 
     public sealed record BookRatedEvent(

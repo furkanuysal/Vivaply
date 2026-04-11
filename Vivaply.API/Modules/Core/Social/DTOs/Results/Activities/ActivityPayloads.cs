@@ -4,7 +4,10 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string SubjectType,
         string SubjectId,
         string Title,
-        string? ImageUrl
+        string? ImageUrl,
+        List<string>? Developers = null,
+        List<string>? Genres = null,
+        List<string>? Authors = null
     );
 
     public sealed record EpisodeWatchedPayload(
@@ -12,7 +15,8 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string ShowName,
         string? PosterPath,
         int SeasonNumber,
-        int EpisodeNumber
+        int EpisodeNumber,
+        List<string>? Genres = null
     );
 
     public sealed record EpisodesWatchedBatchPayload(
@@ -20,7 +24,8 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string ShowName,
         string? PosterPath,
         int SeasonNumber,
-        List<int> EpisodeNumbers
+        List<int> EpisodeNumbers,
+        List<string>? Genres = null
     );
 
     public sealed record SeasonCompletedPayload(
@@ -28,19 +33,22 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Activities
         string ShowName,
         string? PosterPath,
         int SeasonNumber,
-        int EpisodeCount
+        int EpisodeCount,
+        List<string>? Genres = null
     );
 
     public sealed record ShowCompletedPayload(
         int TmdbShowId,
         string ShowName,
-        string? PosterPath
+        string? PosterPath,
+        List<string>? Genres = null
     );
 
     public sealed record MovieWatchedPayload(
         int TmdbMovieId,
         string Title,
-        string? PosterPath
+        string? PosterPath,
+        List<string>? Genres = null
     );
 
     public sealed record RatingPayload(

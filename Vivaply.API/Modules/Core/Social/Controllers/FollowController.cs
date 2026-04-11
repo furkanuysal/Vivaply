@@ -46,7 +46,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         [HttpGet("{userId}/followers")]
         public async Task<IActionResult> GetFollowers(Guid userId)
         {
-            var result = await _followService.GetFollowersAsync(userId);
+            var result = await _followService.GetFollowersAsync(CurrentUserId, userId);
             return Ok(result);
         }
 
@@ -54,7 +54,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         [HttpGet("{userId}/following")]
         public async Task<IActionResult> GetFollowing(Guid userId)
         {
-            var result = await _followService.GetFollowingAsync(userId);
+            var result = await _followService.GetFollowingAsync(CurrentUserId, userId);
             return Ok(result);
         }
 

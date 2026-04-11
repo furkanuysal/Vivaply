@@ -1,4 +1,6 @@
-﻿namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
+using Vivaply.API.Modules.Core.Identity.Enums;
+
+namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
 {
     public class UserProfileDto
     {
@@ -17,5 +19,13 @@
 
         // Finance
         public decimal Money { get; set; }
+
+        // Social
+        public bool IsCurrentUser { get; set; }
+        public FollowStatus? RelationStatus { get; set; }
+        public FollowPolicy? FollowPolicy { get; set; }
+        public bool IsFollowingCurrentUser { get; set; }
+        public int FollowersCount { get; set; }
+        public int FollowingCount { get; set; }
     }
 }
