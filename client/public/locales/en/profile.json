@@ -1,0 +1,36 @@
+{
+  "eyebrow": "Profile Feed",
+  "title": "Recent activity",
+  "subtitle": "A live view of what this person has been watching, rating, reviewing, and finishing lately.",
+  "empty_title": "No activity yet",
+  "empty_subtitle": "When new activity appears, it will show up here.",
+  "stats": {
+    "level": "Level {{level}}",
+    "wallet": "Wallet",
+    "coin": "Viva",
+    "streak": "Streak",
+    "days": "days",
+    "followers": "followers",
+    "following": "following",
+    "xp_progress": "XP Progress",
+    "total_xp": "Total: {{totalXp}} XP"
+  },
+  "actions": {
+    "follow": "Follow",
+    "following": "Following",
+    "requested": "Requested",
+    "processing": "Please wait..."
+  },
+  "social": {
+    "followers_title": "Followers",
+    "following_title": "Following",
+    "empty_followers": "No followers yet.",
+    "empty_following": "Not following anyone yet.",
+    "follows_you": "Follows you"
+  },
+  "errors": {
+    "load_profile": "Your session has expired.",
+    "follow_action": "The follow action could not be completed.",
+    "load_social_list": "The user list could not be loaded."
+  }
+}

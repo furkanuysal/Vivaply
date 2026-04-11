@@ -820,20 +820,30 @@ function getContentSubtitle(item: FeedItemDto, fallback: string): string {
     return fallback;
   }
 
-  const subjectType = getString(payload.subjectType);
+  const safeFallback =
+    fallback === "Akışta paylaşıldı" || fallback === "Shared in feed" ? "" : fallback;
 
   const primary =
     getString(payload.studio) ??
+    getString(payload.Studio) ??
     getString(payload.productionCompany) ??
+    getString(payload.ProductionCompany) ??
     getString(payload.publisher) ??
+    getString(payload.Publisher) ??
     getString(payload.developer) ??
+    getString(payload.Developer) ??
     getString(payload.developers) ??
+    getString(payload.Developers) ??
     getString(payload.author) ??
-    getString(payload.authors);
+    getString(payload.Author) ??
+    getString(payload.authors) ??
+    getString(payload.Authors);
 
   const secondary =
     getString(payload.genre) ??
+    getString(payload.Genre) ??
     getString(payload.genres) ??
+    getString(payload.Genres) ??
     getString(payload.category);
 
   if (primary && secondary) {
@@ -848,19 +858,7 @@ function getContentSubtitle(item: FeedItemDto, fallback: string): string {
     return secondary;
   }
 
-  if (subjectType === "game") {
-    return fallback;
-  }
-
-  if (subjectType === "movie") {
-    return fallback;
-  }
-
-  if (subjectType === "book") {
-    return fallback;
-  }
-
-  return fallback;
+  return safeFallback;
 }
 
 function getString(value: unknown): string | undefined {

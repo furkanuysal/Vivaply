@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutline } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   currentRating?: number;
@@ -8,13 +9,27 @@ interface Props {
 }
 
 export default function StarRating({ currentRating = 0, onRate }: Props) {
+  const { t } = useTranslation("common");
   const [hover, setHover] = useState(0);
 
   // Rating to show
   const displayRating = hover || currentRating || 0;
 
   return (
-    <div className="flex items-center gap-1 select-none">
+    <div className="flex flex-col gap-3 select-none">
+      {currentRating > 0 ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => onRate(0)}
+            className="rounded-lg border border-skin-border px-2.5 py-1 text-xs font-medium text-skin-muted transition hover:border-skin-primary/40 hover:text-skin-text"
+          >
+            {t("buttons.clear")}
+          </button>
+        </div>
+      ) : null}
+
+      <div className="flex items-center gap-1">
       <div className="flex relative">
         {[...Array(10)].map((_, index) => {
           const starValue = index + 1;
@@ -67,6 +82,7 @@ export default function StarRating({ currentRating = 0, onRate }: Props) {
       <span className="ml-3 text-lg font-bold text-skin-primary w-10 text-center">
         {displayRating.toFixed(1)}
       </span>
+      </div>
     </div>
   );
 }

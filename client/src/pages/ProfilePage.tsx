@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
-import { ArrowPathIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  MapPinIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { accountService } from "@/features/account/services/accountService";
-import type { UserProfileDto } from "@/features/account/types";
+import {
+  FollowPolicy,
+  FollowStatus,
+  type FollowUserDto,
+  type UserProfileDto,
+} from "@/features/account/types";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import { feedService } from "@/features/feed/services/feedService";
@@ -16,7 +25,7 @@ import type { FeedItemDto } from "@/features/feed/types";
 import { SERVER_URL } from "@/lib/api";
 
 export default function ProfilePage() {
-  const { t } = useTranslation("feed");
+  const { t } = useTranslation(["profile", "feed"]);
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -26,6 +35,13 @@ export default function ProfilePage() {
   const [postsLoading, setPostsLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [socialListOpen, setSocialListOpen] = useState(false);
+  const [socialListLoading, setSocialListLoading] = useState(false);
+  const [socialListMode, setSocialListMode] = useState<"followers" | "following">(
+    "followers",
+  );
+  const [socialUsers, setSocialUsers] = useState<FollowUserDto[]>([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,7 +57,7 @@ export default function ProfilePage() {
         setUser(data);
         await loadPosts(username);
       } catch (error) {
-        toast.error(t("profile.errors.load_profile"));
+        toast.error(t("profile:errors.load_profile"));
       } finally {
         setLoading(false);
       }
@@ -78,7 +94,7 @@ export default function ProfilePage() {
       setNextCursor(response.nextCursor);
     } catch (error) {
       console.error("Profile posts could not be loaded", error);
-      toast.error(t("profile.empty_title"));
+      toast.error(t("profile:empty_title"));
     } finally {
       setPostsLoading(false);
       setLoadingMore(false);
@@ -90,6 +106,67 @@ export default function ProfilePage() {
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
     if (!path.startsWith("/uploads/")) return null;
     return `${SERVER_URL}${path}`;
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user || user.isCurrentUser || followLoading) return;
+
+    const previous = user;
+    const isFollowing = user.relationStatus === FollowStatus.Accepted;
+    const nextStatus = isFollowing
+      ? null
+      : user.followPolicy === FollowPolicy.RequestOnly
+        ? FollowStatus.Pending
+        : FollowStatus.Accepted;
+
+    setFollowLoading(true);
+    setUser((current) =>
+      current
+        ? {
+            ...current,
+            relationStatus: nextStatus,
+            followersCount: Math.max(
+              0,
+              (current.followersCount ?? 0) +
+                (isFollowing ? -1 : nextStatus === FollowStatus.Accepted ? 1 : 0),
+            ),
+          }
+        : current,
+    );
+
+    try {
+      if (isFollowing) {
+        await accountService.unfollowUser(user.id);
+      } else {
+        await accountService.followUser(user.id);
+      }
+    } catch (error) {
+      setUser(previous);
+      toast.error(t("profile:errors.follow_action"));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const openSocialList = async (mode: "followers" | "following") => {
+    if (!user) return;
+
+    setSocialListMode(mode);
+    setSocialListOpen(true);
+    setSocialListLoading(true);
+
+    try {
+      const items =
+        mode === "followers"
+          ? await accountService.getFollowers(user.id)
+          : await accountService.getFollowing(user.id);
+      setSocialUsers(items);
+    } catch (error) {
+      setSocialUsers([]);
+      toast.error(t("profile:errors.load_social_list"));
+    } finally {
+      setSocialListLoading(false);
+    }
   };
 
   if (loading) {
@@ -124,6 +201,12 @@ export default function ProfilePage() {
               {user?.username}
             </h2>
 
+            {user?.isFollowingCurrentUser ? (
+              <span className="mt-2 inline-flex items-center rounded-full border border-skin-secondary/20 bg-skin-secondary/10 px-3 py-1 text-xs font-semibold text-skin-secondary">
+              {t("profile:social.follows_you")}
+              </span>
+            ) : null}
+
             {user?.location ? (
               <div className="mt-1 flex items-center gap-1 text-sm text-skin-muted">
                 <MapPinIcon className="h-4 w-4" />
@@ -138,31 +221,75 @@ export default function ProfilePage() {
             ) : null}
 
             <div className="mt-3 rounded-full border border-skin-primary/30 bg-skin-primary/20 px-3 py-1 text-xs font-bold text-skin-primary">
-              {t("profile.stats.level", { level: user?.level ?? 0 })}
+              {t("profile:stats.level", { level: user?.level ?? 0 })}
             </div>
+
+            <div className="mt-4 flex items-center gap-4 text-sm text-skin-muted">
+              <button
+                type="button"
+                onClick={() => void openSocialList("followers")}
+                className="transition hover:text-skin-text"
+              >
+                <span className="font-semibold text-skin-text">
+                  {user?.followersCount ?? 0}
+                </span>{" "}
+                {t("profile:stats.followers")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void openSocialList("following")}
+                className="transition hover:text-skin-text"
+              >
+                <span className="font-semibold text-skin-text">
+                  {user?.followingCount ?? 0}
+                </span>{" "}
+                {t("profile:stats.following")}
+              </button>
+            </div>
+
+            {!user?.isCurrentUser && user?.followPolicy !== FollowPolicy.Disabled ? (
+              <button
+                type="button"
+                onClick={() => void handleFollowToggle()}
+                disabled={followLoading}
+                className={`mt-4 inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                  user?.relationStatus === FollowStatus.Accepted
+                    ? "border border-skin-border bg-skin-surface text-skin-text hover:border-skin-primary/40"
+                    : "bg-skin-primary text-skin-base hover:bg-skin-primary/90"
+                }`}
+              >
+                {followLoading
+                  ? t("profile:actions.processing")
+                  : user?.relationStatus === FollowStatus.Accepted
+                    ? t("profile:actions.following")
+                    : user?.relationStatus === FollowStatus.Pending
+                      ? t("profile:actions.requested")
+                      : t("profile:actions.follow")}
+              </button>
+            ) : null}
           </div>
 
           <div className="grid w-full flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
               <div className="mb-1 text-sm text-skin-muted">
-                {t("profile.stats.wallet")}
+                {t("profile:stats.wallet")}
               </div>
               <div className="text-2xl font-bold text-skin-secondary">
                 {user?.money}{" "}
                 <span className="text-xs text-skin-muted">
-                  {t("profile.stats.coin")}
+                  {t("profile:stats.coin")}
                 </span>
               </div>
             </div>
 
             <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
               <div className="mb-1 text-sm text-skin-muted">
-                {t("profile.stats.streak")}
+                {t("profile:stats.streak")}
               </div>
               <div className="flex items-center gap-2 text-2xl font-bold text-skin-primary">
                 <span>{user?.currentStreak}</span>
                 <span className="text-sm text-skin-muted">
-                  {t("profile.stats.days")}
+                  {t("profile:stats.days")}
                 </span>
               </div>
             </div>
@@ -170,7 +297,7 @@ export default function ProfilePage() {
             <div className="col-span-1 rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70 sm:col-span-2">
               <div className="mb-2 flex justify-between text-sm">
                 <span className="text-skin-muted">
-                  {t("profile.stats.xp_progress")}
+                  {t("profile:stats.xp_progress")}
                 </span>
                 <span className="font-bold text-skin-primary">
                   {user?.xp} / 100 XP
@@ -183,7 +310,7 @@ export default function ProfilePage() {
                 ></div>
               </div>
               <p className="mt-2 text-right text-xs text-skin-muted">
-                {t("profile.stats.total_xp", { totalXp: user?.totalXp ?? 0 })}
+                {t("profile:stats.total_xp", { totalXp: user?.totalXp ?? 0 })}
               </p>
             </div>
           </div>
@@ -193,13 +320,13 @@ export default function ProfilePage() {
       <section className="rounded-2xl border border-skin-border bg-skin-surface p-6 shadow-xl">
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
-            {t("profile.eyebrow")}
+            {t("profile:eyebrow")}
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-skin-text">
-            {t("profile.title")}
+            {t("profile:title")}
           </h2>
           <p className="max-w-2xl text-sm leading-6 text-skin-muted">
-            {t("profile.subtitle")}
+            {t("profile:subtitle")}
           </p>
         </div>
 
@@ -210,10 +337,10 @@ export default function ProfilePage() {
         ) : posts.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-dashed border-skin-border/60 bg-skin-base/40 px-8 py-14 text-center">
             <h3 className="text-xl font-semibold text-skin-text">
-              {t("profile.empty_title")}
+              {t("profile:empty_title")}
             </h3>
             <p className="mt-3 text-sm leading-6 text-skin-muted">
-              {t("profile.empty_subtitle")}
+              {t("profile:empty_subtitle")}
             </p>
           </div>
         ) : (
@@ -235,11 +362,93 @@ export default function ProfilePage() {
               <ArrowPathIcon
                 className={`h-4 w-4 ${loadingMore ? "animate-spin" : ""}`}
               />
-              {loadingMore ? t("buttons.loading_more") : t("buttons.load_more")}
+              {loadingMore
+                ? t("feed:buttons.loading_more")
+                : t("feed:buttons.load_more")}
             </button>
           </div>
         ) : null}
       </section>
+
+      {socialListOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSocialListOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-skin-border bg-skin-surface shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-skin-border px-5 py-4">
+              <h3 className="text-lg font-semibold text-skin-text">
+                {socialListMode === "followers"
+                  ? t("profile:social.followers_title")
+                  : t("profile:social.following_title")}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSocialListOpen(false)}
+                className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto px-3 py-3">
+              {socialListLoading ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
+                </div>
+              ) : socialUsers.length === 0 ? (
+                <div className="px-4 py-10 text-center text-sm text-skin-muted">
+                  {socialListMode === "followers"
+                    ? t("profile:social.empty_followers")
+                    : t("profile:social.empty_following")}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {socialUsers.map((socialUser) => (
+                    <button
+                      key={socialUser.id}
+                      type="button"
+                      onClick={() => {
+                        setSocialListOpen(false);
+                        navigate(`/${socialUser.username}`);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-skin-base"
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-skin-base">
+                        {socialUser.avatarUrl ? (
+                          <img
+                            src={getFullAvatarUrl(socialUser.avatarUrl) || ""}
+                            alt={socialUser.username}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-semibold text-skin-primary">
+                            {socialUser.username.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-skin-text">
+                          {socialUser.username}
+                        </p>
+                        {socialUser.isFollowingCurrentUser &&
+                        socialUser.id !== currentUser?.id ? (
+                          <p className="mt-1 text-xs font-medium text-skin-secondary">
+                            {t("profile:social.follows_you")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

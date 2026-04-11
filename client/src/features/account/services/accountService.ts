@@ -3,6 +3,7 @@ import type {
   UpdateProfileDto,
   ChangePasswordDto,
   UserProfileDto,
+  FollowUserDto,
 } from "@/features/account/types";
 
 export const accountService = {
@@ -25,6 +26,24 @@ export const accountService = {
 
   getProfileByUsername: async (username: string) => {
     const response = await api.get<UserProfileDto>(`/users/${username}`);
+    return response.data;
+  },
+
+  followUser: async (targetUserId: string) => {
+    await api.post(`/users/${targetUserId}/follow`);
+  },
+
+  unfollowUser: async (targetUserId: string) => {
+    await api.delete(`/users/${targetUserId}/follow`);
+  },
+
+  getFollowers: async (userId: string) => {
+    const response = await api.get<FollowUserDto[]>(`/users/${userId}/followers`);
+    return response.data;
+  },
+
+  getFollowing: async (userId: string) => {
+    const response = await api.get<FollowUserDto[]>(`/users/${userId}/following`);
     return response.data;
   },
 

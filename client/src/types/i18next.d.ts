@@ -6,6 +6,7 @@ import entertainment from "@public/locales/en/entertainment.json";
 import dashboard from "@public/locales/en/dashboard.json";
 import settings from "@public/locales/en/settings.json";
 import feed from "@public/locales/en/feed.json";
+import profile from "@public/locales/en/profile.json";
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -18,6 +19,7 @@ declare module "i18next" {
       dashboard: typeof dashboard;
       settings: typeof settings;
       feed: typeof feed;
+      profile: typeof profile;
     };
   }
 }

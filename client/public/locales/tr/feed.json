@@ -46,25 +46,6 @@
     },
     "delete_confirm": "Bu gönderiyi silmek istiyor musun?"
   },
-  "profile": {
-    "eyebrow": "Profil Akışı",
-    "title": "Son aktiviteler",
-    "subtitle": "Bu kişinin son zamanlarda neler izlediğini, puanladığını, incelediğini ve bitirdiğini burada görebilirsin.",
-    "empty_title": "Henüz aktivite yok",
-    "empty_subtitle": "Yeni aktiviteler oluştuğunda burada görünecek.",
-    "stats": {
-      "level": "Seviye {{level}}",
-      "wallet": "Cüzdan",
-      "coin": "Viva",
-      "streak": "Seri",
-      "days": "gün",
-      "xp_progress": "XP İlerlemesi",
-      "total_xp": "Toplam: {{totalXp}} XP"
-    },
-    "errors": {
-      "load_profile": "Oturum süresi doldu."
-    }
-  },
   "buttons": {
     "load_more": "Daha fazla yükle",
     "loading_more": "Yükleniyor..."

@@ -256,8 +256,15 @@ export default function BookDetailPage() {
         googleBookId: data.id,
         rating,
       });
-      toast.success(t("common:messages.rate_success", { rating }));
-      setData((prev: any) => ({ ...prev, userRating: rating }));
+      if (rating > 0) {
+        toast.success(t("common:messages.rate_success", { rating }));
+      } else {
+        toast.success(t("common:messages.save_success"));
+      }
+      setData((prev: any) => ({
+        ...prev,
+        userRating: rating > 0 ? rating : undefined,
+      }));
     } catch (error: any) {
       toast.error(t("common:messages.rate_error"));
     }

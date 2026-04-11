@@ -1,0 +1,36 @@
+{
+  "eyebrow": "Profil Akışı",
+  "title": "Son aktiviteler",
+  "subtitle": "Bu kişinin son zamanlarda neler izlediğini, puanladığını, incelediğini ve bitirdiğini burada görebilirsin.",
+  "empty_title": "Henüz aktivite yok",
+  "empty_subtitle": "Yeni aktiviteler oluştuğunda burada görünecek.",
+  "stats": {
+    "level": "Seviye {{level}}",
+    "wallet": "Cüzdan",
+    "coin": "Viva",
+    "streak": "Seri",
+    "days": "gün",
+    "followers": "takipçi",
+    "following": "takip",
+    "xp_progress": "XP İlerlemesi",
+    "total_xp": "Toplam: {{totalXp}} XP"
+  },
+  "actions": {
+    "follow": "Takip et",
+    "following": "Takip ediliyor",
+    "requested": "İstek gönderildi",
+    "processing": "Bekleyin..."
+  },
+  "social": {
+    "followers_title": "Takipçiler",
+    "following_title": "Takip edilenler",
+    "empty_followers": "Henüz takipçi yok.",
+    "empty_following": "Henüz kimse takip edilmiyor.",
+    "follows_you": "Seni takip ediyor"
+  },
+  "errors": {
+    "load_profile": "Oturum süresi doldu.",
+    "follow_action": "Takip işlemi tamamlanamadı.",
+    "load_social_list": "Kullanıcı listesi yüklenemedi."
+  }
+}

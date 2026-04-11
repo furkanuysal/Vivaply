@@ -17,6 +17,7 @@ i18n
       "dashboard",
       "settings",
       "feed",
+      "profile",
     ], // Namespaces
     defaultNS: "common", // Default namespace
 

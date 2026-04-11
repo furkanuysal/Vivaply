@@ -62,13 +62,20 @@ export function useEntertainmentDetail(
       } else {
         await mediaService.rateItem(data.id, type as "tv" | "movie", rating);
       }
-      toast.success(t("common:messages.rate_success", { rating }));
+      if (rating > 0) {
+        toast.success(t("common:messages.rate_success", { rating }));
+      } else {
+        toast.success(t("common:messages.save_success"));
+      }
 
       // Update UI
-      setData((prev: any) => ({ ...prev, user_rating: rating }));
+      setData((prev: any) => ({
+        ...prev,
+        user_rating: rating > 0 ? rating : undefined,
+      }));
 
       // If not added yet, automatically added
-      if (!data.user_status) {
+      if (rating > 0 && !data.user_status) {
         const newStatus =
           type === "tv" ? WatchStatus.Watching : WatchStatus.Completed;
         setData((prev: any) => ({
