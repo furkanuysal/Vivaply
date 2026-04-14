@@ -17,15 +17,13 @@ namespace Vivaply.API.Modules.Core.Dashboard.Services.Implementations
         {
             var response = new DashboardSummaryDto();
 
-            // Tv shows (Continue Watching)
-            var continueWatchingShows = await _dbContext.UserShows
+            // Recently watched shows
+            var recentShows = await _dbContext.UserShows
                 .Where(x =>
                     x.UserId == userId &&
-                    x.Status == WatchStatus.Watching &&
                     x.LastWatchedAt != null
                 )
                 .OrderByDescending(x => x.LastWatchedAt)
-                .Take(5)
                 .Select(show => new DashboardContentItemDto
                 {
                     Id = show.TmdbShowId.ToString(),
@@ -39,17 +37,44 @@ namespace Vivaply.API.Modules.Core.Dashboard.Services.Implementations
                     Episode = show.LastWatchedEpisode,
 
                     UserStatus = (int)show.Status,
+                    ProgressPercent = show.Status == WatchStatus.Completed ? 100 : null,
                     LastUpdated = show.LastWatchedAt!.Value
                 })
                 .ToListAsync();
 
-            response.ContinueWatching.AddRange(continueWatchingShows);
+            var recentMovies = await _dbContext.UserMovies
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.WatchedAt != null
+                )
+                .OrderByDescending(x => x.WatchedAt)
+                .Select(movie => new DashboardContentItemDto
+                {
+                    Id = movie.TmdbMovieId.ToString(),
+                    Type = DashboardItemType.Movie,
+                    Title = movie.Metadata!.Title,
+                    ImageUrl = !string.IsNullOrEmpty(movie.Metadata!.PosterPath)
+                        ? TMDB_IMAGE_BASE + movie.Metadata.PosterPath
+                        : null,
+                    UserStatus = (int)movie.Status,
+                    ProgressPercent = movie.Status == WatchStatus.Completed ? 100 : null,
+                    LastUpdated = movie.WatchedAt!.Value
+                })
+                .ToListAsync();
+
+            response.ContinueWatching.AddRange(recentShows
+                .Concat(recentMovies)
+                .OrderByDescending(x => x.LastUpdated)
+                .Take(5));
 
 
-            // Games (Playing)
+            // Games (recent activity, including completed)
             var activeGames = await _dbContext.UserGames
-                .Where(x => x.UserId == userId && x.Status == PlayStatus.Playing)
-                .OrderByDescending(x => x.DateAdded)
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.Status != PlayStatus.None &&
+                    x.Status != PlayStatus.PlanToPlay)
+                .OrderByDescending(x => x.DateFinished ?? x.DateAdded)
                 .Take(5)
                 .Include(x => x.Metadata)
                 .ToListAsync();
@@ -64,14 +89,17 @@ namespace Vivaply.API.Modules.Core.Dashboard.Services.Implementations
                     ImageUrl = game.Metadata?.CoverUrl,
                     CurrentValue = game.UserPlaytime,
                     UserStatus = (int)game.Status,
-                    LastUpdated = game.DateAdded
+                    LastUpdated = game.DateFinished ?? game.DateAdded
                 });
             }
 
-            // Books (Reading)
+            // Books (recent activity, including completed)
             var activeBooks = await _dbContext.UserBooks
-                .Where(x => x.UserId == userId && x.Status == ReadStatus.Reading)
-                .OrderByDescending(x => x.DateAdded)
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.Status != ReadStatus.None &&
+                    x.Status != ReadStatus.PlanToRead)
+                .OrderByDescending(x => x.DateFinished ?? x.DateAdded)
                 .Take(5)
                 .Include(x => x.Metadata)
                 .ToListAsync();
@@ -89,9 +117,9 @@ namespace Vivaply.API.Modules.Core.Dashboard.Services.Implementations
                     ImageUrl = book.Metadata?.CoverUrl,
                     CurrentValue = book.CurrentPage,
                     MaxValue = pageCount,
-                    ProgressPercent = percent,
+                    ProgressPercent = book.Status == ReadStatus.Completed ? 100 : percent,
                     UserStatus = (int)book.Status,
-                    LastUpdated = book.DateAdded
+                    LastUpdated = book.DateFinished ?? book.DateAdded
                 });
             }
 

@@ -4,6 +4,8 @@ import { UniversalCoverFallback } from "@/shared/ui";
 import type { DashboardItemDto } from "@/features/dashboard/types";
 import { DashboardItemType } from "@/features/dashboard/types";
 import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";
+import { PlayStatus } from "@/features/entertainment/types";
+import { ReadStatus } from "@/features/knowledge/types";
 
 interface DashboardListCardProps {
   item: DashboardItemDto;
@@ -24,20 +26,27 @@ export default function DashboardListCard({
   if (item.type === DashboardItemType.Book) {
     subText = t("common:types.book");
 
-    // Secure percentage calculation
-    const current = item.currentValue ?? 0;
-    const max = item.maxValue ?? 1; // Prevent division by zero
-    const percent = max > 0 ? Math.round((current / max) * 100) : 0;
+    if (item.userStatus === ReadStatus.Completed) {
+      progressText = "%100";
+      progressLabel = t("dashboard:status.completed");
+    } else {
+      const current = item.currentValue ?? 0;
+      const max = item.maxValue ?? 1;
+      const percent = max > 0 ? Math.round((current / max) * 100) : 0;
 
-    progressText = `%${percent}`;
-    progressLabel = t("dashboard:status.in_progress");
+      progressText = `%${percent}`;
+      progressLabel = t("dashboard:status.in_progress");
+    }
+
     progressColor = "text-skin-accent"; // Book color
   } else if (item.type === DashboardItemType.Game) {
     subText = t("common:types.game");
 
-    // Game time
     progressText = `${item.currentValue ?? 0}${t("dashboard:units.hour_short")}`;
-    progressLabel = t("dashboard:status.played");
+    progressLabel =
+      item.userStatus === PlayStatus.Completed
+        ? t("dashboard:status.completed")
+        : t("dashboard:status.played");
     progressColor = "text-skin-rating-90"; // Game color
   }
 

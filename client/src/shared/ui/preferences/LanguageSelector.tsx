@@ -17,7 +17,7 @@ export default function LanguageSelector({
 
   const languages = [
     { code: "en", name: "English", flag: "EN" },
-    { code: "tr", name: "Turkce", flag: "TR" },
+    { code: "tr", name: "Türkçe", flag: "TR" },
   ];
 
   const currentLanguage =

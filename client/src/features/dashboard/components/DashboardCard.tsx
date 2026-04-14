@@ -10,6 +10,7 @@ import { UniversalCoverFallback } from "@/shared/ui";
 import type { DashboardItemDto } from "@/features/dashboard/types";
 import { DashboardItemType } from "@/features/dashboard/types";
 import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";
+import { WatchStatus } from "@/features/entertainment/types";
 
 interface DashboardCardProps {
   item: DashboardItemDto;
@@ -23,8 +24,11 @@ export default function DashboardCard({
   t,
 }: DashboardCardProps) {
   let subText = "";
+
   if (item.type === DashboardItemType.Tv && item.season && item.episode) {
     subText = `${t("dashboard:units.season")} ${item.season} • ${t("dashboard:units.episode")} ${item.episode}`;
+  } else if (item.userStatus === WatchStatus.Completed) {
+    subText = t("dashboard:status.completed");
   } else {
     subText = t("common:types.movie") || "Film";
   }
@@ -34,52 +38,49 @@ export default function DashboardCard({
   return (
     <div
       onClick={() => navigate(getRoutePath(item.type, item.id))}
-      className="group relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md cursor-pointer transform hover:scale-[1.02] transition-all duration-300 border border-skin-border/30"
+      className="group relative aspect-[16/10] cursor-pointer overflow-hidden rounded-2xl border border-skin-border/30 shadow-md transition-all duration-300 hover:scale-[1.02]"
     >
-      {/* --- Background Image --- */}
       <div className="absolute inset-0">
         {item.imageUrl ? (
           <img
             src={item.imageUrl.replace("http:", "https:")}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             alt={item.title}
           />
         ) : (
           <UniversalCoverFallback
             title={item.title}
             type={TYPE_LABEL[item.type]}
-            className="w-full h-full"
+            className="h-full w-full"
           />
         )}
 
-        {/* Darkening Effect */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
       </div>
 
-      {/* --- Top Right Icon Badge --- */}
-      <div className="absolute top-3 right-3 z-20 bg-skin-surface/90 backdrop-blur text-skin-text p-2 rounded-full shadow-lg border border-skin-border/10">
-        {item.type === DashboardItemType.Tv && <TvIcon className="w-5 h-5" />}
+      <div className="absolute right-3 top-3 z-20 rounded-full border border-skin-border/10 bg-skin-surface/90 p-2 text-skin-text shadow-lg backdrop-blur">
+        {item.type === DashboardItemType.Tv && <TvIcon className="h-5 w-5" />}
         {item.type === DashboardItemType.Movie && (
-          <FilmIcon className="w-5 h-5" />
+          <FilmIcon className="h-5 w-5" />
         )}
-        {item.type === DashboardItemType.Book && <BookOpenIcon className="w-5 h-5" />}
-        {item.type === DashboardItemType.Game && <PuzzlePieceIcon className="w-5 h-5" />}
+        {item.type === DashboardItemType.Book && <BookOpenIcon className="h-5 w-5" />}
+        {item.type === DashboardItemType.Game && (
+          <PuzzlePieceIcon className="h-5 w-5" />
+        )}
       </div>
 
-      {/* --- Content --- */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 flex flex-col gap-1 z-10">
-        <h4 className="text-white text-lg font-bold leading-tight drop-shadow-md truncate pr-4">
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-1 p-5">
+        <h4 className="truncate pr-4 text-lg font-bold leading-tight text-white drop-shadow-md">
           {item.title}
         </h4>
-        <p className="text-gray-300 text-sm font-medium drop-shadow-sm">
+        <p className="text-sm font-medium text-gray-300 drop-shadow-sm">
           {subText}
         </p>
 
-        {/* Progress Bar */}
         {progressPercent > 0 && (
-          <div className="w-full bg-white/20 h-1 rounded-full mt-2 overflow-hidden">
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/20">
             <div
-              className="bg-skin-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--color-primary),0.5)]"
+              className="h-full rounded-full bg-skin-primary shadow-[0_0_10px_rgba(var(--color-primary),0.5)]"
               style={{ width: `${progressPercent}%` }}
             ></div>
           </div>
