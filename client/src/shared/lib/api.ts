@@ -17,6 +17,49 @@ export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
+export const getApiErrorMessage = (error: unknown): string | null => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+
+    if (typeof data === "string" && data.trim().length > 0) {
+      return data;
+    }
+
+    if (data && typeof data === "object") {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim().length > 0) {
+        return message;
+      }
+
+      const title = (data as { title?: unknown }).title;
+      if (typeof title === "string" && title.trim().length > 0) {
+        return title;
+      }
+
+      const errors = (data as { errors?: Record<string, string[] | string> }).errors;
+      if (errors && typeof errors === "object") {
+        const firstError = Object.values(errors)[0];
+
+        if (Array.isArray(firstError) && typeof firstError[0] === "string") {
+          return firstError[0];
+        }
+
+        if (typeof firstError === "string" && firstError.trim().length > 0) {
+          return firstError;
+        }
+      }
+    }
+
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return null;
+};
+
 const AUTH_EXCLUDED_PATHS = [
   "/Auth/login",
   "/Auth/register",

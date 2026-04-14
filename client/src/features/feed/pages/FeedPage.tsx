@@ -9,12 +9,14 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
+import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
 import { feedApi, getActorAvatarUrl } from "@/features/feed/api/feedApi";
 import {
   applyPostUpdateToList,
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import { getApiErrorMessage } from "@/shared/lib/api";
 
 export default function FeedPage() {
   const { t } = useTranslation("feed");
@@ -24,6 +26,7 @@ export default function FeedPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [postText, setPostText] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submittingPost, setSubmittingPost] = useState(false);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
 
@@ -62,18 +65,19 @@ export default function FeedPage() {
 
   const handleCreatePost = async () => {
     const value = postText.trim();
-    if (!value) {
+    if (!value && selectedFiles.length === 0) {
       return;
     }
 
     try {
       setSubmittingPost(true);
-      const createdPost = await feedApi.createPost(value);
+      const createdPost = await feedApi.createPost(value, selectedFiles);
       setItems((current) => [createdPost, ...current]);
       setPostText("");
+      setSelectedFiles([]);
     } catch (error) {
       console.error("Post could not be created", error);
-      toast.error(t("page.composer.error"));
+      toast.error(getApiErrorMessage(error) ?? t("page.composer.error"));
     } finally {
       setSubmittingPost(false);
     }
@@ -127,15 +131,32 @@ export default function FeedPage() {
               className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
             />
 
+            <div className="mt-3">
+              <ComposerMediaPreview
+                files={selectedFiles}
+                onRemove={(index) =>
+                  setSelectedFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                }
+              />
+            </div>
+
             <div className="mt-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 text-skin-muted">
-                <button
-                  type="button"
-                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                  aria-label={t("actions.media")}
-                >
+                <label className="cursor-pointer rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    className="hidden"
+                    onChange={(event) => {
+                      const files = Array.from(event.target.files ?? []).slice(0, 4);
+                      setSelectedFiles(files);
+                      event.target.value = "";
+                    }}
+                  />
                   <PhotoIcon className="h-5 w-5" />
-                </button>
+                  <span className="sr-only">{t("actions.media")}</span>
+                </label>
                 <button
                   type="button"
                   className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
@@ -159,7 +180,7 @@ export default function FeedPage() {
                 <button
                   type="button"
                   onClick={() => void handleCreatePost()}
-                  disabled={submittingPost || !postText.trim()}
+                  disabled={submittingPost || (!postText.trim() && selectedFiles.length === 0)}
                   className="inline-flex items-center justify-center rounded-full bg-skin-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submittingPost

@@ -2,6 +2,7 @@
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -59,6 +60,11 @@ builder.Services.AddSocialServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Services Configuration
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 120 * 1024 * 1024;
+});
+
 builder.Services.AddControllers();
 
 // Health Checks Configuration

@@ -27,13 +27,15 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts")]
+        [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
+        [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Create(
-            [FromBody] CreatePostRequest request,
+            [FromForm] CreatePostRequest request,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(request.TextContent))
+            if (string.IsNullOrWhiteSpace(request.TextContent) && (request.Files == null || request.Files.Count == 0))
             {
-                return BadRequest("Post text is required.");
+                return BadRequest("Post text or media is required.");
             }
 
             var result = await _postService.CreateAsync(CurrentUserId, request, cancellationToken);
@@ -75,14 +77,16 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/reply")]
+        [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
+        [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Reply(
             Guid id,
-            [FromBody] CreateReplyPostRequest request,
+            [FromForm] CreateReplyPostRequest request,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(request.TextContent))
+            if (string.IsNullOrWhiteSpace(request.TextContent) && (request.Files == null || request.Files.Count == 0))
             {
-                return BadRequest("Reply text is required.");
+                return BadRequest("Reply text or media is required.");
             }
 
             var result = await _postService.CreateReplyAsync(CurrentUserId, id, request, cancellationToken);
@@ -90,9 +94,11 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/quote")]
+        [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
+        [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Quote(
             Guid id,
-            [FromBody] CreateQuotePostRequest request,
+            [FromForm] CreateQuotePostRequest request,
             CancellationToken cancellationToken)
         {
             var result = await _postService.CreateQuoteAsync(CurrentUserId, id, request, cancellationToken);

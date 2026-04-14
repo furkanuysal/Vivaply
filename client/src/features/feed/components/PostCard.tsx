@@ -8,7 +8,10 @@ import {
   ShareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import {
+  HeartIcon as HeartSolidIcon,
+  PlayIcon,
+} from "@heroicons/react/24/solid";
 import {
   useEffect,
   useRef,
@@ -24,6 +27,7 @@ import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   getActorAvatarUrl,
+  getAttachmentUrl,
   getFeedActivityType,
   getFeedDescription,
   getFeedImageUrl,
@@ -484,6 +488,10 @@ export default function PostCard({
             </blockquote>
           ) : null}
 
+          {item.attachments.length > 0 ? (
+            <PostAttachmentGallery attachments={item.attachments} />
+          ) : null}
+
           {shouldRenderContentPreview ? (
             <Link
               to={targetPath!}
@@ -715,6 +723,12 @@ function QuotedPostPreview({
         <p className="mt-2 text-sm leading-6 text-skin-text/90">{item.textContent}</p>
       ) : null}
 
+      {item.attachments.length > 0 ? (
+        <div className="mt-3">
+          <PostAttachmentGallery attachments={item.attachments} />
+        </div>
+      ) : null}
+
       {targetPath ? (
         <div className="mt-3 rounded-xl border border-skin-border/40 bg-skin-surface px-3 py-3">
           <CardContentPreview
@@ -758,6 +772,192 @@ function PostAction({
     >
       {icon}
       {typeof count === "number" ? <span>{count}</span> : null}
+    </button>
+  );
+}
+
+function PostAttachmentGallery({
+  attachments,
+}: {
+  attachments: FeedItemDto["attachments"] | FeedQuotedPostDto["attachments"];
+}) {
+  const media = attachments.filter(
+    (attachment) => attachment.type === 1 || attachment.type === 2,
+  );
+
+  if (media.length === 0) {
+    return null;
+  }
+
+  const gridClass =
+    media.length === 1
+      ? "grid-cols-1"
+      : media.length === 2
+        ? "grid-cols-2"
+        : "grid-cols-2";
+
+  return (
+    <div className={`mt-4 grid gap-2 ${gridClass}`}>
+      {media.slice(0, 4).map((attachment) => (
+        <div
+          key={attachment.id}
+          className="overflow-hidden rounded-2xl border border-skin-border/40 bg-skin-base"
+        >
+          {attachment.type === 2 ? (
+            <VideoAttachmentPreview attachment={attachment} />
+          ) : (
+            <img
+              src={getAttachmentUrl(attachment.url) ?? attachment.url}
+              alt=""
+              className="max-h-[420px] w-full object-cover"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VideoAttachmentPreview({
+  attachment,
+}: {
+  attachment: FeedItemDto["attachments"][number] | FeedQuotedPostDto["attachments"][number];
+}) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(
+    getAttachmentUrl(attachment.thumbnailUrl ?? undefined) ?? attachment.thumbnailUrl ?? null,
+  );
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(
+    attachment.durationSeconds ?? null,
+  );
+  const src = getAttachmentUrl(attachment.url) ?? attachment.url;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!src) {
+      return undefined;
+    }
+
+    const video = document.createElement("video");
+    video.src = src;
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = "anonymous";
+
+    const captureFrame = () => {
+      if (isCancelled || video.videoWidth === 0 || video.videoHeight === 0) {
+        return;
+      }
+
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          return;
+        }
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        setPosterUrl(canvas.toDataURL("image/jpeg", 0.82));
+      } catch {
+        // Ignore thumbnail capture failures and fall back to a simple placeholder.
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (isCancelled) {
+        return;
+      }
+
+      if (!attachment.durationSeconds && Number.isFinite(video.duration)) {
+        setDurationSeconds(Math.max(0, Math.floor(video.duration)));
+      }
+
+      const seekTarget = Math.min(Math.max(video.duration * 0.05, 0.1), 1);
+
+      if (Number.isFinite(seekTarget) && seekTarget > 0) {
+        try {
+          video.currentTime = seekTarget;
+        } catch {
+          captureFrame();
+        }
+      } else {
+        captureFrame();
+      }
+    };
+
+    const handleSeeked = () => {
+      captureFrame();
+    };
+
+    const handleLoadedData = () => {
+      if (!posterUrl) {
+        captureFrame();
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("seeked", handleSeeked);
+    video.addEventListener("loadeddata", handleLoadedData);
+
+    return () => {
+      isCancelled = true;
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("seeked", handleSeeked);
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.src = "";
+    };
+  }, [attachment.durationSeconds, posterUrl, src]);
+
+  if (isPlaying) {
+    return (
+      <video
+        src={src}
+        className="aspect-video max-h-[420px] w-full bg-black object-contain"
+        controls
+        playsInline
+        preload="metadata"
+        autoPlay
+        onClick={(event) => event.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        setIsPlaying(true);
+      }}
+      className="group relative block w-full"
+    >
+      {posterUrl ? (
+        <img
+          src={posterUrl}
+          alt=""
+          className="aspect-video max-h-[420px] w-full object-cover"
+        />
+      ) : (
+        <div className="flex aspect-video max-h-[420px] w-full items-center justify-center bg-black/80 text-white/80">
+          <PlayIcon className="h-12 w-12" />
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent transition group-hover:from-black/60" />
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-black/60 text-white shadow-lg shadow-black/30">
+          <PlayIcon className="h-7 w-7" />
+        </span>
+      </div>
+
+      <div className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center rounded-full bg-black/65 px-2.5 py-1 text-xs font-medium text-white">
+        {formatVideoDuration(durationSeconds)}
+      </div>
     </button>
   );
 }
@@ -1016,4 +1216,24 @@ function getNumber(value: unknown): number {
 function getEpisodeCount(payload: Record<string, unknown>): number {
   const episodeNumbers = payload.episodeNumbers;
   return Array.isArray(episodeNumbers) ? episodeNumbers.length : 0;
+}
+
+function formatVideoDuration(durationSeconds: number | null): string {
+  if (!durationSeconds || durationSeconds <= 0) {
+    return "00:00";
+  }
+
+  const hours = Math.floor(durationSeconds / 3600);
+  const minutes = Math.floor((durationSeconds % 3600) / 60);
+  const seconds = durationSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  return `${minutes.toString().padStart(2, "0")}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
 }

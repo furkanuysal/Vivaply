@@ -13,11 +13,12 @@ using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class PostService(VivaplyDbContext db, IMemoryCache cache) : IPostService
+    public class PostService(VivaplyDbContext db, IMemoryCache cache, IPostMediaStorageService postMediaStorageService) : IPostService
     {
         private const int ViewCooldownHours = 6;
         private readonly VivaplyDbContext _db = db;
         private readonly IMemoryCache _cache = cache;
+        private readonly IPostMediaStorageService _postMediaStorageService = postMediaStorageService;
 
         public async Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default)
         {
@@ -73,9 +74,18 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 UserId = currentUserId,
                 Type = PostType.Standard,
-                TextContent = request.TextContent.Trim(),
+                TextContent = NormalizeText(request.TextContent),
                 PublishedAt = now
             };
+
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(
+                request.Files,
+                request.ThumbnailFiles,
+                request.ThumbnailIndexes,
+                cancellationToken))
+            {
+                post.Attachments.Add(attachment);
+            }
 
             _db.UserPosts.Add(post);
             _db.PostStats.Add(new PostStats
@@ -403,9 +413,18 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UserId = currentUserId,
                 Type = PostType.Reply,
                 ParentPostId = parentPostId,
-                TextContent = request.TextContent.Trim(),
+                TextContent = NormalizeText(request.TextContent),
                 PublishedAt = DateTime.UtcNow
             };
+
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(
+                request.Files,
+                request.ThumbnailFiles,
+                request.ThumbnailIndexes,
+                cancellationToken))
+            {
+                reply.Attachments.Add(attachment);
+            }
 
             _db.UserPosts.Add(reply);
             _db.PostStats.Add(new PostStats
@@ -448,11 +467,18 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UserId = currentUserId,
                 Type = PostType.Quote,
                 QuotedPostId = quotedPostId,
-                TextContent = string.IsNullOrWhiteSpace(request.TextContent)
-                    ? null
-                    : request.TextContent.Trim(),
+                TextContent = NormalizeText(request.TextContent),
                 PublishedAt = DateTime.UtcNow
             };
+
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(
+                request.Files,
+                request.ThumbnailFiles,
+                request.ThumbnailIndexes,
+                cancellationToken))
+            {
+                quote.Attachments.Add(attachment);
+            }
 
             _db.UserPosts.Add(quote);
             _db.PostStats.Add(new PostStats
@@ -494,6 +520,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         public async Task<PostDeletionDto?> DeleteAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
         {
             var post = await _db.UserPosts
+                .Include(x => x.Attachments)
                 .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
 
             if (post == null || post.UserId != currentUserId)
@@ -543,6 +570,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             await _db.SaveChangesAsync(cancellationToken);
+            DeletePostMedia(post);
 
             return new PostDeletionDto
             {
@@ -552,6 +580,19 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 QuotedPostId = quotedPostId,
                 QuotedPostQuoteCount = quotedPostQuoteCount
             };
+        }
+
+        private void DeletePostMedia(UserPost post)
+        {
+            foreach (var attachment in post.Attachments)
+            {
+                _postMediaStorageService.Delete(attachment.Url);
+
+                if (!string.IsNullOrWhiteSpace(attachment.ThumbnailUrl))
+                {
+                    _postMediaStorageService.Delete(attachment.ThumbnailUrl);
+                }
+            }
         }
 
         public async Task<PostStatsDto?> LikeAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default)
@@ -1116,6 +1157,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         }
 
         private static int NormalizeTake(int take) => Math.Clamp(take, 1, 50);
+
+        private static string? NormalizeText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
 
         private static string EncodeCursor(DateTime publishedAt, Guid id)
         {

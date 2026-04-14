@@ -7,16 +7,21 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
 {
     public class ImageService(IWebHostEnvironment env) : IImageService
     {
+        private const long AvatarMaxFileSizeBytes = 2 * 1024 * 1024;
         private readonly IWebHostEnvironment _env = env;
 
         public async Task<string> SaveImageAsync(IFormFile file)
+        {
+            return await SaveImageAsync(file, "avatars", AvatarMaxFileSizeBytes);
+        }
+
+        public async Task<string> SaveImageAsync(IFormFile file, string folderName, long maxFileSizeBytes)
         {
             if (file == null || file.Length == 0)
                 throw new InvalidOperationException("File is empty.");
 
             // File size limit
-            const long maxFileSize = 2 * 1024 * 1024;
-            if (file.Length > maxFileSize)
+            if (file.Length > maxFileSizeBytes)
                 throw new InvalidOperationException("File size is too large.");
 
             // File extension whitelist
@@ -44,7 +49,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             var uploadsFolder = Path.Combine(
                 _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
                 "uploads",
-                "avatars"
+                folderName
             );
 
             if (!Directory.Exists(uploadsFolder))
@@ -67,7 +72,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             }
 
             // Public URL
-            return $"/uploads/avatars/{uniqueFileName}";
+            return $"/uploads/{folderName}/{uniqueFileName}";
         }
 
 
@@ -91,8 +96,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             if (string.IsNullOrWhiteSpace(relativePath))
                 return;
 
-            // Allow deletion only from the avatars folder
-            if (!relativePath.StartsWith("/uploads/avatars/"))
+            if (!relativePath.StartsWith("/uploads/"))
                 return;
 
             var rootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");

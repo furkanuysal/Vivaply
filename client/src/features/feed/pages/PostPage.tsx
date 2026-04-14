@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
+import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
 import {
   feedApi,
   getActorAvatarUrl,
@@ -22,6 +23,7 @@ import {
   getFeedTitle,
   getRelativeTime,
 } from "@/features/feed/api/feedApi";
+import { getApiErrorMessage } from "@/shared/lib/api";
 import {
   applyPostUpdate,
   publishPostUpdate,
@@ -48,6 +50,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
   const [item, setItem] = useState<FeedItemDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [composerText, setComposerText] = useState("");
+  const [composerFiles, setComposerFiles] = useState<File[]>([]);
   const [submittingComposer, setSubmittingComposer] = useState(false);
   const [composerMode, setComposerMode] = useState<"reply" | "quote" | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
@@ -128,7 +131,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
   const handleComposerSubmit = async () => {
     const value = composerText.trim();
 
-    if (!postId || (composerMode === "reply" && !value)) {
+    if (!postId || (composerMode === "reply" && !value && composerFiles.length === 0)) {
       return;
     }
 
@@ -136,7 +139,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
       setSubmittingComposer(true);
 
       if (composerMode === "quote") {
-        const quotePost = await feedApi.quotePost(postId, value);
+        const quotePost = await feedApi.quotePost(postId, value, composerFiles);
         publishPostUpdate({ createdPost: quotePost });
         publishPostUpdate({
           postId,
@@ -154,6 +157,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
             : current,
         );
         setComposerText("");
+        setComposerFiles([]);
         setComposerMode(null);
 
         if (isModal) {
@@ -162,7 +166,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
         return;
       }
 
-      const reply = await feedApi.replyToPost(postId, value);
+      const reply = await feedApi.replyToPost(postId, value, composerFiles);
       const nextReplyCount = (item?.stats?.replyCount ?? 0) + 1;
 
       setItem((current) =>
@@ -184,11 +188,13 @@ export default function PostPage({ isModal = false }: PostPageProps) {
       });
 
       setComposerText("");
+      setComposerFiles([]);
       setComposerMode(null);
     } catch (error) {
       console.error("Post composer action could not be completed", error);
       toast.error(
-        composerMode === "quote" ? t("post.errors.quote") : t("post.errors.reply"),
+        getApiErrorMessage(error) ??
+          (composerMode === "quote" ? t("post.errors.quote") : t("post.errors.reply")),
       );
     } finally {
       setSubmittingComposer(false);
@@ -266,19 +272,34 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                   className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
                 />
 
+                <ComposerMediaPreview
+                  files={composerFiles}
+                  onRemove={(index) =>
+                    setComposerFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                  }
+                />
+
                 {composerMode === "quote" ? (
                   <QuoteComposerPreview item={item} />
                 ) : null}
 
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 text-skin-muted">
-                    <button
-                      type="button"
-                      className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                      aria-label={t("actions.media")}
-                    >
+                    <label className="cursor-pointer rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        className="hidden"
+                        onChange={(event) => {
+                          const files = Array.from(event.target.files ?? []).slice(0, 4);
+                          setComposerFiles(files);
+                          event.target.value = "";
+                        }}
+                      />
                       <PhotoIcon className="h-5 w-5" />
-                    </button>
+                      <span className="sr-only">{t("actions.media")}</span>
+                    </label>
                     <button
                       type="button"
                       className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
@@ -304,6 +325,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                       onClick={() => {
                         setComposerMode(null);
                         setComposerText("");
+                        setComposerFiles([]);
                       }}
                       className="text-sm font-medium text-skin-muted transition hover:text-skin-text"
                     >
@@ -314,7 +336,9 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                       onClick={() => void handleComposerSubmit()}
                       disabled={
                         submittingComposer ||
-                        (!composerText.trim() && composerMode !== "quote") ||
+                        (!composerText.trim() &&
+                          composerFiles.length === 0 &&
+                          composerMode !== "quote") ||
                         !user
                       }
                       className="inline-flex items-center justify-center rounded-full bg-skin-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
