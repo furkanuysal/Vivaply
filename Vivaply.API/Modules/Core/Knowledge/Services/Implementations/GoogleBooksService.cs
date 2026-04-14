@@ -57,9 +57,18 @@ namespace Vivaply.API.Modules.Core.Knowledge.Services.Implementations
                 Description = item.VolumeInfo?.Description,
                 PageCount = item.VolumeInfo?.PageCount ?? 0,
                 PublishedDate = item.VolumeInfo?.PublishedDate,
-                AverageRating = item.VolumeInfo?.AverageRating ?? 0,
+                AverageRating = NormalizeGoogleBooksRating(item.VolumeInfo?.AverageRating),
+                RatingsCount = item.VolumeInfo?.RatingsCount ?? 0,
                 CoverUrl = item.VolumeInfo?.ImageLinks?.Thumbnail?.Replace("http://", "https://")
             };
+        }
+
+        private static double NormalizeGoogleBooksRating(double? averageRating)
+        {
+            if (!averageRating.HasValue || averageRating.Value <= 0)
+                return 0;
+
+            return Math.Round(Math.Clamp(averageRating.Value * 2, 0, 10), 1);
         }
     }
 }

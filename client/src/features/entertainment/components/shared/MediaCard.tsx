@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import type { TmdbContentDto } from "@/features/entertainment/types";
 import { useTranslation } from "react-i18next";
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { UniversalCoverFallback } from "@/shared/ui";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import FloatingMediaCard from "@/features/entertainment/components/shared/FloatingMediaCard";

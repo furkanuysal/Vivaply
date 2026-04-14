@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence } from "framer-motion";
 import FloatingGameCard from "@/features/entertainment/components/shared/FloatingGameCard";
 
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { UniversalCoverFallback } from "@/shared/ui";
 
 interface Props {
   game: GameContentDto;

@@ -79,6 +79,7 @@ namespace Vivaply.API.Infrastructure.Jobs
 
                     show.LastKnownSeason = details.LastEpisodeToAir?.SeasonNumber;
                     show.LastKnownEpisode = details.LastEpisodeToAir?.EpisodeNumber;
+                    show.LastEpisodeAirDate = ParseTmdbDate(details.LastEpisodeToAir?.AirDate);
                     show.NextEpisodeAirDate = ParseTmdbDate(details.NextEpisodeToAir?.AirDate);
 
                     show.LastFetchedAt = now;

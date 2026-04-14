@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import { mediaService } from "@/features/entertainment/services/mediaService";
-import { gamesService } from "@/features/entertainment/services/gameService";
+import { gamesApi } from "@/features/entertainment/api/gamesApi";
+import { mediaApi } from "@/features/entertainment/api/mediaApi";
 import { WatchStatus, PlayStatus } from "@/features/entertainment/types";
 
 export function useEntertainmentDetail(
@@ -24,11 +24,11 @@ export function useEntertainmentDetail(
       try {
         let result;
         if (type === "tv") {
-          result = await mediaService.getTvDetail(Number(id));
+          result = await mediaApi.getTvDetail(Number(id));
         } else if (type === "movie") {
-          result = await mediaService.getMovieDetail(Number(id));
+          result = await mediaApi.getMovieDetail(Number(id));
         } else {
-          const gameResult = await gamesService.getGameDetail(Number(id));
+          const gameResult = await gamesApi.getGameDetail(Number(id));
           result = {
             ...gameResult,
             user_status: gameResult.userStatus,
@@ -58,9 +58,9 @@ export function useEntertainmentDetail(
     if (!data) return;
     try {
       if (type === "game") {
-        await gamesService.rateGame(data.id, rating);
+        await gamesApi.rateGame(data.id, rating);
       } else {
-        await mediaService.rateItem(data.id, type as "tv" | "movie", rating);
+        await mediaApi.rateItem(data.id, type as "tv" | "movie", rating);
       }
       if (rating > 0) {
         toast.success(t("common:messages.rate_success", { rating }));
@@ -96,7 +96,7 @@ export function useEntertainmentDetail(
     try {
       if (!data.user_status) {
         if (type === "game") {
-          await gamesService.trackGame({
+          await gamesApi.trackGame({
             igdbId: data.id,
             title: data.title,
             coverUrl: data.coverUrl,
@@ -109,7 +109,7 @@ export function useEntertainmentDetail(
               ? WatchStatus.PlanToWatch
               : newStatus;
 
-          await mediaService.trackItem({
+          await mediaApi.trackItem({
             tmdbId: data.id,
             type: type as "tv" | "movie",
             title: data.display_name,
@@ -119,7 +119,7 @@ export function useEntertainmentDetail(
           });
 
           if (newStatus === WatchStatus.Completed) {
-            await mediaService.updateStatus(
+            await mediaApi.updateStatus(
               data.id,
               type as "tv" | "movie",
               WatchStatus.Completed
@@ -129,9 +129,9 @@ export function useEntertainmentDetail(
         toast.success(t("common:messages.track_success"));
       } else {
         if (type === "game") {
-          await gamesService.updateStatus(data.id, newStatus as PlayStatus);
+          await gamesApi.updateStatus(data.id, newStatus as PlayStatus);
         } else {
-          await mediaService.updateStatus(
+          await mediaApi.updateStatus(
             data.id,
             type as "tv" | "movie",
             newStatus as WatchStatus
@@ -158,9 +158,9 @@ export function useEntertainmentDetail(
     if (!data) return;
     try {
       if (type === "game") {
-        await gamesService.removeGame(data.id);
+        await gamesApi.removeGame(data.id);
       } else {
-        await mediaService.removeFromLibrary(data.id, type as "tv" | "movie");
+        await mediaApi.removeFromLibrary(data.id, type as "tv" | "movie");
       }
       toast.info(t("common:messages.remove_from_library_success"));
       setData((prev: any) => ({ ...prev, user_status: undefined }));
@@ -175,9 +175,9 @@ export function useEntertainmentDetail(
     if (!data) return;
     try {
       if (type === "game") {
-        await gamesService.addReview(data.id, reviewText);
+        await gamesApi.addReview(data.id, reviewText);
       } else {
-        await mediaService.addReview(
+        await mediaApi.addReview(
           data.id,
           type as "tv" | "movie",
           reviewText

@@ -1,4 +1,4 @@
-import PostPage from "@/features/feed/PostPage";
+import PostPage from "@/features/feed/pages/PostPage";
 
 export default function PostModal() {
   return <PostPage isModal />;

@@ -19,6 +19,7 @@ namespace Vivaply.API.Entities.Knowledge
         public string? CoverUrl { get; set; }
 
         public int PageCount { get; set; }
+        public double VoteAverage { get; set; }
 
         public DateTime LastFetchedAt { get; set; }
     }

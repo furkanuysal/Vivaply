@@ -1,6 +1,6 @@
 import { type NavigateFunction } from "react-router-dom";
 import type { TFunction } from "i18next";
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { UniversalCoverFallback } from "@/shared/ui";
 import type { DashboardItemDto } from "@/features/dashboard/types";
 import { DashboardItemType } from "@/features/dashboard/types";
 import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";

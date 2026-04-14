@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { recommendationService } from "@/features/entertainment/services/recommendationService";
+import { recommendationApi } from "@/features/entertainment/api/recommendationApi";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
@@ -9,7 +9,9 @@ export const useRecommendations = () => {
 
   return useQuery({
     queryKey: ["recommendations", user?.id, i18n.language],
-    queryFn: () => recommendationService.getRecommendations(i18n.language),
-    staleTime: 1000 * 60 * 10, // 10 minutes cache
+    queryFn: () => recommendationApi.getRecommendations(i18n.language),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
   });
 };

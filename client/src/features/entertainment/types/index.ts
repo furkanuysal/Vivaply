@@ -16,11 +16,16 @@ export interface TmdbContentDto {
   user_review?: string;
   viva_rating?: number;
   viva_rating_count?: number;
+  list_count?: number;
+  active_count?: number;
+  completed_count?: number;
+  completion_rate?: number;
   tagline?: string;
   last_watched_season?: number;
   last_watched_episode?: number;
   last_watched_at?: string;
   latest_episode?: string;
+  latest_episode_air_date?: string;
 }
 
 export interface TmdbGenreDto {
@@ -120,6 +125,10 @@ export interface GameContentDto {
   userReview?: string;
   vivaRating?: number;
   vivaRatingCount?: number;
+  listCount?: number;
+  activeCount?: number;
+  completedCount?: number;
+  completionRate?: number;
 }
 
 // Track Game

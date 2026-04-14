@@ -14,6 +14,7 @@ using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 using Vivaply.API.Modules.Core.Ratings.Enums;
 using Vivaply.API.Modules.Core.Ratings.Services.Interfaces;
+using Vivaply.API.Modules.Core.Statistics.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -25,7 +26,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         IApplicationEventPublisher eventPublisher,
         IActivityCleanupService activityCleanupService,
         IPostCleanupService postCleanupService,
-        IContentRatingService contentRatingService
+        IContentRatingService contentRatingService,
+        IContentEngagementStatsService contentEngagementStatsService
         ) : IMediaService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
@@ -34,6 +36,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
         private readonly IPostCleanupService _postCleanupService = postCleanupService;
         private readonly IContentRatingService _contentRatingService = contentRatingService;
+        private readonly IContentEngagementStatsService _contentEngagementStatsService = contentEngagementStatsService;
 
         public async Task AddMediaReviewAsync(Guid userId, AddMediaReviewDto request)
         {
@@ -130,6 +133,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 _dbContext.UserShows.Add(show);
 
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(request.TmdbId);
 
                 await _eventPublisher.PublishAsync(new LibraryItemAddedEvent(
                     userId,
@@ -167,6 +171,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             _dbContext.UserMovies.Add(movie);
 
             await _dbContext.SaveChangesAsync();
+            await SyncMovieEngagementStatsAsync(request.TmdbId);
 
             if (request.Status == WatchStatus.Completed)
             {
@@ -210,8 +215,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             var movieStats = await _contentRatingService.GetStatsAsync(
                 ContentSourceType.Movie,
                 tmdbId.ToString());
+            var movieEngagementStats = await _contentEngagementStatsService.GetStatsAsync(
+                ContentSourceType.Movie,
+                tmdbId.ToString());
             result.VivaRating = movieStats?.AverageRating;
             result.VivaRatingCount = movieStats?.RatingCount ?? 0;
+            result.ListCount = movieEngagementStats?.ListCount ?? 0;
+            result.ActiveCount = movieEngagementStats?.ActiveCount ?? 0;
+            result.CompletedCount = movieEngagementStats?.CompletedCount ?? 0;
+            result.CompletionRate = movieEngagementStats?.CompletionRate ?? 0;
 
             if (userId.HasValue)
             {
@@ -241,8 +253,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             var showStats = await _contentRatingService.GetStatsAsync(
                 ContentSourceType.TvShow,
                 tmdbId.ToString());
+            var showEngagementStats = await _contentEngagementStatsService.GetStatsAsync(
+                ContentSourceType.TvShow,
+                tmdbId.ToString());
             result.VivaRating = showStats?.AverageRating;
             result.VivaRatingCount = showStats?.RatingCount ?? 0;
+            result.ListCount = showEngagementStats?.ListCount ?? 0;
+            result.ActiveCount = showEngagementStats?.ActiveCount ?? 0;
+            result.CompletedCount = showEngagementStats?.CompletedCount ?? 0;
+            result.CompletionRate = showEngagementStats?.CompletionRate ?? 0;
 
             if (!userId.HasValue)
                 return result;
@@ -272,6 +291,14 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 if (metadata.LastKnownEpisode != freshEpisode)
                 {
                     metadata.LastKnownEpisode = freshEpisode;
+                    hasChanges = true;
+                }
+
+                var lastEpisodeAirDate = ParseTmdbDate(result.LastEpisodeToAir?.AirDate);
+
+                if (metadata.LastEpisodeAirDate != lastEpisodeAirDate)
+                {
+                    metadata.LastEpisodeAirDate = lastEpisodeAirDate;
                     hasChanges = true;
                 }
 
@@ -385,6 +412,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 LatestEpisode = show.Metadata!.LastKnownSeason != null && show.Metadata.LastKnownEpisode != null
                     ? $"S{show.Metadata.LastKnownSeason} E{show.Metadata.LastKnownEpisode}"
                     : null,
+                LatestEpisodeAirDate = show.Metadata!.LastEpisodeAirDate?.ToString("yyyy-MM-dd"),
 
                 Status = show.Metadata!.ProductionStatus,
 
@@ -430,6 +458,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 Movie = movieList
             };
         }
+
         public async Task<MarkSeasonResultDto> MarkSeasonWatchedAsync(Guid userId, int tmdbShowId, int seasonNumber)
         {
             if (tmdbShowId <= 0)
@@ -545,6 +574,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 show.UserRating = request.Rating;
 
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(request.TmdbId);
                 await _contentRatingService.SetRatingAsync(
                     userId,
                     ContentSourceType.TvShow,
@@ -570,6 +600,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             movie.UserRating = request.Rating;
 
             await _dbContext.SaveChangesAsync();
+            await SyncMovieEngagementStatsAsync(request.TmdbId);
             await _contentRatingService.SetRatingAsync(
                 userId,
                 ContentSourceType.Movie,
@@ -603,6 +634,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
                 _dbContext.UserShows.Remove(show);
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(tmdbId);
                 await _activityCleanupService.HideActivitiesForShowAsync(userId, tmdbId);
                 await _postCleanupService.HidePostsForShowAsync(userId, tmdbId);
                 return;
@@ -614,6 +646,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
             _dbContext.UserMovies.Remove(movie);
             await _dbContext.SaveChangesAsync();
+            await SyncMovieEngagementStatsAsync(tmdbId);
             await _activityCleanupService.HideActivitiesForMovieAsync(userId, tmdbId);
             await _postCleanupService.HidePostsForMovieAsync(userId, tmdbId);
         }
@@ -730,6 +763,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 }
 
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(request.TmdbId);
                 await _contentRatingService.SetRatingAsync(
                     userId,
                     ContentSourceType.TvShow,
@@ -806,6 +840,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 movie.Review = request.Review;
 
             await _dbContext.SaveChangesAsync();
+            await SyncMovieEngagementStatsAsync(request.TmdbId);
             await _contentRatingService.SetRatingAsync(
                 userId,
                 ContentSourceType.Movie,
@@ -883,6 +918,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 }
 
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(request.TmdbId);
 
                 if (!wasCompleted && request.Status == WatchStatus.Completed)
                 {
@@ -917,6 +953,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             }
 
             await _dbContext.SaveChangesAsync();
+            await SyncMovieEngagementStatsAsync(request.TmdbId);
 
             if (!movieWasCompleted && request.Status == WatchStatus.Completed)
             {
@@ -988,6 +1025,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                     }
 
                     await _dbContext.SaveChangesAsync();
+                    await SyncShowEngagementStatsAsync(tmdbShowId);
 
                     await _eventPublisher.PublishAsync(new EpisodeWatchedEvent(
                         userId,
@@ -1053,6 +1091,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 }
 
                 await _dbContext.SaveChangesAsync();
+                await SyncShowEngagementStatsAsync(tmdbShowId);
 
                 await _eventPublisher.PublishAsync(new EpisodeWatchedEvent(
                     userId,
@@ -1162,6 +1201,20 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             _dbContext.UserMovies.Add(movie);
 
             return movie;
+        }
+
+        private Task SyncShowEngagementStatsAsync(int tmdbShowId)
+        {
+            return _contentEngagementStatsService.RebuildAsync(
+                ContentSourceType.TvShow,
+                tmdbShowId.ToString());
+        }
+
+        private Task SyncMovieEngagementStatsAsync(int tmdbMovieId)
+        {
+            return _contentEngagementStatsService.RebuildAsync(
+                ContentSourceType.Movie,
+                tmdbMovieId.ToString());
         }
 
         private static void ValidateRating(double rating)
@@ -1322,6 +1375,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
                 ProductionStatus = details.Status,
                 LastKnownSeason = details.LastEpisodeToAir?.SeasonNumber,
                 LastKnownEpisode = details.LastEpisodeToAir?.EpisodeNumber,
+                LastEpisodeAirDate = ParseTmdbDate(details.LastEpisodeToAir?.AirDate),
                 NextEpisodeAirDate = ParseTmdbDate(details.NextEpisodeToAir?.AirDate),
                 GenresJson = JsonHelper.Serialize(details.Genres),
                 LastFetchedAt = DateTime.UtcNow

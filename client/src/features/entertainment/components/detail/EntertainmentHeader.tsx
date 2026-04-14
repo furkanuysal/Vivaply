@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import StarRating from "@/components/common/StarRating";
+import { ConfirmDialog, StarRating, UniversalCoverFallback } from "@/shared/ui";
 import ProdStatusBadge from "@/features/entertainment/components/shared/ProdStatusBadge";
-import ConfirmDialog from "@/components/common/ConfirmDialog";
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
 
 interface EntertainmentHeaderProps {
   data: any;
@@ -162,6 +160,39 @@ export default function EntertainmentHeader({
             </div>
           </div>
 
+          {(data.list_count > 0 || data.completed_count > 0 || data.active_count > 0) && (
+            <div className="mb-6 flex flex-wrap gap-2 text-sm text-skin-muted">
+              {data.list_count > 0 && (
+                <SocialProofChip>
+                  {t("entertainment:detail.list_count", {
+                    count: data.list_count,
+                  })}
+                </SocialProofChip>
+              )}
+              {data.completed_count > 0 && (
+                <SocialProofChip>
+                  {t("entertainment:detail.completed_count", {
+                    count: data.completed_count,
+                  })}
+                </SocialProofChip>
+              )}
+              {data.active_count > 0 && (
+                <SocialProofChip>
+                  {t("entertainment:detail.active_count", {
+                    count: data.active_count,
+                  })}
+                </SocialProofChip>
+              )}
+              {data.completion_rate > 0 && (
+                <SocialProofChip>
+                  {t("entertainment:detail.completion_rate", {
+                    count: Math.round(data.completion_rate * 100),
+                  })}
+                </SocialProofChip>
+              )}
+            </div>
+          )}
+
           <h3 className="text-xl font-bold mb-2">
             {t("entertainment:detail.overview")}
           </h3>
@@ -303,4 +334,12 @@ function RatingInlineStat({
 
 function RatingInlineSeparator() {
   return <span className="mx-4 h-6 w-px bg-skin-border/70" aria-hidden="true" />;
+}
+
+function SocialProofChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-skin-border/70 bg-skin-surface/40 px-3 py-1.5">
+      {children}
+    </span>
+  );
 }

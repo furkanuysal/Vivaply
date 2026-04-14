@@ -12,24 +12,26 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Pages and Components
-import LandingPage from "@/pages/LandingPage";
-import ProfilePage from "@/pages/ProfilePage";
-import DashboardPage from "@/pages/DashboardPage";
-import FeedPage from "@/features/feed/FeedPage";
+import { LandingPage } from "@/app/pages";
+import { ProfilePage, SettingsPage } from "@/features/account/pages";
+import { DashboardPage } from "@/features/dashboard/pages";
 import PostModal from "@/features/feed/components/PostModal";
-import PostPage from "@/features/feed/PostPage";
-import MainLayout from "@/components/MainLayout";
-import SettingsPage from "@/pages/SettingsPage";
+import { FeedPage, PostPage } from "@/features/feed";
+import MainLayout from "@/app/layouts/MainLayout";
 
 // Entertainment
-import EntertainmentPage from "@/pages/entertainment/EntertainmentPage";
-import EntertainmentDetailPage from "@/pages/entertainment/EntertainmentDetailPage";
-import EntertainmentLibraryPage from "@/pages/entertainment/EntertainmentLibraryPage";
+import {
+  EntertainmentDetailPage,
+  EntertainmentLibraryPage,
+  EntertainmentPage,
+} from "@/features/entertainment/pages";
 
 // Knowledge
-import BookLibraryPage from "@/pages/knowledge/BookLibraryPage";
-import BookDetailPage from "@/pages/knowledge/BookDetailPage";
-import KnowledgePage from "@/pages/knowledge/KnowledgePage";
+import {
+  BookLibraryPage,
+  BookDetailPage,
+  KnowledgePage,
+} from "@/features/knowledge/pages";
 
 // Context
 import { AuthProvider, useAuth } from "@/features/auth/context/AuthContext";

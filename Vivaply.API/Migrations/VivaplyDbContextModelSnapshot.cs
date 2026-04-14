@@ -153,6 +153,9 @@ namespace Vivaply.API.Migrations
                     b.Property<string>("GenresJson")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("LastEpisodeAirDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("LastFetchedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -783,6 +786,9 @@ namespace Vivaply.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<double>("VoteAverage")
+                        .HasColumnType("double precision");
+
                     b.HasKey("GoogleBookId");
 
                     b.ToTable("BookMetadata");
@@ -896,6 +902,52 @@ namespace Vivaply.API.Migrations
                         .IsUnique();
 
                     b.ToTable("ContentRatingStats");
+                });
+
+            modelBuilder.Entity("Vivaply.API.Entities.Statistics.ContentEngagementStats", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActiveCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompletedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("CompletionRate")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("DroppedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastAggregatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ListCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OnHoldCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PlannedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceType", "SourceId")
+                        .IsUnique();
+
+                    b.ToTable("ContentEngagementStats");
                 });
 
             modelBuilder.Entity("Vivaply.API.Entities.Entertainment.Igdb.UserGame", b =>

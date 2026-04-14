@@ -27,5 +27,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
         public GameCompletionType CompletionType { get; set; } = GameCompletionType.None;
         public double? VivaRating { get; set; }
         public int VivaRatingCount { get; set; }
+        public int ListCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int CompletedCount { get; set; }
+        public double CompletionRate { get; set; }
     }
 }

@@ -7,7 +7,7 @@ import {
   type UpdateEntertainmentStatusDto,
 } from "@/features/entertainment/types";
 import { useWatchStatusConfig } from "@/features/entertainment/hooks/useWatchStatusConfig";
-import StarRating from "@/components/common/StarRating";
+import { StarRating } from "@/shared/ui";
 
 interface EntertainmentStatusDialogProps {
   isOpen: boolean;

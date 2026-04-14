@@ -5,8 +5,8 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { authService } from "@/features/auth/services/authService";
-import { accountService } from "@/features/account/services/accountService";
+import { authApi } from "@/features/auth/api/authApi";
+import { accountApi } from "@/features/account/api/accountApi";
 import type { LoginDto, RegisterDto } from "@/features/auth/types";
 import type { UserProfileDto } from "@/features/account/types";
 import { toast } from "react-toastify";
@@ -40,9 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const success = await authService.refreshToken();
+        const success = await authApi.refreshToken();
         if (success) {
-          const userData = await accountService.getProfile();
+          const userData = await accountApi.getProfile();
           setUser(userData);
         } else {
           localStorage.removeItem(AUTH_MARKER_KEY);
@@ -60,9 +60,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (data: LoginDto) => {
     try {
-      const res = await authService.login(data);
+      const res = await authApi.login(data);
       if (res.accessToken) {
-        const userData = await accountService.getProfile();
+        const userData = await accountApi.getProfile();
         setUser(userData);
         localStorage.setItem(AUTH_MARKER_KEY, "true");
       }
@@ -72,12 +72,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (data: RegisterDto) => {
-    await authService.register(data);
+    await authApi.register(data);
   };
 
   const logout = async () => {
     try {
-      await authService.logout();
+      await authApi.logout();
     } catch (error) {
       console.error("Logout error", error);
     } finally {

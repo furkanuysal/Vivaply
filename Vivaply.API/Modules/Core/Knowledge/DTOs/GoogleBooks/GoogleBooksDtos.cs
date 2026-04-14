@@ -44,6 +44,9 @@ namespace Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks
         [JsonPropertyName("averageRating")]
         public double AverageRating { get; set; }
 
+        [JsonPropertyName("ratingsCount")]
+        public int RatingsCount { get; set; }
+
         [JsonPropertyName("imageLinks")]
         public ImageLinks? ImageLinks { get; set; }
 
@@ -71,6 +74,7 @@ namespace Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks
         public int PageCount { get; set; }
         public string? PublishedDate { get; set; }
         public double AverageRating { get; set; }
+        public int RatingsCount { get; set; }
 
         // User-specific fields
         public ReadStatus UserStatus { get; set; } = ReadStatus.None; // PlanToRead, Reading, Completed etc.
@@ -79,5 +83,9 @@ namespace Vivaply.API.Modules.Core.Knowledge.DTOs.GoogleBooks
         public string? UserReview { get; set; }
         public double? VivaRating { get; set; }
         public int VivaRatingCount { get; set; }
+        public int ListCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int CompletedCount { get; set; }
+        public double CompletionRate { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using Vivaply.API.Modules.Core.Entertainment.Enums;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 using Vivaply.API.Modules.Core.Ratings.Enums;
 using Vivaply.API.Modules.Core.Ratings.Services.Interfaces;
+using Vivaply.API.Modules.Core.Statistics.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.Events;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
@@ -20,7 +21,8 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         IApplicationEventPublisher eventPublisher,
         IActivityCleanupService activityCleanupService,
         IPostCleanupService postCleanupService,
-        IContentRatingService contentRatingService) : IGameService
+        IContentRatingService contentRatingService,
+        IContentEngagementStatsService contentEngagementStatsService) : IGameService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
         private readonly IIgdbService _igdbService = igdbService;
@@ -28,6 +30,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
         private readonly IActivityCleanupService _activityCleanupService = activityCleanupService;
         private readonly IPostCleanupService _postCleanupService = postCleanupService;
         private readonly IContentRatingService _contentRatingService = contentRatingService;
+        private readonly IContentEngagementStatsService _contentEngagementStatsService = contentEngagementStatsService;
 
         // Detail
         public async Task<GameContentDto?> GetDetailAsync(Guid? userId, int igdbId)
@@ -38,8 +41,15 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             var stats = await _contentRatingService.GetStatsAsync(
                 ContentSourceType.Game,
                 igdbId.ToString());
+            var engagementStats = await _contentEngagementStatsService.GetStatsAsync(
+                ContentSourceType.Game,
+                igdbId.ToString());
             game.VivaRating = stats?.AverageRating;
             game.VivaRatingCount = stats?.RatingCount ?? 0;
+            game.ListCount = engagementStats?.ListCount ?? 0;
+            game.ActiveCount = engagementStats?.ActiveCount ?? 0;
+            game.CompletedCount = engagementStats?.CompletedCount ?? 0;
+            game.CompletionRate = engagementStats?.CompletionRate ?? 0;
 
             if (!userId.HasValue)
                 return game;
@@ -112,6 +122,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             _dbContext.UserGames.Add(game);
 
             await _dbContext.SaveChangesAsync();
+            await SyncGameEngagementStatsAsync(request.IgdbId);
 
             if (request.Status == PlayStatus.Playing)
             {
@@ -162,6 +173,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             }
 
             await _dbContext.SaveChangesAsync();
+            await SyncGameEngagementStatsAsync(request.IgdbId);
 
             if (!wasCompleted && request.Status == PlayStatus.Completed)
             {
@@ -247,6 +259,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
             game.UserRating = request.Rating;
 
             await _dbContext.SaveChangesAsync();
+            await SyncGameEngagementStatsAsync(request.IgdbId);
             await _contentRatingService.SetRatingAsync(
                 userId,
                 ContentSourceType.Game,
@@ -296,8 +309,16 @@ namespace Vivaply.API.Modules.Core.Entertainment.Services.Implementations
 
             _dbContext.UserGames.Remove(game);
             await _dbContext.SaveChangesAsync();
+            await SyncGameEngagementStatsAsync(igdbId);
             await _activityCleanupService.HideActivitiesForGameAsync(userId, igdbId);
             await _postCleanupService.HidePostsForGameAsync(userId, igdbId);
+        }
+
+        private Task SyncGameEngagementStatsAsync(int igdbId)
+        {
+            return _contentEngagementStatsService.RebuildAsync(
+                ContentSourceType.Game,
+                igdbId.ToString());
         }
 
         private GameMetadata CreateMetadata(int igdbId, GameContentDto details)

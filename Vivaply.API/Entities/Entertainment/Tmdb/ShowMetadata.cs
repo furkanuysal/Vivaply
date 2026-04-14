@@ -25,6 +25,8 @@ namespace Vivaply.API.Entities.Entertainment.Tmdb
         public int? LastKnownSeason { get; set; }
         public int? LastKnownEpisode { get; set; }
 
+        public DateTime? LastEpisodeAirDate { get; set; }
+
         public DateTime? NextEpisodeAirDate { get; set; }
 
         public string? GenresJson { get; set; }

@@ -19,7 +19,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Link, type Location, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   getActorAvatarUrl,
@@ -32,8 +32,8 @@ import {
   getRelativeTime,
   getReviewSnippet,
   isActivityPost,
-  feedService,
-} from "@/features/feed/services/feedService";
+  feedApi,
+} from "@/features/feed/api/feedApi";
 import { publishPostUpdate } from "@/features/feed/services/postUpdateEvents";
 import {
   FeedActivityType,
@@ -165,8 +165,8 @@ export default function PostCard({
 
     try {
       const stats = nextLiked
-        ? await feedService.likePost(item.id)
-        : await feedService.unlikePost(item.id);
+        ? await feedApi.likePost(item.id)
+        : await feedApi.unlikePost(item.id);
 
       setLikeCount(stats.likeCount);
       publishPostUpdate({
@@ -195,7 +195,7 @@ export default function PostCard({
 
     try {
       setDeleting(true);
-      const result = await feedService.deletePost(item.id);
+      const result = await feedApi.deletePost(item.id);
 
       publishPostUpdate({
         postId: result.id,
@@ -242,8 +242,8 @@ export default function PostCard({
 
     try {
       const stats = nextBookmarked
-        ? await feedService.bookmarkPost(item.id)
-        : await feedService.removeBookmark(item.id);
+        ? await feedApi.bookmarkPost(item.id)
+        : await feedApi.removeBookmark(item.id);
 
       setBookmarkCount(stats.bookmarkCount);
       publishPostUpdate({

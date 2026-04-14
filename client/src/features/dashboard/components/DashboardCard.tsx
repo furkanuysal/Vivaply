@@ -6,7 +6,7 @@ import {
   BookOpenIcon,
   PuzzlePieceIcon,
 } from "@heroicons/react/24/outline";
-import UniversalCoverFallback from "@/components/common/UniversalCoverFallback";
+import { UniversalCoverFallback } from "@/shared/ui";
 import type { DashboardItemDto } from "@/features/dashboard/types";
 import { DashboardItemType } from "@/features/dashboard/types";
 import { TYPE_LABEL, getRoutePath } from "@/features/dashboard/utils";

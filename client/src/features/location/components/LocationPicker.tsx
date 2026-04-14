@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPinIcon } from "@heroicons/react/24/outline";
-import { locationService } from "@/features/location/services/locationService";
+import { locationApi } from "@/features/location/api/locationApi";
 import type { LocationDto } from "@/features/location/types";
 
 interface Props {
@@ -49,7 +49,7 @@ export default function LocationPicker({ value, onChange }: Props) {
       setIsLoading(true);
 
       try {
-        const data = await locationService.search(query);
+        const data = await locationApi.search(query);
         setSuggestions(data);
         setIsOpen(true);
       } catch (error) {

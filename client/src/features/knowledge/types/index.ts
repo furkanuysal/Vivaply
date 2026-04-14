@@ -27,6 +27,10 @@ export interface BookContentDto {
   userReview?: string;
   vivaRating?: number;
   vivaRatingCount?: number;
+  listCount?: number;
+  activeCount?: number;
+  completedCount?: number;
+  completionRate?: number;
 }
 
 // Book Add Request

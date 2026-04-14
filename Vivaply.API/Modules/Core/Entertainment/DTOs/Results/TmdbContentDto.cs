@@ -28,6 +28,12 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
         [JsonPropertyName("vote_average")]
         public double VoteAverage { get; set; }
 
+        [JsonPropertyName("vote_count")]
+        public int VoteCount { get; set; }
+
+        [JsonPropertyName("popularity")]
+        public double Popularity { get; set; }
+
         [JsonPropertyName("first_air_date")]
         public string? FirstAirDate { get; set; }
 
@@ -59,6 +65,9 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
         [JsonPropertyName("latest_episode")]
         public string? LatestEpisode { get; set; }
 
+        [JsonPropertyName("latest_episode_air_date")]
+        public string? LatestEpisodeAirDate { get; set; }
+
         [JsonPropertyName("user_status")]
         public WatchStatus UserStatus { get; set; } = WatchStatus.None;
 
@@ -73,5 +82,17 @@ namespace Vivaply.API.Modules.Core.Entertainment.DTOs.Results
 
         [JsonPropertyName("viva_rating_count")]
         public int VivaRatingCount { get; set; }
+
+        [JsonPropertyName("list_count")]
+        public int ListCount { get; set; }
+
+        [JsonPropertyName("active_count")]
+        public int ActiveCount { get; set; }
+
+        [JsonPropertyName("completed_count")]
+        public int CompletedCount { get; set; }
+
+        [JsonPropertyName("completion_rate")]
+        public double CompletionRate { get; set; }
     }
 }
