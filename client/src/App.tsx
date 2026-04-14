@@ -16,7 +16,7 @@ import { LandingPage } from "@/app/pages";
 import { ProfilePage, SettingsPage } from "@/features/account/pages";
 import { DashboardPage } from "@/features/dashboard/pages";
 import PostModal from "@/features/feed/components/PostModal";
-import { FeedPage, PostPage } from "@/features/feed";
+import { BookmarksPage, FeedPage, PostPage } from "@/features/feed";
 import MainLayout from "@/app/layouts/MainLayout";
 
 // Entertainment
@@ -83,6 +83,7 @@ function AppRoutes() {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/feed" element={<FeedPage />} />
+          <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="/feed/:postId" element={<PostPage />} />
           <Route path="/post/:postId" element={<PostPage />} />
           <Route path="/profile" element={<Navigate to="/dashboard" replace />} />

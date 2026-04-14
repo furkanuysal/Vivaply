@@ -22,8 +22,24 @@ export const feedApi = {
     return response.data;
   },
 
+  async getBookmarks(cursor?: string | null): Promise<FeedResponseDto> {
+    const response = await api.get<FeedResponseDto>("/bookmarks", {
+      params: cursor ? { cursor } : undefined,
+    });
+
+    return response.data;
+  },
+
   async createPost(textContent: string): Promise<FeedItemDto> {
     const response = await api.post<FeedItemDto>("/posts", {
+      textContent,
+    });
+
+    return response.data;
+  },
+
+  async updatePost(postId: string, textContent: string): Promise<FeedItemDto> {
+    const response = await api.put<FeedItemDto>(`/posts/${postId}`, {
       textContent,
     });
 
@@ -213,9 +229,14 @@ export function getFeedTargetPath(item: FeedRenderablePost): string | null {
   const subjectType = getString(payload.subjectType);
   const subjectId = getString(payload.subjectId);
   const tmdbShowId = getIdentifier(payload.tmdbShowId);
+  const tmdbMovieId = getIdentifier(payload.tmdbMovieId);
 
   if (tmdbShowId) {
     return `/entertainment/tv/${tmdbShowId}`;
+  }
+
+  if (tmdbMovieId) {
+    return `/entertainment/movie/${tmdbMovieId}`;
   }
 
   if (!subjectType || !subjectId) {
@@ -277,7 +298,22 @@ export function getRelativeTime(value: string, locale?: string): string {
 }
 
 export function getFeedTimestamp(item: FeedItemDto): string {
-  return item.updatedAt || item.publishedAt;
+  return item.publishedAt;
+}
+
+export function isPostEdited(item: FeedItemDto): boolean {
+  if (!item.updatedAt) {
+    return false;
+  }
+
+  const publishedAt = new Date(item.publishedAt).getTime();
+  const updatedAt = new Date(item.updatedAt).getTime();
+
+  if (Number.isNaN(publishedAt) || Number.isNaN(updatedAt)) {
+    return false;
+  }
+
+  return updatedAt - publishedAt > 1000;
 }
 
 export function getFeedActivityType(item: FeedRenderablePost): FeedActivityType | null {

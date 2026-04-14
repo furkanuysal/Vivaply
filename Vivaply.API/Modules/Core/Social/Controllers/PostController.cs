@@ -19,6 +19,13 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
             return Ok(result);
         }
 
+        [HttpGet("api/bookmarks")]
+        public async Task<IActionResult> GetBookmarks([FromQuery] PostQuery query, CancellationToken cancellationToken)
+        {
+            var result = await _postService.GetBookmarkedPostsAsync(CurrentUserId, query, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpPost("api/posts")]
         public async Task<IActionResult> Create(
             [FromBody] CreatePostRequest request,
@@ -31,6 +38,23 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
 
             var result = await _postService.CreateAsync(CurrentUserId, request, cancellationToken);
             return Ok(result);
+        }
+
+        [HttpPut("api/posts/{id:guid}")]
+        public async Task<IActionResult> Update(
+            Guid id,
+            [FromBody] UpdatePostRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _postService.UpdateAsync(CurrentUserId, id, request, cancellationToken);
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(exception.Message);
+            }
         }
 
         [HttpGet("api/users/{username}/posts")]

@@ -425,8 +425,8 @@ export default function PostPage({ isModal = false }: PostPageProps) {
 }
 
 function compareFeedItems(left: FeedItemDto, right: FeedItemDto): number {
-  const leftTime = new Date(left.updatedAt || left.publishedAt).getTime();
-  const rightTime = new Date(right.updatedAt || right.publishedAt).getTime();
+  const leftTime = new Date(left.publishedAt).getTime();
+  const rightTime = new Date(right.publishedAt).getTime();
 
   if (leftTime === rightTime) {
     return left.id.localeCompare(right.id);

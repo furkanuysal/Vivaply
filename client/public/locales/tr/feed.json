@@ -13,6 +13,13 @@
     "empty_title": "Akışında henüz bir şey yok",
     "empty_subtitle": "Kişileri takip etmeye başladığında en son aktiviteleri burada görünecek."
   },
+  "bookmarks": {
+    "eyebrow": "Kaydedilen Gönderiler",
+    "title": "Yer İşaretleri",
+    "subtitle": "Daha sonra dönmek istediğin gönderileri burada tek yerde tut.",
+    "empty_title": "Henüz kaydedilen gönderi yok",
+    "empty_subtitle": "Akıştan gönderi kaydettiğinde burada görünecek."
+  },
   "post": {
     "eyebrow": "Gönderi",
     "title": "Konuşma",
@@ -23,10 +30,13 @@
     "reply_box_subtitle": "Yanıtın burada kendi gönderisi olarak görünecek.",
     "reply_compact_placeholder": "Yanıt yazmak için düzenleyiciyi aç.",
     "reply_placeholder": "Düşüncelerini paylaş...",
+    "edit_placeholder": "Gönderini güncelle...",
     "quote_placeholder": "Kendi yorumunu ekle...",
     "quote_preview_label": "Alıntılanan gönderi",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Vazgeç",
+    "edit_save": "Kaydet",
+    "edit_saving": "Kaydediliyor...",
     "reply_submit": "Yanıtla",
     "reply_submitting": "Gönderiliyor...",
     "quote_submit": "Alıntıla",
@@ -57,6 +67,7 @@
     "media": "Medya ekle",
     "emoji": "Emoji ekle",
     "location": "Konum ekle",
+    "edit": "Düzenle",
     "delete": "Sil",
     "quote": "Alıntıla",
     "more": "Daha fazla işlem",
@@ -75,6 +86,7 @@
     "library": "Kütüphane",
     "reply": "Yanıt",
     "quote": "Alıntı",
+    "edited": "Düzenlendi",
     "shared_in_feed": "Akışta paylaşıldı"
   },
   "activity": {

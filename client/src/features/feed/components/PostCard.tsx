@@ -4,6 +4,7 @@ import {
   ChatBubbleLeftRightIcon,
   EllipsisHorizontalIcon,
   EyeIcon,
+  PencilSquareIcon,
   ShareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -30,6 +31,7 @@ import {
   getFeedTimestamp,
   getFeedTitle,
   getRelativeTime,
+  isPostEdited,
   getReviewSnippet,
   isActivityPost,
   feedApi,
@@ -91,7 +93,16 @@ export default function PostCard({
   const [deleting, setDeleting] = useState(false);
   const [bookmarking, setBookmarking] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftText, setDraftText] = useState(item.textContent ?? "");
+  const [savingEdit, setSavingEdit] = useState(false);
   const canDelete = user?.id === item.actor.id;
+  const canEdit =
+    user?.id === item.actor.id &&
+    (item.type === FeedPostType.Standard ||
+      item.type === FeedPostType.Quote ||
+      item.type === FeedPostType.Reply);
+  const edited = isPostEdited(item);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const interactionProps = {
     onClick: (event: MouseEvent<HTMLElement>) => event.stopPropagation(),
@@ -102,8 +113,10 @@ export default function PostCard({
     setHasLiked(item.viewer?.hasLiked ?? false);
     setBookmarkCount(item.stats?.bookmarkCount ?? 0);
     setHasBookmarked(item.viewer?.hasBookmarked ?? false);
+    setDraftText(item.textContent ?? "");
   }, [
     item.id,
+    item.textContent,
     item.stats?.likeCount,
     item.stats?.bookmarkCount,
     item.viewer?.hasLiked,
@@ -315,6 +328,47 @@ export default function PostCard({
     }
   };
 
+  const handleEditStart = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setDraftText(item.textContent ?? "");
+    setIsEditing(true);
+    setIsMenuOpen(false);
+  };
+
+  const handleEditCancel = () => {
+    setDraftText(item.textContent ?? "");
+    setIsEditing(false);
+  };
+
+  const handleEditSave = async () => {
+    if (!canEdit || savingEdit) {
+      return;
+    }
+
+    const normalizedText = draftText.trim();
+    const requiresText = item.type !== FeedPostType.Quote;
+
+    if (requiresText && !normalizedText) {
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+      const updatedPost = await feedApi.updatePost(item.id, requiresText ? normalizedText : draftText);
+      publishPostUpdate({
+        postId: item.id,
+        textContent: updatedPost.textContent ?? null,
+        updatedAt: updatedPost.updatedAt ?? null,
+      });
+      setDraftText(updatedPost.textContent ?? "");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Post could not be updated", error);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <article
       className={`${
@@ -371,9 +425,46 @@ export default function PostCard({
             <span className="text-xs text-skin-muted">
               {getRelativeTime(getFeedTimestamp(item), i18n.resolvedLanguage)}
             </span>
+            {edited ? (
+              <span className="text-xs text-skin-muted">{t("labels.edited")}</span>
+            ) : null}
           </div>
 
-          {description ? (
+          {isEditing ? (
+            <div
+              className={`${shouldRenderContentPreview || quotedPost ? "mb-3" : ""} mt-3 space-y-3`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <textarea
+                value={draftText}
+                onChange={(event) => setDraftText(event.target.value)}
+                rows={isFlat ? 4 : 3}
+                maxLength={4000}
+                placeholder={t("post.edit_placeholder")}
+                className="w-full resize-none rounded-2xl border border-skin-border/50 bg-skin-base px-4 py-3 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:border-skin-primary/40"
+              />
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  className="text-sm font-medium text-skin-muted transition hover:text-skin-text"
+                >
+                  {t("post.reply_cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleEditSave()}
+                  disabled={
+                    savingEdit ||
+                    (item.type !== FeedPostType.Quote && !draftText.trim())
+                  }
+                  className="inline-flex items-center justify-center rounded-full bg-skin-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingEdit ? t("post.edit_saving") : t("post.edit_save")}
+                </button>
+              </div>
+            </div>
+          ) : description ? (
             <p
               className={`${shouldRenderContentPreview || quotedPost ? "mb-3" : ""} mt-2 text-skin-text/90 ${
                 isFlat ? "text-base leading-8" : "text-sm leading-6"
@@ -469,6 +560,14 @@ export default function PostCard({
                   className="absolute right-0 top-full z-20 mt-2 min-w-[12rem] rounded-2xl border border-skin-border/60 bg-skin-surface p-2 shadow-lg shadow-black/10"
                   onClick={(event) => event.stopPropagation()}
                 >
+                  {canEdit ? (
+                    <DropdownAction
+                      icon={<PencilSquareIcon className="h-4 w-4" />}
+                      label={t("actions.edit")}
+                      disabled={savingEdit}
+                      onClick={handleEditStart}
+                    />
+                  ) : null}
                   <DropdownAction
                     icon={<BookmarkIcon className="h-4 w-4" />}
                     label={t("actions.save")}

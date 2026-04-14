@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   BookOpenIcon,
+  BookmarkIcon,
   FilmIcon,
   HomeIcon,
   NewspaperIcon,
@@ -39,6 +40,12 @@ export function getMainNavigation(user: { username?: string } | null | undefined
       name: t("menu.profile"),
       path: user?.username ? `/${user.username}` : "/dashboard",
       icon: <HomeIcon className="h-5 w-5 shrink-0" />,
+    },
+    {
+      key: "bookmarks",
+      name: t("menu.bookmarks"),
+      path: "/bookmarks",
+      icon: <BookmarkIcon className="h-5 w-5 shrink-0" />,
     },
     {
       key: "entertainment",

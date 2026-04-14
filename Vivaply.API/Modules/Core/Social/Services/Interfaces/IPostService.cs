@@ -9,7 +9,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Interfaces
     {
         Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default);
         Task<PostDto> CreateAsync(Guid currentUserId, CreatePostRequest request, CancellationToken cancellationToken = default);
+        Task<PostDto?> UpdateAsync(Guid currentUserId, Guid postId, UpdatePostRequest request, CancellationToken cancellationToken = default);
         Task<PostFeedDto> GetFeedAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default);
+        Task<PostFeedDto> GetBookmarkedPostsAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default);
         Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default);
         Task<PostDto?> GetByIdAsync(Guid currentUserId, Guid postId, CancellationToken cancellationToken = default);
         Task<PostReplyDto?> CreateReplyAsync(Guid currentUserId, Guid parentPostId, CreateReplyPostRequest request, CancellationToken cancellationToken = default);

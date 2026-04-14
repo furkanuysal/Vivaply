@@ -13,6 +13,13 @@
     "empty_title": "Your feed is quiet for now",
     "empty_subtitle": "Follow people and their latest activity will start showing up here."
   },
+  "bookmarks": {
+    "eyebrow": "Saved Posts",
+    "title": "Bookmarks",
+    "subtitle": "Keep the posts you want to revisit in one private place.",
+    "empty_title": "No bookmarks yet",
+    "empty_subtitle": "Save posts from the feed and they will show up here."
+  },
   "post": {
     "eyebrow": "Post",
     "title": "Conversation",
@@ -23,10 +30,13 @@
     "reply_box_subtitle": "Your reply will appear here as its own post.",
     "reply_compact_placeholder": "Open the composer to share a reply.",
     "reply_placeholder": "Share your thoughts...",
+    "edit_placeholder": "Update your post...",
     "quote_placeholder": "Add your perspective...",
     "quote_preview_label": "Quoted post",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Cancel",
+    "edit_save": "Save",
+    "edit_saving": "Saving...",
     "reply_submit": "Reply",
     "reply_submitting": "Sending...",
     "quote_submit": "Quote",
@@ -57,6 +67,7 @@
     "media": "Add media",
     "emoji": "Add emoji",
     "location": "Add location",
+    "edit": "Edit",
     "delete": "Delete",
     "quote": "Quote",
     "more": "More actions",
@@ -75,6 +86,7 @@
     "library": "Library",
     "reply": "Reply",
     "quote": "Quote",
+    "edited": "Edited",
     "shared_in_feed": "Shared in feed"
   },
   "activity": {

@@ -57,7 +57,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 existing.UserId = activity.UserId;
                 existing.Type = PostType.Activity;
-                existing.PublishedAt = activity.OccurredAt;
                 existing.UpdatedAt = activity.OccurredAt;
                 existing.IsDeleted = false;
                 existing.DeletedAt = null;
@@ -102,6 +101,57 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             return dto;
         }
 
+        public async Task<PostDto?> UpdateAsync(Guid currentUserId, Guid postId, UpdatePostRequest request, CancellationToken cancellationToken = default)
+        {
+            var post = await _db.UserPosts
+                .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDeleted, cancellationToken);
+
+            if (post == null || post.UserId != currentUserId)
+            {
+                return null;
+            }
+
+            if (post.Type is not (PostType.Standard or PostType.Quote or PostType.Reply))
+            {
+                return null;
+            }
+
+            var normalizedText = string.IsNullOrWhiteSpace(request.TextContent)
+                ? null
+                : request.TextContent.Trim();
+
+            if (post.Type is PostType.Standard or PostType.Reply && string.IsNullOrWhiteSpace(normalizedText))
+            {
+                throw new ArgumentException("Post text is required.");
+            }
+
+            post.TextContent = normalizedText;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            var updatedPost = await _db.UserPosts
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Activity)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.Attachments)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.QuotedPost)
+                    .ThenInclude(x => x!.Attachments)
+                .Include(x => x.Stats)
+                .FirstAsync(x => x.Id == post.Id, cancellationToken);
+
+            var dto = MapToDto(updatedPost);
+            await EnrichPostDtosAsync(currentUserId, [dto], cancellationToken);
+
+            return dto;
+        }
+
         public async Task<PostFeedDto> GetFeedAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default)
         {
             query ??= new PostQuery();
@@ -141,6 +191,67 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .ToListAsync(cancellationToken);
 
             return await BuildFeedResponseAsync(currentUserId, items, take, cancellationToken);
+        }
+
+        public async Task<PostFeedDto> GetBookmarkedPostsAsync(Guid currentUserId, PostQuery query, CancellationToken cancellationToken = default)
+        {
+            query ??= new PostQuery();
+            var take = NormalizeTake(query.Take);
+            var cursor = DecodeCursor(query.Cursor);
+
+            var followingIds = await _db.UserFollows
+                .Where(x => x.FollowerId == currentUserId && x.Status == FollowStatus.Accepted)
+                .Select(x => x.FollowingId)
+                .ToListAsync(cancellationToken);
+
+            IQueryable<PostBookmark> bookmarks = _db.PostBookmarks
+                .AsNoTracking()
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.Attachments)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.QuotedPost)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.QuotedPost)
+                        .ThenInclude(x => x!.Activity)
+                            .ThenInclude(x => x!.User)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.QuotedPost)
+                        .ThenInclude(x => x!.Attachments)
+                .Include(x => x.Post)
+                    .ThenInclude(x => x!.Stats)
+                .Where(x =>
+                    x.UserId == currentUserId &&
+                    x.Post != null &&
+                    !x.Post.IsDeleted &&
+                    x.Post.ParentPostId == null &&
+                    (
+                        x.Post.UserId == currentUserId ||
+                        (!_db.UserPreferences.Any(p =>
+                            p.UserId == x.Post.UserId &&
+                            p.ProfileVisibility == ProfileVisibility.Private) &&
+                         (
+                            !_db.UserPreferences.Any(p =>
+                                p.UserId == x.Post.UserId &&
+                                p.ProfileVisibility == ProfileVisibility.FollowersOnly) ||
+                            followingIds.Contains(x.Post.UserId)
+                         ))
+                    ));
+
+            bookmarks = ApplyBookmarkCursor(bookmarks, cursor);
+
+            var items = await bookmarks
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
+                .Take(take + 1)
+                .ToListAsync(cancellationToken);
+
+            return await BuildBookmarkedFeedResponseAsync(currentUserId, items, take, cancellationToken);
         }
 
         public async Task<PostFeedDto> GetProfilePostsAsync(Guid currentUserId, string username, PostQuery query, CancellationToken cancellationToken = default)
@@ -569,6 +680,22 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 (x.PublishedAt == publishedAt && x.Id != id));
         }
 
+        private static IQueryable<PostBookmark> ApplyBookmarkCursor(
+            IQueryable<PostBookmark> query,
+            (DateTime publishedAt, Guid id)? cursor)
+        {
+            if (!cursor.HasValue)
+            {
+                return query;
+            }
+
+            var (createdAt, id) = cursor.Value;
+
+            return query.Where(x =>
+                x.CreatedAt < createdAt ||
+                (x.CreatedAt == createdAt && x.Id != id));
+        }
+
         private static bool CanViewProfile(
             bool isOwner,
             ProfileVisibility? profileVisibility,
@@ -603,6 +730,35 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             var dtos = entities.Select(MapToDto).ToList();
+            await EnrichPostDtosAsync(currentUserId, dtos, cancellationToken);
+
+            return new PostFeedDto
+            {
+                Items = dtos,
+                NextCursor = nextCursor
+            };
+        }
+
+        private async Task<PostFeedDto> BuildBookmarkedFeedResponseAsync(
+            Guid currentUserId,
+            List<PostBookmark> entities,
+            int take,
+            CancellationToken cancellationToken)
+        {
+            string? nextCursor = null;
+
+            if (entities.Count > take)
+            {
+                var next = entities[take - 1];
+                nextCursor = EncodeCursor(next.CreatedAt, next.Id);
+                entities = entities.Take(take).ToList();
+            }
+
+            var dtos = entities
+                .Where(x => x.Post != null)
+                .Select(x => MapToDto(x.Post!))
+                .ToList();
+
             await EnrichPostDtosAsync(currentUserId, dtos, cancellationToken);
 
             return new PostFeedDto
