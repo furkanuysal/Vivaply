@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Infrastructure.RateLimiting;
 using Vivaply.API.Modules.Core.Social.DTOs.Commands.Posts;
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
@@ -27,6 +29,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts")]
+        [EnableRateLimiting(RateLimitPolicies.SocialCreate)]
         [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
         [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Create(
@@ -43,6 +46,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPut("api/posts/{id:guid}")]
+        [EnableRateLimiting(RateLimitPolicies.SocialCreate)]
         public async Task<IActionResult> Update(
             Guid id,
             [FromBody] UpdatePostRequest request,
@@ -77,6 +81,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/reply")]
+        [EnableRateLimiting(RateLimitPolicies.SocialCreate)]
         [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
         [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Reply(
@@ -94,6 +99,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/quote")]
+        [EnableRateLimiting(RateLimitPolicies.SocialCreate)]
         [RequestFormLimits(MultipartBodyLengthLimit = 120 * 1024 * 1024)]
         [RequestSizeLimit(120 * 1024 * 1024)]
         public async Task<IActionResult> Quote(
@@ -106,6 +112,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpDelete("api/posts/{id:guid}")]
+        [EnableRateLimiting(RateLimitPolicies.SocialCreate)]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.DeleteAsync(CurrentUserId, id, cancellationToken);
@@ -113,6 +120,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/like")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Like(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.LikeAsync(CurrentUserId, id, cancellationToken);
@@ -120,6 +128,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpDelete("api/posts/{id:guid}/like")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Unlike(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.UnlikeAsync(CurrentUserId, id, cancellationToken);
@@ -127,6 +136,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpPost("api/posts/{id:guid}/bookmark")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Bookmark(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.BookmarkAsync(CurrentUserId, id, cancellationToken);
@@ -134,6 +144,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
         }
 
         [HttpDelete("api/posts/{id:guid}/bookmark")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> RemoveBookmark(Guid id, CancellationToken cancellationToken)
         {
             var result = await _postService.RemoveBookmarkAsync(CurrentUserId, id, cancellationToken);

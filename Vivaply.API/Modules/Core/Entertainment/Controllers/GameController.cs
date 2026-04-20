@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Infrastructure.RateLimiting;
 using Vivaply.API.Modules.Core.Entertainment.DTOs.Commands.Games;
 using Vivaply.API.Modules.Core.Entertainment.Services.Interfaces;
 
@@ -30,6 +32,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> Track([FromBody] TrackGameDto request)
         {
             await _gameService.AddToLibraryAsync(CurrentUserId, request);
@@ -37,6 +40,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpPut("status")]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> UpdateStatus([FromBody] UpdateGameStatusDto request)
         {
             await _gameService.UpdateStatusAsync(CurrentUserId, request);
@@ -44,6 +48,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpPut("progress")]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> UpdateProgress([FromBody] UpdateGameProgressDto request)
         {
             await _gameService.UpdateProgressAsync(CurrentUserId, request);
@@ -51,6 +56,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpPut("rating")]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> Rate([FromBody] RateGameDto request)
         {
             await _gameService.RateAsync(CurrentUserId, request);
@@ -58,6 +64,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpPut("review")]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> Review([FromBody] AddGameReviewDto request)
         {
             await _gameService.AddReviewAsync(CurrentUserId, request);
@@ -65,6 +72,7 @@ namespace Vivaply.API.Modules.Core.Entertainment.Controllers
         }
 
         [HttpDelete("{id}")]
+        [EnableRateLimiting(RateLimitPolicies.LibraryWrite)]
         public async Task<IActionResult> Remove(int id)
         {
             await _gameService.RemoveAsync(CurrentUserId, id);

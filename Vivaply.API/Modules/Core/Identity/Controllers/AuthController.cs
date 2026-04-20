@@ -10,6 +10,9 @@ using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Modules.Core.Identity.DTOs.Auth;
 using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 
+using Microsoft.AspNetCore.RateLimiting;
+using Vivaply.API.Infrastructure.RateLimiting;
+
 namespace Vivaply.API.Modules.Core.Identity.Controllers
 {
     [Route("api/[controller]")]
@@ -21,6 +24,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Register
         [HttpPost("register")]
+        [EnableRateLimiting(RateLimitPolicies.Auth)]
         public async Task<IActionResult> Register(RegisterDto request)
         {
             // Validation (Check if email or username already exists)
@@ -81,6 +85,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Login
         [HttpPost("login")]
+        [EnableRateLimiting(RateLimitPolicies.Auth)]
         public async Task<IActionResult> Login(LoginDto request)
         {
             var user = await _context.Users
@@ -112,6 +117,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [EnableRateLimiting(RateLimitPolicies.Auth)]
         public async Task<IActionResult> RefreshToken()
         {
             // Read Refresh Token from HttpOnly Cookie

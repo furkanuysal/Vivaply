@@ -2,6 +2,9 @@
 using Vivaply.API.Infrastructure.Core;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
+using Microsoft.AspNetCore.RateLimiting;
+using Vivaply.API.Infrastructure.RateLimiting;
+
 namespace Vivaply.API.Modules.Core.Social.Controllers
 {
     [ApiController]
@@ -12,6 +15,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
 
         // FOLLOW
         [HttpPost("{targetUserId}/follow")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Follow(Guid targetUserId)
         {
             await _followService.FollowAsync(CurrentUserId, targetUserId);
@@ -20,6 +24,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
 
         // UNFOLLOW
         [HttpDelete("{targetUserId}/follow")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Unfollow(Guid targetUserId)
         {
             await _followService.UnfollowAsync(CurrentUserId, targetUserId);
@@ -28,6 +33,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
 
         // ACCEPT REQUEST
         [HttpPut("{requesterId}/follow/accept")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Accept(Guid requesterId)
         {
             await _followService.AcceptRequestAsync(CurrentUserId, requesterId);
@@ -36,6 +42,7 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
 
         // REJECT REQUEST
         [HttpPut("{requesterId}/follow/reject")]
+        [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Reject(Guid requesterId)
         {
             await _followService.RejectRequestAsync(CurrentUserId, requesterId);

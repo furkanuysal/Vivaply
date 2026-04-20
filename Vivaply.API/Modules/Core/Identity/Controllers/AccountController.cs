@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Vivaply.API.Infrastructure.Core;
+using Vivaply.API.Infrastructure.RateLimiting;
 using Vivaply.API.Modules.Core.Identity.DTOs.Account;
 using Vivaply.API.Modules.Core.Identity.Services.Interfaces;
 
@@ -36,6 +38,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Update Profile
         [HttpPut("profile")]
+        [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
         {
             try
@@ -53,6 +56,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Upload Avatar
         [HttpPost("avatar")]
+        [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> UploadAvatar([FromForm] UploadAvatarDto request)
         {
             var avatarUrl = await _accountService.UploadAvatarAsync(CurrentUserId, request);
@@ -61,6 +65,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Change Password
         [HttpPut("password")]
+        [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
             await _accountService.ChangePasswordAsync(CurrentUserId, request);
@@ -69,6 +74,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
 
         // Delete Account
         [HttpDelete]
+        [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> DeleteAccount()
         {
             await _accountService.DeleteAccountAsync(CurrentUserId);
