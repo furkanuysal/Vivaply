@@ -10,16 +10,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
     public class PostMediaStorageService(IWebHostEnvironment env) : IPostMediaStorageService
     {
         private const long MaxImageSizeBytes = 10 * 1024 * 1024;
-        private const long MaxVideoSizeBytes = 100 * 1024 * 1024;
         private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-        private static readonly string[] AllowedVideoExtensions = [".mp4", ".webm", ".mov", ".m4v", ".ogv", ".ogg"];
         private readonly IWebHostEnvironment _env = env;
 
-        public async Task<List<PostAttachment>> SaveAsync(
-            IEnumerable<IFormFile>? files,
-            IEnumerable<IFormFile>? thumbnailFiles,
-            IEnumerable<int>? thumbnailIndexes,
-            CancellationToken cancellationToken = default)
+        public async Task<List<PostAttachment>> SaveAsync(IEnumerable<IFormFile>? files, CancellationToken cancellationToken = default)
         {
             if (files == null)
             {
@@ -36,7 +30,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 return [];
             }
 
-            var thumbnailLookup = BuildThumbnailLookup(thumbnailFiles, thumbnailIndexes);
             var attachments = new List<PostAttachment>(validFiles.Count);
 
             for (var index = 0; index < validFiles.Count; index++)
@@ -53,58 +46,15 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     continue;
                 }
 
-                if (IsVideoFile(extension, contentType))
-                {
-                    thumbnailLookup.TryGetValue(index, out var thumbnailFile);
-                    attachments.Add(await SaveVideoAsync(file, thumbnailFile, index, extension, cancellationToken));
-                    continue;
-                }
-
-                throw new InvalidOperationException("Unsupported media format.");
+                throw new InvalidOperationException("Only image uploads are supported for posts right now.");
             }
 
             return attachments;
         }
 
-        private static Dictionary<int, IFormFile> BuildThumbnailLookup(
-            IEnumerable<IFormFile>? thumbnailFiles,
-            IEnumerable<int>? thumbnailIndexes)
-        {
-            if (thumbnailFiles == null || thumbnailIndexes == null)
-            {
-                return [];
-            }
-
-            var files = thumbnailFiles.ToList();
-            var indexes = thumbnailIndexes.ToList();
-
-            if (files.Count == 0 || indexes.Count == 0)
-            {
-                return [];
-            }
-
-            var count = Math.Min(files.Count, indexes.Count);
-            var lookup = new Dictionary<int, IFormFile>(count);
-
-            for (var i = 0; i < count; i++)
-            {
-                if (files[i] is { Length: > 0 })
-                {
-                    lookup[indexes[i]] = files[i];
-                }
-            }
-
-            return lookup;
-        }
-
         private static bool IsImageFile(string extension, string contentType)
         {
             return AllowedImageExtensions.Contains(extension) || contentType.StartsWith("image/");
-        }
-
-        private static bool IsVideoFile(string extension, string contentType)
-        {
-            return AllowedVideoExtensions.Contains(extension) || contentType.StartsWith("video/");
         }
 
         public void Delete(string? relativePath)
@@ -131,39 +81,6 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 Type = PostAttachmentType.Image,
                 Url = relativePath,
-                SortOrder = sortOrder
-            };
-        }
-
-        private async Task<PostAttachment> SaveVideoAsync(
-            IFormFile file,
-            IFormFile? thumbnailFile,
-            int sortOrder,
-            string extension,
-            CancellationToken cancellationToken)
-        {
-            if (file.Length > MaxVideoSizeBytes)
-            {
-                throw new InvalidOperationException("Video file size is too large.");
-            }
-
-            var contentType = file.ContentType?.ToLowerInvariant() ?? string.Empty;
-            if (!contentType.StartsWith("video/") &&
-                !AllowedVideoExtensions.Contains(extension))
-            {
-                throw new InvalidOperationException("Unsupported video format.");
-            }
-
-            var relativePath = await SaveFileAsync(file, cancellationToken);
-            var thumbnailRelativePath = thumbnailFile == null
-                ? null
-                : await SaveImageFileAsync(thumbnailFile, cancellationToken);
-
-            return new PostAttachment
-            {
-                Type = PostAttachmentType.Video,
-                Url = relativePath,
-                ThumbnailUrl = thumbnailRelativePath,
                 SortOrder = sortOrder
             };
         }

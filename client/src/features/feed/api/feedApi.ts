@@ -31,7 +31,7 @@ export const feedApi = {
   },
 
   async createPost(textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = await createPostFormData(textContent, files);
+    const formData = createPostFormData(textContent, files);
     const response = await api.post<FeedItemDto>("/posts", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -48,7 +48,7 @@ export const feedApi = {
   },
 
   async quotePost(postId: string, textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = await createPostFormData(textContent, files);
+    const formData = createPostFormData(textContent, files);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/quote`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -73,7 +73,7 @@ export const feedApi = {
   },
 
   async replyToPost(postId: string, textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = await createPostFormData(textContent, files);
+    const formData = createPostFormData(textContent, files);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/reply`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -379,7 +379,7 @@ export function isActivityPost(item: FeedRenderablePost): boolean {
   return item.type === FeedPostType.Activity && !!item.activity;
 }
 
-async function createPostFormData(textContent: string, files: File[]): Promise<FormData> {
+function createPostFormData(textContent: string, files: File[]): FormData {
   const formData = new FormData();
   const limitedFiles = files.slice(0, 4);
 
@@ -391,107 +391,5 @@ async function createPostFormData(textContent: string, files: File[]): Promise<F
     formData.append("files", file);
   });
 
-  const thumbnailEntries = await Promise.all(
-    limitedFiles.map(async (file, index) => {
-      if (!file.type.startsWith("video/")) {
-        return null;
-      }
-
-      const thumbnailFile = await generateVideoThumbnailFile(file, index);
-      if (!thumbnailFile) {
-        return null;
-      }
-
-      return { index, file: thumbnailFile };
-    }),
-  );
-
-  thumbnailEntries
-    .filter((entry): entry is { index: number; file: File } => entry !== null)
-    .forEach((entry) => {
-      formData.append("thumbnailFiles", entry.file);
-      formData.append("thumbnailIndexes", String(entry.index));
-    });
-
   return formData;
-}
-
-async function generateVideoThumbnailFile(file: File, index: number): Promise<File | null> {
-  const objectUrl = URL.createObjectURL(file);
-
-  try {
-    return await new Promise<File | null>((resolve) => {
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.muted = true;
-      video.playsInline = true;
-      video.src = objectUrl;
-
-      const cleanup = () => {
-        video.removeAttribute("src");
-        video.load();
-        URL.revokeObjectURL(objectUrl);
-      };
-
-      const finalize = (result: File | null) => {
-        cleanup();
-        resolve(result);
-      };
-
-      const captureFrame = () => {
-        if (!video.videoWidth || !video.videoHeight) {
-          finalize(null);
-          return;
-        }
-
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const context = canvas.getContext("2d");
-
-          if (!context) {
-            finalize(null);
-            return;
-          }
-
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                finalize(null);
-                return;
-              }
-
-              finalize(new File([blob], `${file.name}-thumb-${index}.jpg`, { type: "image/jpeg" }));
-            },
-            "image/jpeg",
-            0.82,
-          );
-        } catch {
-          finalize(null);
-        }
-      };
-
-      video.addEventListener("loadedmetadata", () => {
-        const seekTarget = Math.min(Math.max(video.duration * 0.05, 0.1), 1);
-
-        if (Number.isFinite(seekTarget) && seekTarget > 0) {
-          try {
-            video.currentTime = seekTarget;
-          } catch {
-            captureFrame();
-          }
-        } else {
-          captureFrame();
-        }
-      });
-
-      video.addEventListener("seeked", captureFrame, { once: true });
-      video.addEventListener("error", () => finalize(null), { once: true });
-    });
-  } catch {
-    URL.revokeObjectURL(objectUrl);
-    return null;
-  }
 }

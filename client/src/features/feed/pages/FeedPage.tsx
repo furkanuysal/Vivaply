@@ -145,7 +145,7 @@ export default function FeedPage() {
                 <label className="cursor-pointer rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text">
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     multiple
                     className="hidden"
                     onChange={(event) => {

@@ -78,11 +78,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = now
             };
 
-            foreach (var attachment in await _postMediaStorageService.SaveAsync(
-                request.Files,
-                request.ThumbnailFiles,
-                request.ThumbnailIndexes,
-                cancellationToken))
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(request.Files, cancellationToken))
             {
                 post.Attachments.Add(attachment);
             }
@@ -417,11 +413,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = DateTime.UtcNow
             };
 
-            foreach (var attachment in await _postMediaStorageService.SaveAsync(
-                request.Files,
-                request.ThumbnailFiles,
-                request.ThumbnailIndexes,
-                cancellationToken))
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(request.Files, cancellationToken))
             {
                 reply.Attachments.Add(attachment);
             }
@@ -471,11 +463,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = DateTime.UtcNow
             };
 
-            foreach (var attachment in await _postMediaStorageService.SaveAsync(
-                request.Files,
-                request.ThumbnailFiles,
-                request.ThumbnailIndexes,
-                cancellationToken))
+            foreach (var attachment in await _postMediaStorageService.SaveAsync(request.Files, cancellationToken))
             {
                 quote.Attachments.Add(attachment);
             }
