@@ -11,6 +11,7 @@ export interface PostUpdatePayload {
   stats?: Partial<FeedStatsDto>;
   viewer?: Partial<FeedViewerStateDto>;
   textContent?: string | null;
+  isSpoiler?: boolean;
   updatedAt?: string | null;
   remove?: boolean;
   createdPost?: FeedItemDto;
@@ -87,6 +88,7 @@ export function applyPostUpdate(
   return {
     ...item,
     textContent: update.textContent !== undefined ? update.textContent : item.textContent,
+    isSpoiler: update.isSpoiler !== undefined ? update.isSpoiler : item.isSpoiler,
     updatedAt: update.updatedAt !== undefined ? update.updatedAt : item.updatedAt,
     stats: update.stats ? { ...item.stats, ...update.stats } : item.stats,
     viewer: update.viewer ? { ...item.viewer, ...update.viewer } : item.viewer,

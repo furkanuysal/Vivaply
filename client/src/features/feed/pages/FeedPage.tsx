@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowPathIcon,
+  EyeSlashIcon,
   FaceSmileIcon,
   MapPinIcon,
   PhotoIcon,
@@ -27,6 +28,7 @@ export default function FeedPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [postText, setPostText] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSpoiler, setIsSpoiler] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
 
@@ -71,10 +73,11 @@ export default function FeedPage() {
 
     try {
       setSubmittingPost(true);
-      const createdPost = await feedApi.createPost(value, selectedFiles);
+      const createdPost = await feedApi.createPost(value, selectedFiles, isSpoiler);
       setItems((current) => [createdPost, ...current]);
       setPostText("");
       setSelectedFiles([]);
+      setIsSpoiler(false);
     } catch (error) {
       console.error("Post could not be created", error);
       toast.error(getApiErrorMessage(error) ?? t("page.composer.error"));
@@ -157,6 +160,17 @@ export default function FeedPage() {
                   <PhotoIcon className="h-5 w-5" />
                   <span className="sr-only">{t("actions.media")}</span>
                 </label>
+                <button
+                  type="button"
+                  onClick={() => setIsSpoiler((current) => !current)}
+                  className={`rounded-full p-2 transition hover:bg-skin-base hover:text-skin-text ${
+                    isSpoiler ? "bg-skin-primary/10 text-skin-primary" : "text-skin-muted"
+                  }`}
+                  aria-pressed={isSpoiler}
+                  aria-label={t("actions.spoiler")}
+                >
+                  <EyeSlashIcon className="h-5 w-5" />
+                </button>
                 <button
                   type="button"
                   className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"

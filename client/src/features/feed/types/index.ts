@@ -60,6 +60,7 @@ export interface FeedQuotedPostDto {
   publishedAt: string;
   updatedAt?: string | null;
   textContent?: string | null;
+  isSpoiler: boolean;
   activity?: FeedActivityDto | null;
   attachments: FeedAttachmentDto[];
 }
@@ -92,6 +93,7 @@ export interface FeedItemDto {
   publishedAt: string;
   updatedAt?: string | null;
   textContent?: string | null;
+  isSpoiler: boolean;
   parentPostId?: string | null;
   quotedPostId?: string | null;
   quotedPost?: FeedQuotedPostDto | null;

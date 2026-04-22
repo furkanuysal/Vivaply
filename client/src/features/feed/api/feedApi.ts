@@ -30,8 +30,12 @@ export const feedApi = {
     return response.data;
   },
 
-  async createPost(textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files);
+  async createPost(
+    textContent: string,
+    files: File[] = [],
+    isSpoiler = false,
+  ): Promise<FeedItemDto> {
+    const formData = createPostFormData(textContent, files, isSpoiler);
     const response = await api.post<FeedItemDto>("/posts", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -39,16 +43,26 @@ export const feedApi = {
     return response.data;
   },
 
-  async updatePost(postId: string, textContent: string): Promise<FeedItemDto> {
+  async updatePost(
+    postId: string,
+    textContent: string,
+    isSpoiler?: boolean,
+  ): Promise<FeedItemDto> {
     const response = await api.put<FeedItemDto>(`/posts/${postId}`, {
       textContent,
+      isSpoiler,
     });
 
     return response.data;
   },
 
-  async quotePost(postId: string, textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files);
+  async quotePost(
+    postId: string,
+    textContent: string,
+    files: File[] = [],
+    isSpoiler = false,
+  ): Promise<FeedItemDto> {
+    const formData = createPostFormData(textContent, files, isSpoiler);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/quote`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -72,8 +86,13 @@ export const feedApi = {
     return response.data;
   },
 
-  async replyToPost(postId: string, textContent: string, files: File[] = []): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files);
+  async replyToPost(
+    postId: string,
+    textContent: string,
+    files: File[] = [],
+    isSpoiler = false,
+  ): Promise<FeedItemDto> {
+    const formData = createPostFormData(textContent, files, isSpoiler);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/reply`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -379,13 +398,19 @@ export function isActivityPost(item: FeedRenderablePost): boolean {
   return item.type === FeedPostType.Activity && !!item.activity;
 }
 
-function createPostFormData(textContent: string, files: File[]): FormData {
+function createPostFormData(
+  textContent: string,
+  files: File[],
+  isSpoiler: boolean,
+): FormData {
   const formData = new FormData();
   const limitedFiles = files.slice(0, 4);
 
   if (textContent.trim().length > 0) {
     formData.append("textContent", textContent.trim());
   }
+
+  formData.append("isSpoiler", String(isSpoiler));
 
   limitedFiles.forEach((file) => {
     formData.append("files", file);

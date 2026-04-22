@@ -24,6 +24,8 @@ namespace Vivaply.API.Entities.Identity
         [MaxLength(4000)]
         public string? TextContent { get; set; }
 
+        public bool IsSpoiler { get; set; }
+
         public DateTime PublishedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

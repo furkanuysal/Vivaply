@@ -75,6 +75,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UserId = currentUserId,
                 Type = PostType.Standard,
                 TextContent = NormalizeText(request.TextContent),
+                IsSpoiler = request.IsSpoiler,
                 PublishedAt = now
             };
 
@@ -132,6 +133,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             post.TextContent = normalizedText;
+            if (request.IsSpoiler.HasValue)
+            {
+                post.IsSpoiler = request.IsSpoiler.Value;
+            }
             post.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync(cancellationToken);
@@ -410,6 +415,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 Type = PostType.Reply,
                 ParentPostId = parentPostId,
                 TextContent = NormalizeText(request.TextContent),
+                IsSpoiler = request.IsSpoiler,
                 PublishedAt = DateTime.UtcNow
             };
 
@@ -460,6 +466,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 Type = PostType.Quote,
                 QuotedPostId = quotedPostId,
                 TextContent = NormalizeText(request.TextContent),
+                IsSpoiler = request.IsSpoiler,
                 PublishedAt = DateTime.UtcNow
             };
 
@@ -812,6 +819,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = entity.PublishedAt,
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
+                IsSpoiler = entity.IsSpoiler,
                 ParentPostId = entity.ParentPostId,
                 QuotedPostId = entity.QuotedPostId,
                 QuotedPost = MapQuotedDto(entity.QuotedPost),
@@ -855,6 +863,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = entity.PublishedAt,
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
+                IsSpoiler = entity.IsSpoiler,
                 ParentPostId = entity.ParentPostId,
                 QuotedPostId = entity.QuotedPostId,
                 QuotedPost = MapQuotedDto(entity.QuotedPost),
@@ -897,6 +906,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 PublishedAt = entity.PublishedAt,
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
+                IsSpoiler = entity.IsSpoiler,
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
                 Attachments = entity.Attachments
                     .OrderBy(x => x.SortOrder)

@@ -1,5 +1,6 @@
 import {
   ArrowLeftIcon,
+  EyeSlashIcon,
   FaceSmileIcon,
   MapPinIcon,
   PhotoIcon,
@@ -51,6 +52,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
   const [loading, setLoading] = useState(true);
   const [composerText, setComposerText] = useState("");
   const [composerFiles, setComposerFiles] = useState<File[]>([]);
+  const [isSpoiler, setIsSpoiler] = useState(false);
   const [submittingComposer, setSubmittingComposer] = useState(false);
   const [composerMode, setComposerMode] = useState<"reply" | "quote" | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
@@ -139,7 +141,12 @@ export default function PostPage({ isModal = false }: PostPageProps) {
       setSubmittingComposer(true);
 
       if (composerMode === "quote") {
-        const quotePost = await feedApi.quotePost(postId, value, composerFiles);
+        const quotePost = await feedApi.quotePost(
+          postId,
+          value,
+          composerFiles,
+          isSpoiler,
+        );
         publishPostUpdate({ createdPost: quotePost });
         publishPostUpdate({
           postId,
@@ -158,6 +165,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
         );
         setComposerText("");
         setComposerFiles([]);
+        setIsSpoiler(false);
         setComposerMode(null);
 
         if (isModal) {
@@ -166,7 +174,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
         return;
       }
 
-      const reply = await feedApi.replyToPost(postId, value, composerFiles);
+      const reply = await feedApi.replyToPost(postId, value, composerFiles, isSpoiler);
       const nextReplyCount = (item?.stats?.replyCount ?? 0) + 1;
 
       setItem((current) =>
@@ -189,6 +197,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
 
       setComposerText("");
       setComposerFiles([]);
+      setIsSpoiler(false);
       setComposerMode(null);
     } catch (error) {
       console.error("Post composer action could not be completed", error);
@@ -302,6 +311,17 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                     </label>
                     <button
                       type="button"
+                      onClick={() => setIsSpoiler((current) => !current)}
+                      className={`rounded-full p-2 transition hover:bg-skin-base hover:text-skin-text ${
+                        isSpoiler ? "bg-skin-primary/10 text-skin-primary" : "text-skin-muted"
+                      }`}
+                      aria-pressed={isSpoiler}
+                      aria-label={t("actions.spoiler")}
+                    >
+                      <EyeSlashIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
                       className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
                       aria-label={t("actions.emoji")}
                     >
@@ -326,6 +346,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                         setComposerMode(null);
                         setComposerText("");
                         setComposerFiles([]);
+                        setIsSpoiler(false);
                       }}
                       className="text-sm font-medium text-skin-muted transition hover:text-skin-text"
                     >

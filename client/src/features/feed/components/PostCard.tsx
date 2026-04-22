@@ -3,6 +3,7 @@ import {
   BookmarkIcon,
   ChatBubbleLeftRightIcon,
   EllipsisHorizontalIcon,
+  EyeSlashIcon,
   EyeIcon,
   PencilSquareIcon,
   ShareIcon,
@@ -95,6 +96,7 @@ export default function PostCard({
   const [bookmarking, setBookmarking] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSpoilerRevealed, setIsSpoilerRevealed] = useState(false);
   const [draftText, setDraftText] = useState(item.textContent ?? "");
   const [savingEdit, setSavingEdit] = useState(false);
   const canDelete = user?.id === item.actor.id;
@@ -104,6 +106,10 @@ export default function PostCard({
       item.type === FeedPostType.Quote ||
       item.type === FeedPostType.Reply);
   const edited = isPostEdited(item);
+  const isSpoilerHidden = item.isSpoiler && !isSpoilerRevealed && !isEditing;
+  const spoilerContentClass = isSpoilerHidden
+    ? "pointer-events-none select-none blur-md transition duration-200"
+    : "transition duration-200";
   const menuRef = useRef<HTMLDivElement | null>(null);
   const interactionProps = {
     onClick: (event: MouseEvent<HTMLElement>) => event.stopPropagation(),
@@ -115,9 +121,11 @@ export default function PostCard({
     setBookmarkCount(item.stats?.bookmarkCount ?? 0);
     setHasBookmarked(item.viewer?.hasBookmarked ?? false);
     setDraftText(item.textContent ?? "");
+    setIsSpoilerRevealed(false);
   }, [
     item.id,
     item.textContent,
+    item.isSpoiler,
     item.stats?.likeCount,
     item.stats?.bookmarkCount,
     item.viewer?.hasLiked,
@@ -359,6 +367,7 @@ export default function PostCard({
       publishPostUpdate({
         postId: item.id,
         textContent: updatedPost.textContent ?? null,
+        isSpoiler: updatedPost.isSpoiler,
         updatedAt: updatedPost.updatedAt ?? null,
       });
       setDraftText(updatedPost.textContent ?? "");
@@ -429,6 +438,11 @@ export default function PostCard({
             {edited ? (
               <span className="text-xs text-skin-muted">{t("labels.edited")}</span>
             ) : null}
+            {item.isSpoiler ? (
+              <span className="rounded-full bg-skin-primary/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-skin-primary">
+                {t("labels.spoiler")}
+              </span>
+            ) : null}
           </div>
 
           {isEditing ? (
@@ -465,61 +479,83 @@ export default function PostCard({
                 </button>
               </div>
             </div>
-          ) : description ? (
-            <p
-              className={`${shouldRenderContentPreview || quotedPost ? "mb-3" : ""} mt-2 text-skin-text/90 ${
-                isFlat ? "text-base leading-8" : "text-sm leading-6"
-              }`}
-            >
-              {renderDescription(description, title, targetPath)}
-            </p>
-          ) : null}
+          ) : (
+            <div className="relative">
+              <div className={spoilerContentClass}>
+                {description ? (
+                  <p
+                    className={`${shouldRenderContentPreview || quotedPost ? "mb-3" : ""} mt-2 text-skin-text/90 ${
+                      isFlat ? "text-base leading-8" : "text-sm leading-6"
+                    }`}
+                  >
+                    {renderDescription(description, title, targetPath)}
+                  </p>
+                ) : null}
 
-          {reviewSnippet ? (
-            <blockquote
-              className={`mt-4 border-l-2 border-skin-border/70 pl-4 italic text-skin-muted ${
-                isFlat ? "text-base leading-8" : "text-sm"
-              }`}
-            >
-              "{reviewSnippet}"
-            </blockquote>
-          ) : null}
+                {reviewSnippet ? (
+                  <blockquote
+                    className={`mt-4 border-l-2 border-skin-border/70 pl-4 italic text-skin-muted ${
+                      isFlat ? "text-base leading-8" : "text-sm"
+                    }`}
+                  >
+                    "{reviewSnippet}"
+                  </blockquote>
+                ) : null}
 
-          {item.attachments.length > 0 ? (
-            <PostAttachmentGallery attachments={item.attachments} />
-          ) : null}
+                {item.attachments.length > 0 ? (
+                  <PostAttachmentGallery attachments={item.attachments} />
+                ) : null}
 
-          {shouldRenderContentPreview ? (
-            <Link
-              to={targetPath!}
-              {...interactionProps}
-              className={`mt-4 block overflow-hidden border border-skin-border/40 ${
-                isFlat
-                  ? "rounded-xl hover:border-skin-border/70"
-                  : "rounded-xl bg-skin-surface px-3 py-3 transition hover:bg-skin-border/10"
-              }`}
-            >
-              {isFlat ? (
-                <FlatContentPreview
-                  imageUrl={imageUrl}
-                  title={title}
-                  secondaryMeta={contentSubtitle}
-                  fallbackType={getFallbackType(activityType)}
-                />
-              ) : (
-                <CardContentPreview
-                  imageUrl={imageUrl}
-                  title={title}
-                  secondaryMeta={contentSubtitle}
-                  fallbackType={getFallbackType(activityType)}
-                />
-              )}
-            </Link>
-          ) : null}
+                {shouldRenderContentPreview ? (
+                  <Link
+                    to={targetPath!}
+                    {...interactionProps}
+                    className={`mt-4 block overflow-hidden border border-skin-border/40 ${
+                      isFlat
+                        ? "rounded-xl hover:border-skin-border/70"
+                        : "rounded-xl bg-skin-surface px-3 py-3 transition hover:bg-skin-border/10"
+                    }`}
+                  >
+                    {isFlat ? (
+                      <FlatContentPreview
+                        imageUrl={imageUrl}
+                        title={title}
+                        secondaryMeta={contentSubtitle}
+                        fallbackType={getFallbackType(activityType)}
+                      />
+                    ) : (
+                      <CardContentPreview
+                        imageUrl={imageUrl}
+                        title={title}
+                        secondaryMeta={contentSubtitle}
+                        fallbackType={getFallbackType(activityType)}
+                      />
+                    )}
+                  </Link>
+                ) : null}
 
-          {quotedPost ? (
-            <QuotedPostPreview item={quotedPost} isFlat={isFlat} />
-          ) : null}
+                {quotedPost ? (
+                  <QuotedPostPreview item={quotedPost} isFlat={isFlat} />
+                ) : null}
+              </div>
+
+              {isSpoilerHidden ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIsSpoilerRevealed(true);
+                  }}
+                  className="absolute inset-0 flex min-h-24 items-center justify-center rounded-2xl bg-skin-surface/55 backdrop-blur-[2px]"
+                >
+                  <span className="inline-flex items-center gap-2 rounded-full border border-skin-border/50 bg-skin-surface px-4 py-2 text-sm font-semibold text-skin-text shadow-sm">
+                    <EyeSlashIcon className="h-4 w-4 text-skin-primary" />
+                    {t("post.spoiler_reveal")}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+          )}
 
           <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center gap-4 text-skin-muted">
@@ -689,12 +725,14 @@ function QuotedPostPreview({
   isFlat: boolean;
 }) {
   const { t } = useTranslation("feed");
+  const [isRevealed, setIsRevealed] = useState(false);
   const imageUrl = getFeedImageUrl(item);
   const title = getFeedTitle(item);
   const targetPath = getFeedTargetPath(item);
   const activityType = getFeedActivityType(item);
   const fallbackType = getFallbackType(activityType);
   const quotedText = item.textContent?.trim() || title;
+  const isHidden = item.isSpoiler && !isRevealed;
 
   return (
     <Link
@@ -714,30 +752,70 @@ function QuotedPostPreview({
               ? t("labels.shared_in_feed")
               : t("post.eyebrow")}
         </span>
+        {item.isSpoiler ? (
+          <span className="rounded-full bg-skin-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-skin-primary">
+            {t("labels.spoiler")}
+          </span>
+        ) : null}
       </div>
 
-      {item.textContent ? (
-        <p className="mt-2 text-sm leading-6 text-skin-text/90">{item.textContent}</p>
-      ) : null}
+      <div className="relative">
+        <div
+          className={
+            isHidden
+              ? "pointer-events-none select-none blur-md transition duration-200"
+              : "transition duration-200"
+          }
+        >
+          {item.textContent ? (
+            <p className="mt-2 text-sm leading-6 text-skin-text/90">{item.textContent}</p>
+          ) : null}
 
-      {item.attachments.length > 0 ? (
-        <div className="mt-3">
-          <PostAttachmentGallery attachments={item.attachments} />
-        </div>
-      ) : null}
+          {item.attachments.length > 0 ? (
+            <div className="mt-3">
+              <PostAttachmentGallery attachments={item.attachments} />
+            </div>
+          ) : null}
 
-      {targetPath ? (
-        <div className="mt-3 rounded-xl border border-skin-border/40 bg-skin-surface px-3 py-3">
-          <CardContentPreview
-            imageUrl={imageUrl}
-            title={quotedText}
-            secondaryMeta=""
-            fallbackType={fallbackType}
-          />
+          {targetPath ? (
+            <div className="mt-3 rounded-xl border border-skin-border/40 bg-skin-surface px-3 py-3">
+              <CardContentPreview
+                imageUrl={imageUrl}
+                title={quotedText}
+                secondaryMeta=""
+                fallbackType={fallbackType}
+              />
+            </div>
+          ) : !item.textContent ? (
+            <p className="mt-2 text-sm leading-6 text-skin-text/90">{quotedText}</p>
+          ) : null}
         </div>
-      ) : !item.textContent ? (
-        <p className="mt-2 text-sm leading-6 text-skin-text/90">{quotedText}</p>
-      ) : null}
+
+        {isHidden ? (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsRevealed(true);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsRevealed(true);
+              }
+            }}
+            className="absolute inset-0 mt-2 flex min-h-16 items-center justify-center rounded-xl bg-skin-surface/60 backdrop-blur-[2px]"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full border border-skin-border/50 bg-skin-surface px-3 py-1.5 text-xs font-semibold text-skin-text shadow-sm">
+              <EyeSlashIcon className="h-4 w-4 text-skin-primary" />
+              {t("post.spoiler_reveal")}
+            </span>
+          </div>
+        ) : null}
+      </div>
     </Link>
   );
 }

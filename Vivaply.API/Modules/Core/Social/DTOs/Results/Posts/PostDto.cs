@@ -11,6 +11,7 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
         public DateTime PublishedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string? TextContent { get; set; }
+        public bool IsSpoiler { get; set; }
         public Guid? ParentPostId { get; set; }
         public Guid? QuotedPostId { get; set; }
         public PostQuotedDto? QuotedPost { get; set; }

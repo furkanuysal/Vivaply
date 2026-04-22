@@ -33,6 +33,7 @@
     "edit_placeholder": "Update your post...",
     "quote_placeholder": "Add your perspective...",
     "quote_preview_label": "Quoted post",
+    "spoiler_reveal": "Spoiler - click to reveal",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Cancel",
     "edit_save": "Save",
@@ -67,6 +68,7 @@
     "media": "Add media",
     "emoji": "Add emoji",
     "location": "Add location",
+    "spoiler": "Mark as spoiler",
     "edit": "Edit",
     "delete": "Delete",
     "quote": "Quote",
@@ -86,6 +88,7 @@
     "library": "Library",
     "reply": "Reply",
     "quote": "Quote",
+    "spoiler": "Spoiler",
     "edited": "Edited",
     "shared_in_feed": "Shared in feed"
   },

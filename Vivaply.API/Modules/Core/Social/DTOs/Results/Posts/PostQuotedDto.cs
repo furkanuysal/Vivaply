@@ -11,6 +11,7 @@ namespace Vivaply.API.Modules.Core.Social.DTOs.Results.Posts
         public DateTime PublishedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string? TextContent { get; set; }
+        public bool IsSpoiler { get; set; }
         public ActivityDto? Activity { get; set; }
         public List<PostAttachmentDto> Attachments { get; set; } = [];
     }

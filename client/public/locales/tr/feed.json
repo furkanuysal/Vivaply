@@ -33,6 +33,7 @@
     "edit_placeholder": "Gönderini güncelle...",
     "quote_placeholder": "Kendi yorumunu ekle...",
     "quote_preview_label": "Alıntılanan gönderi",
+    "spoiler_reveal": "Spoiler var - görmek için tıkla",
     "reply_count_hint": "{{count}} / 4000",
     "reply_cancel": "Vazgeç",
     "edit_save": "Kaydet",
@@ -67,6 +68,7 @@
     "media": "Medya ekle",
     "emoji": "Emoji ekle",
     "location": "Konum ekle",
+    "spoiler": "Spoiler olarak işaretle",
     "edit": "Düzenle",
     "delete": "Sil",
     "quote": "Alıntıla",
@@ -86,6 +88,7 @@
     "library": "Kütüphane",
     "reply": "Yanıt",
     "quote": "Alıntı",
+    "spoiler": "Spoiler",
     "edited": "Düzenlendi",
     "shared_in_feed": "Akışta paylaşıldı"
   },
