@@ -546,7 +546,6 @@ function QuoteComposerPreview({ item }: { item: FeedItemDto }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-semibold text-skin-text">{item.actor.username}</span>
-            <span className="text-skin-muted">Â·</span>
             <span className="text-skin-muted">{timestamp}</span>
           </div>
 

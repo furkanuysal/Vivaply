@@ -744,7 +744,6 @@ function QuotedPostPreview({
     >
       <div className="flex items-center gap-2 text-xs text-skin-muted">
         <span className="font-semibold text-skin-text">{item.actor.username}</span>
-        <span>·</span>
         <span>
           {item.type === FeedPostType.Quote
             ? t("actions.quote")
@@ -1046,34 +1045,14 @@ function getContentSubtitle(item: FeedItemDto, fallback: string): string {
     return fallback;
   }
 
-  const safeFallback =
-    fallback === "Akışta paylaşıldı" || fallback === "Shared in feed" ? "" : fallback;
+  const safeFallback = "";
 
-  const primary =
-    getString(payload.studio) ??
-    getString(payload.Studio) ??
-    getString(payload.productionCompany) ??
-    getString(payload.ProductionCompany) ??
-    getString(payload.publisher) ??
-    getString(payload.Publisher) ??
-    getString(payload.developer) ??
-    getString(payload.Developer) ??
-    getString(payload.developers) ??
-    getString(payload.Developers) ??
-    getString(payload.author) ??
-    getString(payload.Author) ??
-    getString(payload.authors) ??
-    getString(payload.Authors);
+  const primary = getFirstString(payload, ["developers", "authors"]);
 
-  const secondary =
-    getString(payload.genre) ??
-    getString(payload.Genre) ??
-    getString(payload.genres) ??
-    getString(payload.Genres) ??
-    getString(payload.category);
+  const secondary = getFirstString(payload, ["genres"]);
 
   if (primary && secondary) {
-    return `${primary} • ${secondary}`;
+    return `${primary} / ${secondary}`;
   }
 
   if (primary) {
@@ -1085,6 +1064,20 @@ function getContentSubtitle(item: FeedItemDto, fallback: string): string {
   }
 
   return safeFallback;
+}
+
+function getFirstString(
+  payload: Record<string, unknown>,
+  keys: string[],
+): string | undefined {
+  for (const key of keys) {
+    const value = getString(payload[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
 }
 
 function getString(value: unknown): string | undefined {
