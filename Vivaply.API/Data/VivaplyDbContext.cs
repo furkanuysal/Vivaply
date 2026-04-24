@@ -53,6 +53,7 @@ namespace Vivaply.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.HasPostgresExtension("pg_trgm");
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(VivaplyDbContext).Assembly);
         }
     }

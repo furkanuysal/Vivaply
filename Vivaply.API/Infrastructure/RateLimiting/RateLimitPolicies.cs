@@ -4,6 +4,7 @@
     {
         public const string LocationSearch = "location-search";
         public const string Auth = "auth";
+        public const string SearchRead = "search-read";
         public const string SocialCreate = "social-create";
         public const string SocialAction = "social-action";
         public const string LibraryWrite = "library-write";
@@ -14,6 +15,9 @@
 
         public static readonly TimeSpan AuthWindow = TimeSpan.FromMinutes(5);
         public const int AuthPermitLimit = 12;
+
+        public static readonly TimeSpan SearchReadWindow = TimeSpan.FromSeconds(15);
+        public const int SearchReadPermitLimit = 30;
 
         public static readonly TimeSpan SocialCreateWindow = TimeSpan.FromMinutes(10);
         public const int SocialCreatePermitLimit = 20;

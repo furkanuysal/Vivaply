@@ -33,6 +33,10 @@ namespace Vivaply.API.Data.Configurations.Identity
                 .WithOne(w => w.User)
                 .HasForeignKey<Wallet>(w => w.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(u => u.Username)
+                .IsUnique();
+
         }
     }
 }

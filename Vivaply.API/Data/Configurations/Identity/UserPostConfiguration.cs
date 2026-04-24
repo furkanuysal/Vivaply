@@ -34,6 +34,9 @@ namespace Vivaply.API.Data.Configurations.Identity
                 .IsUnique();
             builder.HasIndex(x => x.ParentPostId);
             builder.HasIndex(x => x.QuotedPostId);
+            builder.HasIndex(x => new { x.TextContent })
+                .HasMethod("gin")
+                .IsTsVectorExpressionIndex("simple");
         }
     }
 }

@@ -58,6 +58,17 @@ namespace Vivaply.API.Infrastructure.RateLimiting
                             QueueLimit = 0
                         }));
 
+                options.AddPolicy(RateLimitPolicies.SearchRead, context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: BuildUserPartitionKey(context, RateLimitPolicies.SearchRead),
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = RateLimitPolicies.SearchReadPermitLimit,
+                            Window = RateLimitPolicies.SearchReadWindow,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+
                 options.AddPolicy(RateLimitPolicies.SocialCreate, context =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: BuildUserPartitionKey(context, RateLimitPolicies.SocialCreate),
@@ -118,6 +129,10 @@ namespace Vivaply.API.Infrastructure.RateLimiting
                     "auth_rate_limited",
                     "Too many authentication attempts. Please try again later.",
                     (int)RateLimitPolicies.AuthWindow.TotalSeconds),
+                RateLimitPolicies.SearchRead => new(
+                    "search_rate_limited",
+                    "You are searching too quickly. Please try again shortly.",
+                    (int)RateLimitPolicies.SearchReadWindow.TotalSeconds),
                 RateLimitPolicies.SocialCreate => new(
                     "post_rate_limited",
                     "You are posting too quickly. Please slow down and try again shortly.",

@@ -6,7 +6,6 @@ using Vivaply.API.Entities.Gamification;
 namespace Vivaply.API.Entities.Identity
 {
     [Index(nameof(Email), IsUnique = true)]
-    [Index(nameof(Username), IsUnique = true)]
     public class User
 
     {
