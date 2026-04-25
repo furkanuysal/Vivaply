@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import {
   ArrowPathIcon,
   EyeSlashIcon,
   FaceSmileIcon,
+  MagnifyingGlassIcon,
   MapPinIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
@@ -20,7 +22,8 @@ import type { FeedItemDto } from "@/features/feed/types";
 import { getApiErrorMessage } from "@/shared/lib/api";
 
 export default function FeedPage() {
-  const { t } = useTranslation("feed");
+  const { t } = useTranslation(["feed", "search"]);
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,7 @@ export default function FeedPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
 
   useEffect(() => {
@@ -86,6 +90,13 @@ export default function FeedPage() {
     }
   };
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmed = searchQuery.trim();
+    navigate(trimmed.length > 0 ? `/search?q=${encodeURIComponent(trimmed)}&tab=users` : "/search");
+  };
+
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center text-skin-text">
@@ -96,16 +107,39 @@ export default function FeedPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-6 md:px-6">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
-          {t("page.eyebrow")}
-        </p>
-        <h1 className="text-4xl font-black tracking-tight text-skin-text">
-          {t("page.title")}
-        </h1>
-        <p className="max-w-2xl text-sm leading-6 text-skin-muted">
-          {t("page.subtitle")}
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
+            {t("page.eyebrow")}
+          </p>
+          <h1 className="text-4xl font-black tracking-tight text-skin-text">
+            {t("page.title")}
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-skin-muted">
+            {t("page.subtitle")}
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSearchSubmit}
+          className="w-full max-w-xl lg:w-[360px] lg:shrink-0"
+        >
+          <label className="relative block">
+            <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-skin-muted" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={t("search:page.search_placeholder")}
+              className="h-12 w-full rounded-2xl border border-skin-border/60 bg-skin-surface/90 pl-12 pr-24 text-sm text-skin-text outline-none transition focus:border-skin-primary/40"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 inline-flex h-8 -translate-y-1/2 items-center justify-center rounded-full bg-skin-primary px-4 text-xs font-semibold text-white transition hover:opacity-90"
+            >
+              {t("search:page.search_button")}
+            </button>
+          </label>
+        </form>
       </div>
 
       <section className="rounded-3xl border border-skin-border/50 bg-skin-surface/90 p-5 shadow-sm">
@@ -143,8 +177,8 @@ export default function FeedPage() {
               />
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 text-skin-muted">
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2 text-skin-muted">
                 <label className="cursor-pointer rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text">
                   <input
                     type="file"
@@ -187,15 +221,15 @@ export default function FeedPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-skin-muted">
+              <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                <span className="text-xs text-skin-muted sm:text-right">
                   {t("page.composer.count", { count: postText.trim().length })}
                 </span>
                 <button
                   type="button"
                   onClick={() => void handleCreatePost()}
                   disabled={submittingPost || (!postText.trim() && selectedFiles.length === 0)}
-                  className="inline-flex items-center justify-center rounded-full bg-skin-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-w-[112px] items-center justify-center rounded-full bg-skin-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submittingPost
                     ? t("page.composer.submitting")

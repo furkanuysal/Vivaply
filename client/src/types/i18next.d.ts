@@ -7,6 +7,7 @@ import dashboard from "@public/locales/en/dashboard.json";
 import settings from "@public/locales/en/settings.json";
 import feed from "@public/locales/en/feed.json";
 import profile from "@public/locales/en/profile.json";
+import search from "@public/locales/en/search.json";
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -20,6 +21,7 @@ declare module "i18next" {
       settings: typeof settings;
       feed: typeof feed;
       profile: typeof profile;
+      search: typeof search;
     };
   }
 }

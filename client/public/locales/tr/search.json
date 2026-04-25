@@ -1,0 +1,32 @@
+{
+  "page": {
+    "eyebrow": "Arama",
+    "title": "Ara",
+    "subtitle": "Kişileri ve gönderileri tek yerden bul, sonra doğrudan ilgili akışa geç.",
+    "search_placeholder": "Kişi veya gönderi ara",
+    "search_button": "Ara"
+  },
+  "tabs": {
+    "users": "Kişiler",
+    "posts": "Gönderiler"
+  },
+  "labels": {
+    "you": "Sen"
+  },
+  "stats": {
+    "followers": "takipçi",
+    "following": "takip"
+  },
+  "states": {
+    "idle_title": "Aramaya başla",
+    "idle_subtitle": "Kullanıcı adına ya da bir gönderinin metnine göre arama yap.",
+    "min_length_title": "Biraz daha yaz",
+    "min_length_subtitle": "Daha iyi sonuçlar için en az 2 karakter kullan.",
+    "empty_title": "Sonuç bulunamadı",
+    "empty_users": "Bu arama için eşleşen kişi bulunamadı.",
+    "empty_posts": "Bu arama için eşleşen gönderi bulunamadı."
+  },
+  "errors": {
+    "load": "Arama sonuçları yüklenemedi."
+  }
+}

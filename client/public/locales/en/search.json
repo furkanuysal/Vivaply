@@ -1,0 +1,32 @@
+{
+  "page": {
+    "eyebrow": "Search",
+    "title": "Search",
+    "subtitle": "Find people and posts from one place, then jump straight into the conversation.",
+    "search_placeholder": "Search for people or posts",
+    "search_button": "Search"
+  },
+  "tabs": {
+    "users": "Users",
+    "posts": "Posts"
+  },
+  "labels": {
+    "you": "You"
+  },
+  "stats": {
+    "followers": "followers",
+    "following": "following"
+  },
+  "states": {
+    "idle_title": "Start with a search",
+    "idle_subtitle": "Search by username or by the text inside a post.",
+    "min_length_title": "Type a bit more",
+    "min_length_subtitle": "Use at least 2 characters to get better results.",
+    "empty_title": "No results found",
+    "empty_users": "No matching users were found for this search.",
+    "empty_posts": "No matching posts were found for this search."
+  },
+  "errors": {
+    "load": "Search results could not be loaded."
+  }
+}

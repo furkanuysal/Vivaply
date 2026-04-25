@@ -18,6 +18,7 @@ i18n
       "settings",
       "feed",
       "profile",
+      "search",
     ],
     defaultNS: "common",
     backend: {

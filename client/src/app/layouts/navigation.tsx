@@ -4,6 +4,7 @@ import {
   BookmarkIcon,
   FilmIcon,
   HomeIcon,
+  MagnifyingGlassIcon,
   NewspaperIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
@@ -46,6 +47,12 @@ export function getMainNavigation(user: { username?: string } | null | undefined
       name: t("menu.bookmarks"),
       path: "/bookmarks",
       icon: <BookmarkIcon className="h-5 w-5 shrink-0" />,
+    },
+    {
+      key: "search",
+      name: t("menu.search"),
+      path: "/search",
+      icon: <MagnifyingGlassIcon className="h-5 w-5 shrink-0" />,
     },
     {
       key: "entertainment",
