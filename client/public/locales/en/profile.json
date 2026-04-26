@@ -2,6 +2,12 @@
   "eyebrow": "Profile Feed",
   "title": "Recent activity",
   "subtitle": "A live view of what this person has been watching, rating, reviewing, and finishing lately.",
+  "tabs": {
+    "posts": "Posts",
+    "content": "Content",
+    "replies": "Replies",
+    "media": "Media"
+  },
   "empty_title": "No activity yet",
   "empty_subtitle": "When new activity appears, it will show up here.",
   "stats": {

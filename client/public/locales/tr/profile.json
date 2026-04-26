@@ -2,6 +2,12 @@
   "eyebrow": "Profil Akışı",
   "title": "Son aktiviteler",
   "subtitle": "Bu kişinin son zamanlarda neler izlediğini, puanladığını, incelediğini ve bitirdiğini burada görebilirsin.",
+  "tabs": {
+    "posts": "Gönderiler",
+    "content": "İçerik",
+    "replies": "Yanıtlar",
+    "media": "Medya"
+  },
   "empty_title": "Henüz aktivite yok",
   "empty_subtitle": "Yeni aktiviteler oluştuğunda burada görünecek.",
   "stats": {

@@ -5,7 +5,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { accountApi } from "@/features/account/api/accountApi";
 import {
@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const { t } = useTranslation(["profile", "feed"]);
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [posts, setPosts] = useState<FeedItemDto[]>([]);
@@ -42,6 +43,7 @@ export default function ProfilePage() {
     "followers",
   );
   const [socialUsers, setSocialUsers] = useState<FollowUserDto[]>([]);
+  const activeTab = getValidProfileTab(searchParams.get("tab"));
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -55,7 +57,7 @@ export default function ProfilePage() {
       try {
         const data = await accountApi.getProfileByUsername(username);
         setUser(data);
-        await loadPosts(username);
+        await loadPosts(username, activeTab);
       } catch (error) {
         toast.error(t("profile:errors.load_profile"));
       } finally {
@@ -64,7 +66,7 @@ export default function ProfilePage() {
     };
 
     void fetchProfile();
-  }, [username, currentUser?.username, navigate, t]);
+  }, [activeTab, username, currentUser?.username, navigate, t]);
 
   useEffect(
     () =>
@@ -74,12 +76,20 @@ export default function ProfilePage() {
             ? { ...update, createdPost: undefined }
             : update;
 
-        setPosts((current) => applyPostUpdateToList(current, nextUpdate));
+        setPosts((current) =>
+          applyPostUpdateToList(current, nextUpdate).filter((item) =>
+            matchesProfileTab(item, activeTab),
+          ),
+        );
       }),
-    [username],
+    [activeTab, username],
   );
 
-  const loadPosts = async (username: string, cursor?: string | null) => {
+  const loadPosts = async (
+    username: string,
+    scope: ProfileTab,
+    cursor?: string | null,
+  ) => {
     try {
       if (cursor) {
         setLoadingMore(true);
@@ -87,7 +97,7 @@ export default function ProfilePage() {
         setPostsLoading(true);
       }
 
-      const response = await feedApi.getProfileFeed(username, cursor);
+      const response = await feedApi.getProfileFeed(username, scope, cursor);
       setPosts((prev) =>
         cursor ? [...prev, ...response.items] : response.items,
       );
@@ -147,6 +157,14 @@ export default function ProfilePage() {
       setFollowLoading(false);
     }
   };
+
+  const profileTabs: Array<{ key: ProfileTab; label: string }> = [
+    { key: "posts", label: t("profile:tabs.posts") },
+    { key: "content", label: t("profile:tabs.content") },
+    { key: "replies", label: t("profile:tabs.replies") },
+    { key: "media", label: t("profile:tabs.media") },
+  ];
+  const activeTabIndex = profileTabs.findIndex((tab) => tab.key === activeTab);
 
   const openSocialList = async (mode: "followers" | "following") => {
     if (!user) return;
@@ -317,8 +335,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <section className="rounded-2xl border border-skin-border bg-skin-surface p-6 shadow-xl">
-        <div className="space-y-2">
+      <section className="overflow-hidden rounded-2xl border border-skin-border bg-skin-surface shadow-xl">
+        <div className="space-y-2 px-6 pb-4 pt-6">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
             {t("profile:eyebrow")}
           </p>
@@ -330,44 +348,88 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {postsLoading ? (
-          <div className="flex h-40 items-center justify-center text-skin-text">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="mt-6 rounded-3xl border border-dashed border-skin-border/60 bg-skin-base/40 px-8 py-14 text-center">
-            <h3 className="text-xl font-semibold text-skin-text">
-              {t("profile:empty_title")}
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-skin-muted">
-              {t("profile:empty_subtitle")}
-            </p>
-          </div>
-        ) : (
-          <div className="mt-6 space-y-4">
-            {posts.map((item) => (
-              <PostCard key={item.id} item={item} />
-            ))}
-          </div>
-        )}
+        <div className="border-b border-skin-border bg-skin-surface/80 px-3 sm:px-6">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-skin-border/70" />
+            <div
+              className="pointer-events-none absolute bottom-0 h-0.5 bg-skin-primary transition-transform duration-300 ease-out"
+              style={{
+                width: `${100 / profileTabs.length}%`,
+                transform: `translateX(${activeTabIndex * 100}%)`,
+              }}
+            />
 
-        {nextCursor && user ? (
-          <div className="mt-6 flex justify-center">
-            <button
-              type="button"
-              onClick={() => void loadPosts(user.username, nextCursor)}
-              disabled={loadingMore}
-              className="inline-flex items-center gap-2 rounded-full border border-skin-border/60 bg-skin-surface px-5 py-3 text-sm font-medium text-skin-text transition hover:border-skin-primary/40 hover:bg-skin-surface/80 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <ArrowPathIcon
-                className={`h-4 w-4 ${loadingMore ? "animate-spin" : ""}`}
-              />
-              {loadingMore
-                ? t("feed:buttons.loading_more")
-                : t("feed:buttons.load_more")}
-            </button>
+            <div className="grid grid-cols-4">
+            {profileTabs.map((tab) => {
+              const isActive = tab.key === activeTab;
+
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setNextCursor(null);
+                    setPosts([]);
+                    setSearchParams((current) => {
+                      const next = new URLSearchParams(current);
+                    next.set("tab", tab.key);
+                    return next;
+                  });
+                }}
+                  className={`relative z-10 whitespace-nowrap px-3 py-5 text-center text-sm font-medium transition-colors duration-300 sm:px-6 ${
+                    isActive
+                      ? "text-skin-primary"
+                      : "text-skin-muted hover:text-skin-text"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+            </div>
           </div>
-        ) : null}
+        </div>
+
+        <div className="bg-skin-base/20 px-4 py-5 sm:px-6 sm:py-6">
+          {postsLoading ? (
+            <div className="flex h-40 items-center justify-center text-skin-text">
+              <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-skin-border/60 bg-skin-surface px-8 py-14 text-center">
+              <h3 className="text-xl font-semibold text-skin-text">
+                {t("profile:empty_title")}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-skin-muted">
+                {t("profile:empty_subtitle")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((item) => (
+                <PostCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+
+          {nextCursor && user ? (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void loadPosts(user.username, activeTab, nextCursor)}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 rounded-full border border-skin-border/60 bg-skin-surface px-5 py-3 text-sm font-medium text-skin-text transition hover:border-skin-primary/40 hover:bg-skin-surface/80 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <ArrowPathIcon
+                  className={`h-4 w-4 ${loadingMore ? "animate-spin" : ""}`}
+                />
+                {loadingMore
+                  ? t("feed:buttons.loading_more")
+                  : t("feed:buttons.load_more")}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       {socialListOpen ? (
@@ -451,4 +513,25 @@ export default function ProfilePage() {
       ) : null}
     </div>
   );
+}
+
+type ProfileTab = "posts" | "content" | "replies" | "media";
+
+function getValidProfileTab(value: string | null): ProfileTab {
+  return value === "content" || value === "replies" || value === "media"
+    ? value
+    : "posts";
+}
+
+function matchesProfileTab(item: FeedItemDto, tab: ProfileTab): boolean {
+  switch (tab) {
+    case "content":
+      return !item.parentPostId && !!item.activity;
+    case "replies":
+      return !!item.parentPostId;
+    case "media":
+      return item.attachments.length > 0;
+    default:
+      return !item.parentPostId && !item.activity;
+  }
 }
