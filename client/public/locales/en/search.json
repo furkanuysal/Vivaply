@@ -26,6 +26,14 @@
     "empty_users": "No matching users were found for this search.",
     "empty_posts": "No matching posts were found for this search."
   },
+  "live": {
+    "loading": "Searching...",
+    "min_length": "Type at least 2 characters to see the results.",
+    "users": "Users",
+    "posts": "Posts",
+    "empty": "No quick results found.",
+    "view_all": "See all results"
+  },
   "errors": {
     "load": "Search results could not be loaded."
   }

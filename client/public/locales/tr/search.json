@@ -19,12 +19,20 @@
   },
   "states": {
     "idle_title": "Aramaya başla",
-    "idle_subtitle": "Kullanıcı adına ya da bir gönderinin metnine göre arama yap.",
+    "idle_subtitle": "Bir kullanıcıyı ya da gönderiyi arayın.",
     "min_length_title": "Biraz daha yaz",
     "min_length_subtitle": "Daha iyi sonuçlar için en az 2 karakter kullan.",
     "empty_title": "Sonuç bulunamadı",
     "empty_users": "Bu arama için eşleşen kişi bulunamadı.",
     "empty_posts": "Bu arama için eşleşen gönderi bulunamadı."
+  },
+  "live": {
+    "loading": "Aranıyor...",
+    "min_length": "Sonuçları görmek için en az 2 karakter yaz.",
+    "users": "Kişiler",
+    "posts": "Gönderiler",
+    "empty": "Sonuç bulunamadı.",
+    "view_all": "Tüm sonuçları gör"
   },
   "errors": {
     "load": "Arama sonuçları yüklenemedi."

@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   EyeSlashIcon,
@@ -9,21 +9,29 @@ import {
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
-import { feedApi, getActorAvatarUrl } from "@/features/feed/api/feedApi";
+import {
+  feedApi,
+  getActorAvatarUrl,
+  getFeedDescription,
+  getRelativeTime,
+} from "@/features/feed/api/feedApi";
 import {
   applyPostUpdateToList,
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import { searchApi } from "@/features/search/api/searchApi";
+import type { SearchResponseDto } from "@/features/search/types";
 import { getApiErrorMessage } from "@/shared/lib/api";
 
 export default function FeedPage() {
   const { t } = useTranslation(["feed", "search"]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItemDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +42,52 @@ export default function FeedPage() {
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResponseDto>({
+    users: [],
+    posts: [],
+  });
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
+  const trimmedSearchQuery = searchQuery.trim();
+  const shouldShowSearchDropdown = searchOpen && trimmedSearchQuery.length > 0;
+  const hasSearchResults =
+    searchResults.users.length > 0 || searchResults.posts.length > 0;
+
+  const previewUsers = useMemo(() => searchResults.users.slice(0, 3), [searchResults.users]);
+  const previewPosts = useMemo(() => searchResults.posts.slice(0, 3), [searchResults.posts]);
+  const searchNavigationItems = useMemo(
+    () => [
+      ...previewUsers.map((searchUser) => ({
+        key: `user-${searchUser.id}`,
+        type: "user" as const,
+        label: searchUser.username,
+        action: () => handleSearchUserClick(searchUser.username),
+      })),
+      ...previewPosts.map((post) => ({
+        key: `post-${post.id}`,
+        type: "post" as const,
+        label: post.actor.username,
+        action: () => handleSearchPostClick(post.id),
+      })),
+      ...(trimmedSearchQuery.length >= 2
+        ? [
+            {
+              key: "view-all",
+              type: "view-all" as const,
+              label: trimmedSearchQuery,
+              action: () => {
+                setSearchOpen(false);
+                navigate(`/search?q=${encodeURIComponent(trimmedSearchQuery)}&tab=users`);
+              },
+            },
+          ]
+        : []),
+    ],
+    [navigate, previewPosts, previewUsers, trimmedSearchQuery],
+  );
 
   useEffect(() => {
     void loadFeed();
@@ -47,6 +100,56 @@ export default function FeedPage() {
       }),
     [],
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setActiveSearchIndex(-1);
+  }, [trimmedSearchQuery, searchResults.users.length, searchResults.posts.length, searchOpen]);
+
+  useEffect(() => {
+    if (trimmedSearchQuery.length < 2) {
+      setSearchResults({ users: [], posts: [] });
+      setSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        const response = await searchApi.search(trimmedSearchQuery, 6);
+        if (!cancelled) {
+          setSearchResults(response);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSearchResults({ users: [], posts: [] });
+        }
+      } finally {
+        if (!cancelled) {
+          setSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [trimmedSearchQuery]);
 
   const loadFeed = async (cursor?: string | null) => {
     try {
@@ -94,7 +197,66 @@ export default function FeedPage() {
     event.preventDefault();
 
     const trimmed = searchQuery.trim();
+    setSearchOpen(false);
     navigate(trimmed.length > 0 ? `/search?q=${encodeURIComponent(trimmed)}&tab=users` : "/search");
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!shouldShowSearchDropdown) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (searchNavigationItems.length === 0) {
+        return;
+      }
+
+      setActiveSearchIndex((current) =>
+        current >= searchNavigationItems.length - 1 ? 0 : current + 1,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (searchNavigationItems.length === 0) {
+        return;
+      }
+
+      setActiveSearchIndex((current) =>
+        current <= 0 ? searchNavigationItems.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setSearchOpen(false);
+      setActiveSearchIndex(-1);
+      return;
+    }
+
+    if (event.key === "Enter" && activeSearchIndex >= 0) {
+      event.preventDefault();
+      searchNavigationItems[activeSearchIndex]?.action();
+    }
+  };
+
+  const handleSearchUserClick = (username: string) => {
+    setSearchOpen(false);
+    navigate(`/${username}`);
+  };
+
+  const handleSearchPostClick = (postId: string) => {
+    setSearchOpen(false);
+    navigate(`/post/${postId}`, {
+      state: { backgroundLocation: location },
+    });
+  };
+
+  const renderSearchPostPreview = (item: FeedItemDto) => {
+    const previewText = item.textContent?.trim() || getFeedDescription(item, t);
+    return previewText.length > 110 ? `${previewText.slice(0, 110)}...` : previewText;
   };
 
   if (loading) {
@@ -120,26 +282,159 @@ export default function FeedPage() {
           </p>
         </div>
 
-        <form
-          onSubmit={handleSearchSubmit}
-          className="w-full max-w-xl lg:w-[360px] lg:shrink-0"
+        <div
+          ref={searchContainerRef}
+          className="relative w-full max-w-xl lg:w-[360px] lg:shrink-0"
         >
-          <label className="relative block">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-skin-muted" />
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={t("search:page.search_placeholder")}
-              className="h-12 w-full rounded-2xl border border-skin-border/60 bg-skin-surface/90 pl-12 pr-24 text-sm text-skin-text outline-none transition focus:border-skin-primary/40"
-            />
-            <button
-              type="submit"
-              className="absolute right-2 top-1/2 inline-flex h-8 -translate-y-1/2 items-center justify-center rounded-full bg-skin-primary px-4 text-xs font-semibold text-white transition hover:opacity-90"
-            >
-              {t("search:page.search_button")}
-            </button>
-          </label>
-        </form>
+          <form onSubmit={handleSearchSubmit}>
+            <label className="relative block">
+              <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-skin-muted" />
+              <input
+                value={searchQuery}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setSearchOpen(true);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={t("search:page.search_placeholder")}
+                className="h-12 w-full rounded-2xl border border-skin-border/60 bg-skin-surface/90 pl-12 pr-24 text-sm text-skin-text outline-none transition focus:border-skin-primary/40"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 inline-flex h-8 -translate-y-1/2 items-center justify-center rounded-full bg-skin-primary px-4 text-xs font-semibold text-white transition hover:opacity-90"
+              >
+                {t("search:page.search_button")}
+              </button>
+            </label>
+          </form>
+
+          {shouldShowSearchDropdown ? (
+            <div className="absolute right-0 z-20 mt-2 w-full overflow-hidden rounded-2xl border border-skin-border/60 bg-skin-surface shadow-xl">
+              {trimmedSearchQuery.length < 2 ? (
+                <div className="px-4 py-3 text-sm text-skin-muted">
+                  {t("search:live.min_length")}
+                </div>
+              ) : searchLoading ? (
+                <div className="px-4 py-3 text-sm text-skin-muted">
+                  {t("search:live.loading")}
+                </div>
+              ) : hasSearchResults ? (
+                <div className="divide-y divide-skin-border/50">
+                  {previewUsers.length > 0 ? (
+                    <div className="p-2">
+                      <div className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-skin-muted">
+                        {t("search:live.users")}
+                      </div>
+                      {previewUsers.map((searchUser) => (
+                        <button
+                          key={searchUser.id}
+                          type="button"
+                          onClick={() => handleSearchUserClick(searchUser.username)}
+                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-skin-base ${
+                            searchNavigationItems[activeSearchIndex]?.key === `user-${searchUser.id}`
+                              ? "bg-skin-base"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-skin-base">
+                            {getActorAvatarUrl(searchUser.avatarUrl ?? undefined) ? (
+                              <img
+                                src={getActorAvatarUrl(searchUser.avatarUrl ?? undefined) ?? ""}
+                                alt={searchUser.username}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-semibold text-skin-primary">
+                                {searchUser.username.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-skin-text">
+                              {searchUser.username}
+                            </p>
+                            {searchUser.bio ? (
+                              <p className="truncate text-xs text-skin-muted">
+                                {searchUser.bio}
+                              </p>
+                            ) : null}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {previewPosts.length > 0 ? (
+                    <div className="p-2">
+                      <div className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-skin-muted">
+                        {t("search:live.posts")}
+                      </div>
+                      {previewPosts.map((post) => (
+                        <button
+                          key={post.id}
+                          type="button"
+                          onClick={() => handleSearchPostClick(post.id)}
+                          className={`flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-skin-base ${
+                            searchNavigationItems[activeSearchIndex]?.key === `post-${post.id}`
+                              ? "bg-skin-base"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-skin-base">
+                            {getActorAvatarUrl(post.actor.avatarUrl) ? (
+                              <img
+                                src={getActorAvatarUrl(post.actor.avatarUrl) ?? ""}
+                                alt={post.actor.username}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-semibold text-skin-primary">
+                                {post.actor.username.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-skin-muted">
+                              <span className="font-medium text-skin-text">
+                                {post.actor.username}
+                              </span>
+                              <span>{getRelativeTime(post.publishedAt)}</span>
+                            </div>
+                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-skin-muted">
+                              {renderSearchPostPreview(post)}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        navigate(`/search?q=${encodeURIComponent(trimmedSearchQuery)}&tab=users`);
+                      }}
+                      className={`w-full rounded-xl px-3 py-2 text-sm font-medium text-skin-primary transition hover:bg-skin-base ${
+                        searchNavigationItems[activeSearchIndex]?.key === "view-all"
+                          ? "bg-skin-base"
+                          : ""
+                      }`}
+                    >
+                      {t("search:live.view_all")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 text-sm text-skin-muted">
+                  {t("search:live.empty")}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <section className="rounded-3xl border border-skin-border/50 bg-skin-surface/90 p-5 shadow-sm">
