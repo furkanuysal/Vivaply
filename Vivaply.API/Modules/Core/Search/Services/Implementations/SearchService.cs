@@ -229,7 +229,9 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
                 IsSpoiler = entity.IsSpoiler,
+                Location = MapLocation(entity),
                 ParentPostId = entity.ParentPostId,
+                ParentPost = MapQuotedDto(entity.ParentPost),
                 QuotedPostId = entity.QuotedPostId,
                 QuotedPost = MapQuotedDto(entity.QuotedPost),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
@@ -273,6 +275,7 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
                 IsSpoiler = entity.IsSpoiler,
+                Location = MapLocation(entity),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
                 Attachments = entity.Attachments
                     .OrderBy(x => x.SortOrder)
@@ -288,6 +291,21 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
                         DurationSeconds = x.DurationSeconds
                     })
                     .ToList()
+            };
+        }
+
+        private static PostLocationDto? MapLocation(UserPost entity)
+        {
+            if (string.IsNullOrWhiteSpace(entity.LocationName))
+            {
+                return null;
+            }
+
+            return new PostLocationDto
+            {
+                DisplayName = entity.LocationName,
+                Lat = entity.LocationLat,
+                Lon = entity.LocationLon
             };
         }
 

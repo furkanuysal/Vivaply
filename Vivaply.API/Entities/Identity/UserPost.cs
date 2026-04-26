@@ -26,6 +26,11 @@ namespace Vivaply.API.Entities.Identity
 
         public bool IsSpoiler { get; set; }
 
+        [MaxLength(200)]
+        public string? LocationName { get; set; }
+        public double? LocationLat { get; set; }
+        public double? LocationLon { get; set; }
+
         public DateTime PublishedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

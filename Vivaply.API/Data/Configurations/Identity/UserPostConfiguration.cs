@@ -8,6 +8,9 @@ namespace Vivaply.API.Data.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<UserPost> builder)
         {
+            builder.Property(x => x.LocationName)
+                .HasMaxLength(200);
+
             builder.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)

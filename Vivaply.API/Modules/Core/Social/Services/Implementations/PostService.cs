@@ -76,6 +76,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 Type = PostType.Standard,
                 TextContent = NormalizeText(request.TextContent),
                 IsSpoiler = request.IsSpoiler,
+                LocationName = NormalizeText(request.LocationName),
+                LocationLat = request.LocationLat,
+                LocationLon = request.LocationLon,
                 PublishedAt = now
             };
 
@@ -147,6 +150,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -180,6 +190,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -300,6 +317,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -310,8 +334,15 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Stats)
                 .Where(x =>
                     x.UserId == targetUser.Id &&
-                    !x.IsDeleted &&
-                    x.ParentPostId == null);
+                    !x.IsDeleted);
+
+            posts = NormalizeProfileScope(query.Scope) switch
+            {
+                "content" => posts.Where(x => x.ActivityId != null && x.ParentPostId == null),
+                "replies" => posts.Where(x => x.ParentPostId != null),
+                "media" => posts.Where(x => x.Attachments.Any()),
+                _ => posts.Where(x => x.ParentPostId == null && x.ActivityId == null)
+            };
 
             posts = ApplyCursor(posts, cursor);
 
@@ -332,6 +363,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -416,6 +454,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 ParentPostId = parentPostId,
                 TextContent = NormalizeText(request.TextContent),
                 IsSpoiler = request.IsSpoiler,
+                LocationName = NormalizeText(request.LocationName),
+                LocationLat = request.LocationLat,
+                LocationLon = request.LocationLon,
                 PublishedAt = DateTime.UtcNow
             };
 
@@ -467,6 +508,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 QuotedPostId = quotedPostId,
                 TextContent = NormalizeText(request.TextContent),
                 IsSpoiler = request.IsSpoiler,
+                LocationName = NormalizeText(request.LocationName),
+                LocationLat = request.LocationLat,
+                LocationLon = request.LocationLon,
                 PublishedAt = DateTime.UtcNow
             };
 
@@ -496,6 +540,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -820,7 +871,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
                 IsSpoiler = entity.IsSpoiler,
+                Location = MapLocation(entity),
                 ParentPostId = entity.ParentPostId,
+                ParentPost = MapQuotedDto(entity.ParentPost),
                 QuotedPostId = entity.QuotedPostId,
                 QuotedPost = MapQuotedDto(entity.QuotedPost),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
@@ -864,7 +917,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
                 IsSpoiler = entity.IsSpoiler,
+                Location = MapLocation(entity),
                 ParentPostId = entity.ParentPostId,
+                ParentPost = MapQuotedDto(entity.ParentPost),
                 QuotedPostId = entity.QuotedPostId,
                 QuotedPost = MapQuotedDto(entity.QuotedPost),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
@@ -907,6 +962,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 UpdatedAt = entity.UpdatedAt,
                 TextContent = entity.TextContent,
                 IsSpoiler = entity.IsSpoiler,
+                Location = MapLocation(entity),
                 Activity = entity.Activity == null ? null : ActivityDtoMapper.Map(entity.Activity),
                 Attachments = entity.Attachments
                     .OrderBy(x => x.SortOrder)
@@ -922,6 +978,21 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                         DurationSeconds = x.DurationSeconds
                     })
                     .ToList()
+            };
+        }
+
+        private static PostLocationDto? MapLocation(UserPost entity)
+        {
+            if (string.IsNullOrWhiteSpace(entity.LocationName))
+            {
+                return null;
+            }
+
+            return new PostLocationDto
+            {
+                DisplayName = entity.LocationName,
+                Lat = entity.LocationLat,
+                Lon = entity.LocationLon
             };
         }
 
@@ -973,6 +1044,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Include(x => x.Activity)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.Attachments)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Activity)
+                        .ThenInclude(x => x!.User)
+                .Include(x => x.ParentPost)
+                    .ThenInclude(x => x!.Attachments)
                 .Include(x => x.QuotedPost)
                     .ThenInclude(x => x!.User)
                 .Include(x => x.QuotedPost)
@@ -1155,6 +1233,26 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         }
 
         private static int NormalizeTake(int take) => Math.Clamp(take, 1, 50);
+
+        private static string NormalizeProfileScope(string? scope)
+        {
+            if (string.Equals(scope, "replies", StringComparison.OrdinalIgnoreCase))
+            {
+                return "replies";
+            }
+
+            if (string.Equals(scope, "content", StringComparison.OrdinalIgnoreCase))
+            {
+                return "content";
+            }
+
+            if (string.Equals(scope, "media", StringComparison.OrdinalIgnoreCase))
+            {
+                return "media";
+            }
+
+            return "posts";
+        }
 
         private static string? NormalizeText(string? value)
         {
