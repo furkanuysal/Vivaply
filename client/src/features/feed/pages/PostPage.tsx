@@ -1,8 +1,6 @@
 import {
   ArrowLeftIcon,
   EyeSlashIcon,
-  FaceSmileIcon,
-  MapPinIcon,
   PhotoIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -13,6 +11,8 @@ import { toast } from "react-toastify";
 import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
+import ComposerEmojiPicker from "@/features/feed/components/ComposerEmojiPicker";
+import ComposerLocationPopover from "@/features/feed/components/ComposerLocationPopover";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
 import {
   feedApi,
@@ -31,6 +31,7 @@ import {
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import type { LocationDto } from "@/features/location/types";
 
 interface PostPageProps {
   isModal?: boolean;
@@ -53,6 +54,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
   const [composerText, setComposerText] = useState("");
   const [composerFiles, setComposerFiles] = useState<File[]>([]);
   const [isSpoiler, setIsSpoiler] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationDto | null>(null);
   const [submittingComposer, setSubmittingComposer] = useState(false);
   const [composerMode, setComposerMode] = useState<"reply" | "quote" | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
@@ -130,6 +132,10 @@ export default function PostPage({ isModal = false }: PostPageProps) {
     });
   };
 
+  const appendEmoji = (emoji: string) => {
+    setComposerText((current) => `${current}${emoji}`);
+  };
+
   const handleComposerSubmit = async () => {
     const value = composerText.trim();
 
@@ -146,6 +152,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
           value,
           composerFiles,
           isSpoiler,
+          selectedLocation,
         );
         publishPostUpdate({ createdPost: quotePost });
         publishPostUpdate({
@@ -166,6 +173,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
         setComposerText("");
         setComposerFiles([]);
         setIsSpoiler(false);
+        setSelectedLocation(null);
         setComposerMode(null);
 
         if (isModal) {
@@ -174,7 +182,13 @@ export default function PostPage({ isModal = false }: PostPageProps) {
         return;
       }
 
-      const reply = await feedApi.replyToPost(postId, value, composerFiles, isSpoiler);
+      const reply = await feedApi.replyToPost(
+        postId,
+        value,
+        composerFiles,
+        isSpoiler,
+        selectedLocation,
+      );
       const nextReplyCount = (item?.stats?.replyCount ?? 0) + 1;
 
       setItem((current) =>
@@ -198,6 +212,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
       setComposerText("");
       setComposerFiles([]);
       setIsSpoiler(false);
+      setSelectedLocation(null);
       setComposerMode(null);
     } catch (error) {
       console.error("Post composer action could not be completed", error);
@@ -288,6 +303,12 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                   }
                 />
 
+                {selectedLocation ? (
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-skin-primary/10 px-3 py-1.5 text-xs text-skin-primary">
+                    <span className="truncate">{selectedLocation.displayName}</span>
+                  </div>
+                ) : null}
+
                 {composerMode === "quote" ? (
                   <QuoteComposerPreview item={item} />
                 ) : null}
@@ -320,20 +341,11 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                     >
                       <EyeSlashIcon className="h-5 w-5" />
                     </button>
-                    <button
-                      type="button"
-                      className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                      aria-label={t("actions.emoji")}
-                    >
-                      <FaceSmileIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                      aria-label={t("actions.location")}
-                    >
-                      <MapPinIcon className="h-5 w-5" />
-                    </button>
+                    <ComposerEmojiPicker onSelect={appendEmoji} />
+                    <ComposerLocationPopover
+                      value={selectedLocation}
+                      onChange={setSelectedLocation}
+                    />
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -347,6 +359,7 @@ export default function PostPage({ isModal = false }: PostPageProps) {
                         setComposerText("");
                         setComposerFiles([]);
                         setIsSpoiler(false);
+                        setSelectedLocation(null);
                       }}
                       className="text-sm font-medium text-skin-muted transition hover:text-skin-text"
                     >

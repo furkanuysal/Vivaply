@@ -2,9 +2,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   EyeSlashIcon,
-  FaceSmileIcon,
   MagnifyingGlassIcon,
-  MapPinIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
@@ -12,6 +10,8 @@ import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
+import ComposerEmojiPicker from "@/features/feed/components/ComposerEmojiPicker";
+import ComposerLocationPopover from "@/features/feed/components/ComposerLocationPopover";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
 import {
   feedApi,
@@ -24,6 +24,7 @@ import {
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import type { LocationDto } from "@/features/location/types";
 import { searchApi } from "@/features/search/api/searchApi";
 import type { SearchResponseDto } from "@/features/search/types";
 import { getApiErrorMessage } from "@/shared/lib/api";
@@ -40,6 +41,7 @@ export default function FeedPage() {
   const [postText, setPostText] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSpoiler, setIsSpoiler] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationDto | null>(null);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResponseDto>({
@@ -180,11 +182,17 @@ export default function FeedPage() {
 
     try {
       setSubmittingPost(true);
-      const createdPost = await feedApi.createPost(value, selectedFiles, isSpoiler);
+      const createdPost = await feedApi.createPost(
+        value,
+        selectedFiles,
+        isSpoiler,
+        selectedLocation,
+      );
       setItems((current) => [createdPost, ...current]);
       setPostText("");
       setSelectedFiles([]);
       setIsSpoiler(false);
+      setSelectedLocation(null);
     } catch (error) {
       console.error("Post could not be created", error);
       toast.error(getApiErrorMessage(error) ?? t("page.composer.error"));
@@ -252,6 +260,10 @@ export default function FeedPage() {
     navigate(`/post/${postId}`, {
       state: { backgroundLocation: location },
     });
+  };
+
+  const appendEmoji = (emoji: string) => {
+    setPostText((current) => `${current}${emoji}`);
   };
 
   const renderSearchPostPreview = (item: FeedItemDto) => {
@@ -472,6 +484,12 @@ export default function FeedPage() {
               />
             </div>
 
+            {selectedLocation ? (
+              <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full bg-skin-primary/10 px-3 py-1.5 text-xs text-skin-primary">
+                <span className="truncate">{selectedLocation.displayName}</span>
+              </div>
+            ) : null}
+
             <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-wrap items-center gap-2 text-skin-muted">
                 <label className="cursor-pointer rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text">
@@ -500,20 +518,11 @@ export default function FeedPage() {
                 >
                   <EyeSlashIcon className="h-5 w-5" />
                 </button>
-                <button
-                  type="button"
-                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                  aria-label={t("actions.emoji")}
-                >
-                  <FaceSmileIcon className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full p-2 text-skin-muted transition hover:bg-skin-base hover:text-skin-text"
-                  aria-label={t("actions.location")}
-                >
-                  <MapPinIcon className="h-5 w-5" />
-                </button>
+                <ComposerEmojiPicker onSelect={appendEmoji} />
+                <ComposerLocationPopover
+                  value={selectedLocation}
+                  onChange={setSelectedLocation}
+                />
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">

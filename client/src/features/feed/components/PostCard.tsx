@@ -5,6 +5,7 @@ import {
   EllipsisHorizontalIcon,
   EyeSlashIcon,
   EyeIcon,
+  MapPinIcon,
   PencilSquareIcon,
   ShareIcon,
   TrashIcon,
@@ -88,6 +89,7 @@ export default function PostCard({
   const isThreadReply = variant === "threadReply";
   const isFlat = isDetailMain || isThreadReply;
   const quotedPost = item.quotedPost;
+  const parentPost = item.parentPost;
   const [likeCount, setLikeCount] = useState(item.stats?.likeCount ?? 0);
   const [hasLiked, setHasLiked] = useState(item.viewer?.hasLiked ?? false);
   const [bookmarkCount, setBookmarkCount] = useState(item.stats?.bookmarkCount ?? 0);
@@ -300,6 +302,22 @@ export default function PostCard({
         backgroundLocation,
         modalDepth,
         composerMode: "quote",
+      },
+    });
+  };
+
+  const handleReply = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
+    const state = location.state as ModalNavigationState | null;
+    const backgroundLocation = state?.backgroundLocation ?? location;
+    const modalDepth = (state?.modalDepth ?? 0) + 1;
+
+    navigate(postPath, {
+      state: {
+        backgroundLocation,
+        modalDepth,
+        composerMode: "reply",
       },
     });
   };
@@ -534,6 +552,10 @@ export default function PostCard({
                   </Link>
                 ) : null}
 
+                {item.type === FeedPostType.Reply && parentPost && !isThreadReply ? (
+                  <ReplyContextPreview item={parentPost} />
+                ) : null}
+
                 {quotedPost ? (
                   <QuotedPostPreview item={quotedPost} isFlat={isFlat} />
                 ) : null}
@@ -557,13 +579,15 @@ export default function PostCard({
             </div>
           )}
 
+          {item.location?.displayName ? (
+            <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full bg-skin-base/70 px-3 py-1.5 text-xs text-skin-muted">
+              <MapPinIcon className="h-4 w-4 shrink-0 text-skin-primary" />
+              <span className="truncate">{item.location.displayName}</span>
+            </div>
+          ) : null}
+
           <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center gap-4 text-skin-muted">
-              <PostAction
-                icon={<ChatBubbleLeftRightIcon className="h-4 w-4" />}
-                label={t("actions.reply")}
-                count={item.stats?.replyCount ?? 0}
-              />
               <PostAction
                 icon={<HeartSolidIcon className="h-4 w-4" />}
                 label={t("actions.like")}
@@ -576,6 +600,12 @@ export default function PostCard({
                 label={t("actions.quote")}
                 count={item.stats?.quoteCount ?? 0}
                 onClick={handleQuote}
+              />
+              <PostAction
+                icon={<ChatBubbleLeftRightIcon className="h-4 w-4" />}
+                label={t("actions.reply")}
+                count={item.stats?.replyCount ?? 0}
+                onClick={handleReply}
               />
             </div>
 
@@ -638,6 +668,44 @@ export default function PostCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function ReplyContextPreview({ item }: { item: FeedQuotedPostDto }) {
+  const { t } = useTranslation("feed");
+  const imageUrl = getFeedImageUrl(item);
+  const title = getFeedTitle(item);
+  const targetPath = getFeedTargetPath(item);
+  const activityType = getFeedActivityType(item);
+  const fallbackType = getFallbackType(activityType);
+  const previewText = item.textContent?.trim() || title;
+
+  return (
+    <Link
+      to={`/feed/${item.id}`}
+      onClick={(event) => event.stopPropagation()}
+      className="mt-4 block rounded-2xl border border-skin-border/40 bg-skin-base/50 p-4 transition hover:border-skin-primary/30"
+    >
+      <div className="flex items-center gap-2 text-xs text-skin-muted">
+        <span>{t("post.replying_to")}</span>
+        <span className="font-semibold text-skin-text">{item.actor.username}</span>
+      </div>
+
+      {targetPath ? (
+        <div className="mt-3 rounded-xl border border-skin-border/40 bg-skin-surface px-3 py-3">
+          <CardContentPreview
+            imageUrl={imageUrl}
+            title={previewText}
+            secondaryMeta=""
+            fallbackType={fallbackType}
+          />
+        </div>
+      ) : (
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-skin-text/90">
+          {previewText}
+        </p>
+      )}
+    </Link>
   );
 }
 

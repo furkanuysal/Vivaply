@@ -53,6 +53,12 @@ export interface FeedAttachmentDto {
   durationSeconds?: number | null;
 }
 
+export interface FeedLocationDto {
+  displayName: string;
+  lat?: number | null;
+  lon?: number | null;
+}
+
 export interface FeedQuotedPostDto {
   id: string;
   actor: FeedActorDto;
@@ -61,6 +67,7 @@ export interface FeedQuotedPostDto {
   updatedAt?: string | null;
   textContent?: string | null;
   isSpoiler: boolean;
+  location?: FeedLocationDto | null;
   activity?: FeedActivityDto | null;
   attachments: FeedAttachmentDto[];
 }
@@ -94,7 +101,9 @@ export interface FeedItemDto {
   updatedAt?: string | null;
   textContent?: string | null;
   isSpoiler: boolean;
+  location?: FeedLocationDto | null;
   parentPostId?: string | null;
+  parentPost?: FeedQuotedPostDto | null;
   quotedPostId?: string | null;
   quotedPost?: FeedQuotedPostDto | null;
   activity?: FeedActivityDto | null;

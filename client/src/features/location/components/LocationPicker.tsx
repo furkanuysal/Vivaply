@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { locationApi } from "@/features/location/api/locationApi";
 import type { LocationDto } from "@/features/location/types";
@@ -6,22 +6,25 @@ import type { LocationDto } from "@/features/location/types";
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  onSelectLocation?: (location: LocationDto) => void;
+  placeholder?: string;
 }
 
-export default function LocationPicker({ value, onChange }: Props) {
+export default function LocationPicker({
+  value,
+  onChange,
+  onSelectLocation,
+  placeholder = "Şehir veya ülke ara...",
+}: Props) {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState<LocationDto[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -30,12 +33,10 @@ export default function LocationPicker({ value, onChange }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Parent value changes, update input
   useEffect(() => {
     setQuery(value);
   }, [value]);
 
-  // Search logic (Debounce + Service)
   useEffect(() => {
     const timeOutId = setTimeout(async () => {
       if (query.length < 3) {
@@ -43,8 +44,9 @@ export default function LocationPicker({ value, onChange }: Props) {
         return;
       }
 
-      // If query is same as selected value, don't search
-      if (query === value) return;
+      if (query === value) {
+        return;
+      }
 
       setIsLoading(true);
 
@@ -53,7 +55,6 @@ export default function LocationPicker({ value, onChange }: Props) {
         setSuggestions(data);
         setIsOpen(true);
       } catch (error) {
-        // 429 / network / backend error → sessizce ignore
         console.error("Location search error:", error);
         setSuggestions([]);
       } finally {
@@ -65,11 +66,14 @@ export default function LocationPicker({ value, onChange }: Props) {
   }, [query, value]);
 
   const handleSelect = (option: LocationDto) => {
-    // "Semt, İlçe, İl" → ilk 3 parça
-    const shortName = option.displayName.split(",").slice(0, 3).join(",");
+    const shortName = option.displayName.split(",").slice(0, 3).join(", ");
 
     setQuery(shortName);
     onChange(shortName);
+    onSelectLocation?.({
+      ...option,
+      displayName: shortName,
+    });
     setIsOpen(false);
   };
 
@@ -78,49 +82,49 @@ export default function LocationPicker({ value, onChange }: Props) {
       <div className="relative">
         <input
           type="text"
-          className="w-full bg-skin-base/50 border border-skin-border/50 rounded-xl px-4 py-3 pl-10 text-skin-text placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50 outline-none transition-all"
-          placeholder="Şehir veya Ülke ara..."
+          className="w-full rounded-xl border border-skin-border/50 bg-skin-base/50 px-4 py-3 pl-10 text-skin-text outline-none transition-all placeholder:text-skin-muted/50 focus:border-skin-primary focus:ring-1 focus:ring-skin-primary/50"
+          placeholder={placeholder}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
           }}
           onFocus={() => {
-            if (suggestions.length > 0) setIsOpen(true);
+            if (suggestions.length > 0) {
+              setIsOpen(true);
+            }
           }}
         />
 
-        <MapPinIcon className="w-5 h-5 text-skin-muted absolute left-3 top-3.5" />
+        <MapPinIcon className="absolute left-3 top-3.5 h-5 w-5 text-skin-muted" />
 
-        {isLoading && (
+        {isLoading ? (
           <div className="absolute right-3 top-3.5">
-            <div className="w-4 h-4 border-2 border-skin-primary border-t-transparent rounded-full animate-spin" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-skin-primary border-t-transparent" />
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Suggestions List */}
-      {isOpen && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-skin-surface border border-skin-border/50 rounded-xl shadow-xl max-h-60 overflow-y-auto animate-fade-in backdrop-blur-sm">
+      {isOpen && suggestions.length > 0 ? (
+        <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-skin-border/50 bg-skin-surface shadow-xl backdrop-blur-sm">
           {suggestions.map((option, index) => (
             <li
-              key={index}
+              key={`${option.displayName}-${index}`}
               onClick={() => handleSelect(option)}
-              className="px-4 py-3 hover:bg-skin-primary/10 cursor-pointer text-sm text-skin-text border-b border-skin-border/20 last:border-0 flex items-start gap-2 transition-colors"
+              className="flex cursor-pointer items-start gap-2 border-b border-skin-border/20 px-4 py-3 text-sm text-skin-text transition-colors hover:bg-skin-primary/10 last:border-0"
             >
-              <MapPinIcon className="w-4 h-4 mt-0.5 text-skin-primary shrink-0" />
+              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-skin-primary" />
               <span>{option.displayName}</span>
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
 
-      {/* Attribution */}
-      {isOpen && (
-        <div className="text-[10px] text-skin-muted mt-1 text-right px-1">
+      {isOpen ? (
+        <div className="mt-1 px-1 text-right text-[10px] text-skin-muted">
           Data © OpenStreetMap contributors
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

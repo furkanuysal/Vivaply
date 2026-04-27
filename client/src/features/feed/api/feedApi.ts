@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import api, { SERVER_URL } from "@/shared/lib/api";
+import type { LocationDto } from "@/features/location/types";
 import {
   FeedActivityType,
   FeedPostType,
@@ -34,8 +35,9 @@ export const feedApi = {
     textContent: string,
     files: File[] = [],
     isSpoiler = false,
+    location?: LocationDto | null,
   ): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files, isSpoiler);
+    const formData = createPostFormData(textContent, files, isSpoiler, location);
     const response = await api.post<FeedItemDto>("/posts", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -61,8 +63,9 @@ export const feedApi = {
     textContent: string,
     files: File[] = [],
     isSpoiler = false,
+    location?: LocationDto | null,
   ): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files, isSpoiler);
+    const formData = createPostFormData(textContent, files, isSpoiler, location);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/quote`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -72,10 +75,14 @@ export const feedApi = {
 
   async getProfileFeed(
     username: string,
+    scope: "posts" | "content" | "replies" | "media" = "posts",
     cursor?: string | null,
   ): Promise<FeedResponseDto> {
     const response = await api.get<FeedResponseDto>(`/users/${username}/posts`, {
-      params: cursor ? { cursor } : undefined,
+      params: {
+        ...(cursor ? { cursor } : {}),
+        scope,
+      },
     });
 
     return response.data;
@@ -91,8 +98,9 @@ export const feedApi = {
     textContent: string,
     files: File[] = [],
     isSpoiler = false,
+    location?: LocationDto | null,
   ): Promise<FeedItemDto> {
-    const formData = createPostFormData(textContent, files, isSpoiler);
+    const formData = createPostFormData(textContent, files, isSpoiler, location);
     const response = await api.post<FeedItemDto>(`/posts/${postId}/reply`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -402,6 +410,7 @@ function createPostFormData(
   textContent: string,
   files: File[],
   isSpoiler: boolean,
+  location?: LocationDto | null,
 ): FormData {
   const formData = new FormData();
   const limitedFiles = files.slice(0, 4);
@@ -411,6 +420,16 @@ function createPostFormData(
   }
 
   formData.append("isSpoiler", String(isSpoiler));
+
+  if (location?.displayName) {
+    formData.append("locationName", location.displayName);
+    if (typeof location.lat === "number" && Number.isFinite(location.lat)) {
+      formData.append("locationLat", String(location.lat));
+    }
+    if (typeof location.lon === "number" && Number.isFinite(location.lon)) {
+      formData.append("locationLon", String(location.lon));
+    }
+  }
 
   limitedFiles.forEach((file) => {
     formData.append("files", file);
