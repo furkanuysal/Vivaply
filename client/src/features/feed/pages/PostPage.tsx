@@ -14,6 +14,7 @@ import PostCard from "@/features/feed/components/PostCard";
 import ComposerEmojiPicker from "@/features/feed/components/ComposerEmojiPicker";
 import ComposerLocationPopover from "@/features/feed/components/ComposerLocationPopover";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
+import PostTextRenderer from "@/features/feed/components/PostTextRenderer";
 import {
   feedApi,
   getActorAvatarUrl,
@@ -563,7 +564,9 @@ function QuoteComposerPreview({ item }: { item: FeedItemDto }) {
           </div>
 
           {text ? (
-            <p className="mt-2 text-sm leading-6 text-skin-text/90">{text}</p>
+            <p className="mt-2 text-sm leading-6 text-skin-text/90">
+              <PostTextRenderer text={text} />
+            </p>
           ) : null}
 
           {targetPath ? (

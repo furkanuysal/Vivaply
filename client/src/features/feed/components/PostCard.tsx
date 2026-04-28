@@ -24,6 +24,7 @@ import { Link, type Location, useLocation, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify";
 import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import PostTextRenderer from "@/features/feed/components/PostTextRenderer";
 import {
   getActorAvatarUrl,
   getAttachmentUrl,
@@ -506,7 +507,11 @@ export default function PostCard({
                       isFlat ? "text-base leading-8" : "text-sm leading-6"
                     }`}
                   >
-                    {renderDescription(description, title, targetPath)}
+                    <PostTextRenderer
+                      text={description}
+                      contentLinkTitle={title}
+                      contentLinkPath={targetPath}
+                    />
                   </p>
                 ) : null}
 
@@ -702,7 +707,7 @@ function ReplyContextPreview({ item }: { item: FeedQuotedPostDto }) {
         </div>
       ) : (
         <p className="mt-2 line-clamp-3 text-sm leading-6 text-skin-text/90">
-          {previewText}
+          <PostTextRenderer text={previewText} />
         </p>
       )}
     </Link>
@@ -835,7 +840,9 @@ function QuotedPostPreview({
           }
         >
           {item.textContent ? (
-            <p className="mt-2 text-sm leading-6 text-skin-text/90">{item.textContent}</p>
+            <p className="mt-2 text-sm leading-6 text-skin-text/90">
+              <PostTextRenderer text={item.textContent} />
+            </p>
           ) : null}
 
           {item.attachments.length > 0 ? (
@@ -854,7 +861,9 @@ function QuotedPostPreview({
               />
             </div>
           ) : !item.textContent ? (
-            <p className="mt-2 text-sm leading-6 text-skin-text/90">{quotedText}</p>
+            <p className="mt-2 text-sm leading-6 text-skin-text/90">
+              <PostTextRenderer text={quotedText} />
+            </p>
           ) : null}
         </div>
 
@@ -992,33 +1001,6 @@ function DropdownAction({
       </span>
       {meta ? <span className="text-xs text-skin-muted">{meta}</span> : null}
     </button>
-  );
-}
-
-function renderDescription(
-  description: string,
-  title: string,
-  targetPath: string | null,
-) {
-  if (!targetPath || !title || !description.includes(title)) {
-    return description;
-  }
-
-  const [before, ...afterParts] = description.split(title);
-  const after = afterParts.join(title);
-
-  return (
-    <>
-      {before}
-      <Link
-        to={targetPath}
-        className="font-medium text-skin-primary transition hover:text-skin-secondary"
-        onClick={(event) => event.stopPropagation()}
-      >
-        {title}
-      </Link>
-      {after}
-    </>
   );
 }
 

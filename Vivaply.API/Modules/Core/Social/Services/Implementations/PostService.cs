@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text;
+using System.Text.RegularExpressions;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Identity.Enums;
@@ -16,6 +17,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
     public class PostService(VivaplyDbContext db, IMemoryCache cache, IPostMediaStorageService postMediaStorageService) : IPostService
     {
         private const int ViewCooldownHours = 6;
+        private static readonly Regex MentionRegex = new(
+            @"(?<![A-Za-z0-9_])@(?<username>[A-Za-z0-9_]{1,50})",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private readonly VivaplyDbContext _db = db;
         private readonly IMemoryCache _cache = cache;
         private readonly IPostMediaStorageService _postMediaStorageService = postMediaStorageService;
@@ -95,6 +99,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             });
 
             await _db.SaveChangesAsync(cancellationToken);
+            await SyncMentionsAsync(post, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             var createdPost = await _db.UserPosts
                 .AsNoTracking()
@@ -142,6 +148,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
             post.UpdatedAt = DateTime.UtcNow;
 
+            await _db.SaveChangesAsync(cancellationToken);
+            await SyncMentionsAsync(post, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             var updatedPost = await _db.UserPosts
@@ -479,6 +487,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
             await _db.SaveChangesAsync(cancellationToken);
+            await SyncMentionsAsync(reply, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             var createdReply = await _db.UserPosts
                 .AsNoTracking()
@@ -533,6 +543,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
             await _db.SaveChangesAsync(cancellationToken);
+            await SyncMentionsAsync(quote, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             var createdQuote = await _db.UserPosts
                 .AsNoTracking()
@@ -581,6 +593,15 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             post.IsDeleted = true;
             post.DeletedAt = now;
             post.UpdatedAt = now;
+
+            var mentions = await _db.PostMentions
+                .Where(x => x.PostId == postId)
+                .ToListAsync(cancellationToken);
+
+            if (mentions.Count > 0)
+            {
+                _db.PostMentions.RemoveRange(mentions);
+            }
 
             int? parentReplyCount = null;
             int? quotedPostQuoteCount = null;
@@ -1257,6 +1278,61 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         private static string? NormalizeText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private async Task SyncMentionsAsync(UserPost post, CancellationToken cancellationToken)
+        {
+            var existingMentions = await _db.PostMentions
+                .Where(x => x.PostId == post.Id)
+                .ToListAsync(cancellationToken);
+
+            if (existingMentions.Count > 0)
+            {
+                _db.PostMentions.RemoveRange(existingMentions);
+            }
+
+            var usernames = ExtractMentionUsernames(post.TextContent);
+            if (usernames.Count == 0)
+            {
+                return;
+            }
+
+            var loweredUsernames = usernames
+                .Select(x => x.ToLowerInvariant())
+                .ToList();
+
+            var matchedUsers = await _db.Users
+                .AsNoTracking()
+                .Where(x => loweredUsernames.Contains(x.Username.ToLower()) && x.Id != post.UserId)
+                .Select(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            if (matchedUsers.Count == 0)
+            {
+                return;
+            }
+
+            _db.PostMentions.AddRange(matchedUsers.Select(userId => new PostMention
+            {
+                PostId = post.Id,
+                MentionedUserId = userId,
+                CreatedAt = post.UpdatedAt ?? post.PublishedAt
+            }));
+        }
+
+        private static List<string> ExtractMentionUsernames(string? textContent)
+        {
+            if (string.IsNullOrWhiteSpace(textContent))
+            {
+                return [];
+            }
+
+            return MentionRegex
+                .Matches(textContent)
+                .Select(x => x.Groups["username"].Value)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         private static string EncodeCursor(DateTime publishedAt, Guid id)

@@ -40,6 +40,7 @@ namespace Vivaply.API.Entities.Identity
         public ICollection<PostAttachment> Attachments { get; set; } = new List<PostAttachment>();
         public ICollection<UserPost> Replies { get; set; } = new List<UserPost>();
         public ICollection<UserPost> Quotes { get; set; } = new List<UserPost>();
+        public ICollection<PostMention> Mentions { get; set; } = new List<PostMention>();
         public ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
         public ICollection<PostBookmark> Bookmarks { get; set; } = new List<PostBookmark>();
         public PostStats? Stats { get; set; }

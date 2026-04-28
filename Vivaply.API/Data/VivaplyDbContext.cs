@@ -23,6 +23,7 @@ namespace Vivaply.API.Data
         public DbSet<UserFollow> UserFollows { get; set; }
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<UserPost> UserPosts { get; set; }
+        public DbSet<PostMention> PostMentions { get; set; }
         public DbSet<PostAttachment> PostAttachments { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<PostBookmark> PostBookmarks { get; set; }
