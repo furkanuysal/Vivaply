@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import PostCard from "@/features/feed/components/PostCard";
 import ComposerEmojiPicker from "@/features/feed/components/ComposerEmojiPicker";
+import ComposerMentionSuggestions from "@/features/feed/components/ComposerMentionSuggestions";
 import ComposerLocationPopover from "@/features/feed/components/ComposerLocationPopover";
 import ComposerMediaPreview from "@/features/feed/components/ComposerMediaPreview";
 import {
@@ -24,9 +25,15 @@ import {
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import {
+  applyMentionSelection,
+  getActiveMentionRange,
+  type ActiveMentionRange,
+} from "@/features/feed/lib/mentions";
 import type { LocationDto } from "@/features/location/types";
 import { searchApi } from "@/features/search/api/searchApi";
 import type { SearchResponseDto } from "@/features/search/types";
+import type { SearchUserDto } from "@/features/search/types";
 import { getApiErrorMessage } from "@/shared/lib/api";
 
 export default function FeedPage() {
@@ -43,6 +50,10 @@ export default function FeedPage() {
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationDto | null>(null);
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [mentionResults, setMentionResults] = useState<SearchUserDto[]>([]);
+  const [mentionLoading, setMentionLoading] = useState(false);
+  const [mentionRange, setMentionRange] = useState<ActiveMentionRange | null>(null);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResponseDto>({
     users: [],
@@ -52,9 +63,11 @@ export default function FeedPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const postTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
   const trimmedSearchQuery = searchQuery.trim();
   const shouldShowSearchDropdown = searchOpen && trimmedSearchQuery.length > 0;
+  const shouldShowMentionDropdown = mentionRange !== null;
   const hasSearchResults =
     searchResults.users.length > 0 || searchResults.posts.length > 0;
 
@@ -122,6 +135,10 @@ export default function FeedPage() {
   }, [trimmedSearchQuery, searchResults.users.length, searchResults.posts.length, searchOpen]);
 
   useEffect(() => {
+    setActiveMentionIndex(-1);
+  }, [mentionRange?.query, mentionResults.length]);
+
+  useEffect(() => {
     if (trimmedSearchQuery.length < 2) {
       setSearchResults({ users: [], posts: [] });
       setSearchLoading(false);
@@ -152,6 +169,40 @@ export default function FeedPage() {
       window.clearTimeout(timeoutId);
     };
   }, [trimmedSearchQuery]);
+
+  useEffect(() => {
+    const query = mentionRange?.query.trim() ?? "";
+
+    if (!mentionRange || query.length === 0) {
+      setMentionResults([]);
+      setMentionLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setMentionLoading(true);
+        const users = await searchApi.searchUsers(query, 5);
+        if (!cancelled) {
+          setMentionResults(users);
+        }
+      } catch {
+        if (!cancelled) {
+          setMentionResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setMentionLoading(false);
+        }
+      }
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [mentionRange]);
 
   const loadFeed = async (cursor?: string | null) => {
     try {
@@ -264,6 +315,83 @@ export default function FeedPage() {
 
   const appendEmoji = (emoji: string) => {
     setPostText((current) => `${current}${emoji}`);
+  };
+
+  const syncMentionState = (
+    nextText: string,
+    cursorPosition: number,
+  ) => {
+    setMentionRange(getActiveMentionRange(nextText, cursorPosition));
+  };
+
+  const handlePostTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nextText = event.target.value;
+    setPostText(nextText);
+    syncMentionState(nextText, event.target.selectionStart ?? nextText.length);
+  };
+
+  const handleMentionSelect = (username: string) => {
+    if (!mentionRange || !postTextareaRef.current) {
+      return;
+    }
+
+    const { nextText, nextCursorPosition } = applyMentionSelection(
+      postText,
+      mentionRange,
+      username,
+    );
+
+    setPostText(nextText);
+    setMentionRange(null);
+    setMentionResults([]);
+    setActiveMentionIndex(-1);
+
+    requestAnimationFrame(() => {
+      postTextareaRef.current?.focus();
+      postTextareaRef.current?.setSelectionRange(nextCursorPosition, nextCursorPosition);
+    });
+  };
+
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!shouldShowMentionDropdown) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (mentionResults.length === 0) {
+        return;
+      }
+
+      setActiveMentionIndex((current) =>
+        current >= mentionResults.length - 1 ? 0 : current + 1,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (mentionResults.length === 0) {
+        return;
+      }
+
+      setActiveMentionIndex((current) =>
+        current <= 0 ? mentionResults.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setMentionRange(null);
+      setMentionResults([]);
+      setActiveMentionIndex(-1);
+      return;
+    }
+
+    if (event.key === "Enter" && activeMentionIndex >= 0) {
+      event.preventDefault();
+      handleMentionSelect(mentionResults[activeMentionIndex].username);
+    }
   };
 
   const renderSearchPostPreview = (item: FeedItemDto) => {
@@ -466,14 +594,42 @@ export default function FeedPage() {
           </div>
 
           <div className="min-w-0 flex-1">
+            <div className="relative">
             <textarea
+              ref={postTextareaRef}
               value={postText}
-              onChange={(event) => setPostText(event.target.value)}
+              onChange={handlePostTextChange}
+              onClick={(event) =>
+                syncMentionState(postText, event.currentTarget.selectionStart ?? postText.length)
+              }
+              onKeyUp={(event) =>
+                syncMentionState(postText, event.currentTarget.selectionStart ?? postText.length)
+              }
+              onKeyDown={handleComposerKeyDown}
+              onBlur={() => {
+                window.setTimeout(() => {
+                  setMentionRange(null);
+                  setMentionResults([]);
+                  setActiveMentionIndex(-1);
+                }, 120);
+              }}
+              onFocus={(event) =>
+                syncMentionState(postText, event.currentTarget.selectionStart ?? postText.length)
+              }
               rows={3}
               maxLength={4000}
               placeholder={t("page.composer.placeholder")}
               className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
             />
+              <ComposerMentionSuggestions
+                users={mentionResults}
+                loading={mentionLoading}
+                open={shouldShowMentionDropdown}
+                activeIndex={activeMentionIndex}
+                onSelect={handleMentionSelect}
+                onHover={setActiveMentionIndex}
+              />
+            </div>
 
             <div className="mt-3">
               <ComposerMediaPreview

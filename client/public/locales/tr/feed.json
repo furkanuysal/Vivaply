@@ -79,6 +79,11 @@
     "share_copied": "Gönderi bağlantısı kopyalandı.",
     "share_failed": "Gönderi bağlantısı kopyalanamadı."
   },
+  "mentions": {
+    "title": "Kişiler",
+    "loading": "Kullanıcılar aranıyor...",
+    "empty": "Eşleşen kullanıcı bulunamadı."
+  },
   "labels": {
     "watching": "İzliyor",
     "movie": "Film",

@@ -4,12 +4,13 @@ import {
   PhotoIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type Location, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { UniversalCoverFallback } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import ComposerMentionSuggestions from "@/features/feed/components/ComposerMentionSuggestions";
 import PostCard from "@/features/feed/components/PostCard";
 import ComposerEmojiPicker from "@/features/feed/components/ComposerEmojiPicker";
 import ComposerLocationPopover from "@/features/feed/components/ComposerLocationPopover";
@@ -32,7 +33,14 @@ import {
   subscribeToPostUpdates,
 } from "@/features/feed/services/postUpdateEvents";
 import type { FeedItemDto } from "@/features/feed/types";
+import {
+  applyMentionSelection,
+  getActiveMentionRange,
+  type ActiveMentionRange,
+} from "@/features/feed/lib/mentions";
 import type { LocationDto } from "@/features/location/types";
+import { searchApi } from "@/features/search/api/searchApi";
+import type { SearchUserDto } from "@/features/search/types";
 
 interface PostPageProps {
   isModal?: boolean;
@@ -58,6 +66,11 @@ export default function PostPage({ isModal = false }: PostPageProps) {
   const [selectedLocation, setSelectedLocation] = useState<LocationDto | null>(null);
   const [submittingComposer, setSubmittingComposer] = useState(false);
   const [composerMode, setComposerMode] = useState<"reply" | "quote" | null>(null);
+  const [mentionResults, setMentionResults] = useState<SearchUserDto[]>([]);
+  const [mentionLoading, setMentionLoading] = useState(false);
+  const [mentionRange, setMentionRange] = useState<ActiveMentionRange | null>(null);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(-1);
+  const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const currentUserAvatarUrl = getActorAvatarUrl(user?.avatarUrl);
 
   const closeModal = () => {
@@ -112,6 +125,44 @@ export default function PostPage({ isModal = false }: PostPageProps) {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    setActiveMentionIndex(-1);
+  }, [mentionRange?.query, mentionResults.length]);
+
+  useEffect(() => {
+    const query = mentionRange?.query.trim() ?? "";
+
+    if (!mentionRange || query.length === 0) {
+      setMentionResults([]);
+      setMentionLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setMentionLoading(true);
+        const users = await searchApi.searchUsers(query, 5);
+        if (!cancelled) {
+          setMentionResults(users);
+        }
+      } catch {
+        if (!cancelled) {
+          setMentionResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setMentionLoading(false);
+        }
+      }
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [mentionRange]);
+
   const replies = useMemo(
     () =>
       [...(item?.replies ?? [])]
@@ -135,6 +186,83 @@ export default function PostPage({ isModal = false }: PostPageProps) {
 
   const appendEmoji = (emoji: string) => {
     setComposerText((current) => `${current}${emoji}`);
+  };
+
+  const syncMentionState = (
+    nextText: string,
+    cursorPosition: number,
+  ) => {
+    setMentionRange(getActiveMentionRange(nextText, cursorPosition));
+  };
+
+  const handleComposerTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nextText = event.target.value;
+    setComposerText(nextText);
+    syncMentionState(nextText, event.target.selectionStart ?? nextText.length);
+  };
+
+  const handleMentionSelect = (username: string) => {
+    if (!mentionRange || !composerTextareaRef.current) {
+      return;
+    }
+
+    const { nextText, nextCursorPosition } = applyMentionSelection(
+      composerText,
+      mentionRange,
+      username,
+    );
+
+    setComposerText(nextText);
+    setMentionRange(null);
+    setMentionResults([]);
+    setActiveMentionIndex(-1);
+
+    requestAnimationFrame(() => {
+      composerTextareaRef.current?.focus();
+      composerTextareaRef.current?.setSelectionRange(nextCursorPosition, nextCursorPosition);
+    });
+  };
+
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!mentionRange) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (mentionResults.length === 0) {
+        return;
+      }
+
+      setActiveMentionIndex((current) =>
+        current >= mentionResults.length - 1 ? 0 : current + 1,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (mentionResults.length === 0) {
+        return;
+      }
+
+      setActiveMentionIndex((current) =>
+        current <= 0 ? mentionResults.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setMentionRange(null);
+      setMentionResults([]);
+      setActiveMentionIndex(-1);
+      return;
+    }
+
+    if (event.key === "Enter" && activeMentionIndex >= 0) {
+      event.preventDefault();
+      handleMentionSelect(mentionResults[activeMentionIndex].username);
+    }
   };
 
   const handleComposerSubmit = async () => {
@@ -284,18 +412,55 @@ export default function PostPage({ isModal = false }: PostPageProps) {
               </button>
             ) : (
               <div className="space-y-4">
-                <textarea
-                  value={composerText}
-                  onChange={(event) => setComposerText(event.target.value)}
-                  rows={4}
-                  maxLength={4000}
-                  placeholder={
-                    composerMode === "quote"
-                      ? t("post.quote_placeholder")
-                      : t("post.reply_placeholder")
-                  }
-                  className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
-                />
+                <div className="relative">
+                  <textarea
+                    ref={composerTextareaRef}
+                    value={composerText}
+                    onChange={handleComposerTextChange}
+                    onClick={(event) =>
+                      syncMentionState(
+                        composerText,
+                        event.currentTarget.selectionStart ?? composerText.length,
+                      )
+                    }
+                    onKeyUp={(event) =>
+                      syncMentionState(
+                        composerText,
+                        event.currentTarget.selectionStart ?? composerText.length,
+                      )
+                    }
+                    onKeyDown={handleComposerKeyDown}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        setMentionRange(null);
+                        setMentionResults([]);
+                        setActiveMentionIndex(-1);
+                      }, 120);
+                    }}
+                    onFocus={(event) =>
+                      syncMentionState(
+                        composerText,
+                        event.currentTarget.selectionStart ?? composerText.length,
+                      )
+                    }
+                    rows={4}
+                    maxLength={4000}
+                    placeholder={
+                      composerMode === "quote"
+                        ? t("post.quote_placeholder")
+                        : t("post.reply_placeholder")
+                    }
+                    className="w-full resize-none border-0 bg-transparent px-0 py-1 text-[15px] leading-7 text-skin-text outline-none placeholder:text-skin-muted focus:ring-0"
+                  />
+                  <ComposerMentionSuggestions
+                    users={mentionResults}
+                    loading={mentionLoading}
+                    open={mentionRange !== null}
+                    activeIndex={activeMentionIndex}
+                    onSelect={handleMentionSelect}
+                    onHover={setActiveMentionIndex}
+                  />
+                </div>
 
                 <ComposerMediaPreview
                   files={composerFiles}

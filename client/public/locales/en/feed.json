@@ -79,6 +79,11 @@
     "share_copied": "Post link copied.",
     "share_failed": "Post link could not be copied."
   },
+  "mentions": {
+    "title": "People",
+    "loading": "Searching users...",
+    "empty": "No matching users found."
+  },
   "labels": {
     "watching": "Watching",
     "movie": "Movie",
