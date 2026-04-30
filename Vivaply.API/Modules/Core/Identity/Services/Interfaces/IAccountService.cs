@@ -7,6 +7,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Interfaces
         Task<UserProfileDto> GetProfileAsync(Guid userId);
         Task<UserProfileDto> GetProfileByUsernameAsync(Guid currentUserId, string username);
         Task UpdateProfileAsync(Guid userId, UpdateProfileDto request);
+        Task UpdatePreferencesAsync(Guid userId, UpdatePreferencesDto request);
         Task<string> UploadAvatarAsync(Guid userId, UploadAvatarDto request);
         Task ChangePasswordAsync(Guid userId, ChangePasswordDto request);
         Task DeleteAccountAsync(Guid userId);

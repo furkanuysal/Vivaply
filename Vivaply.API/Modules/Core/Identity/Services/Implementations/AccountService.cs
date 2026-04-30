@@ -48,6 +48,10 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 IsCurrentUser = true,
                 RelationStatus = FollowStatus.Accepted,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
+                ActivityVisibility = user.Preferences?.ActivityVisibility ?? ActivityVisibility.Followers,
+                EmailNotifications = user.Preferences?.EmailNotifications ?? true,
+                PushNotifications = user.Preferences?.PushNotifications ?? true,
                 IsFollowingCurrentUser = isFollowingCurrentUser,
                 FollowersCount = followersCount,
                 FollowingCount = followingCount
@@ -118,6 +122,10 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 IsCurrentUser = isOwner,
                 RelationStatus = relationStatusForDto,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
+                ActivityVisibility = user.Preferences?.ActivityVisibility ?? ActivityVisibility.Followers,
+                EmailNotifications = user.Preferences?.EmailNotifications ?? true,
+                PushNotifications = user.Preferences?.PushNotifications ?? true,
                 IsFollowingCurrentUser = isFollowingCurrentUser,
                 FollowersCount = followersCount,
                 FollowingCount = followingCount
@@ -154,6 +162,29 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
             // Update profile data
             user.Profile.Bio = request.Bio;
             user.Profile.Location = request.Location;
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdatePreferencesAsync(Guid userId, UpdatePreferencesDto request)
+        {
+            var preferences = await _dbContext.UserPreferences
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (preferences == null)
+            {
+                preferences = new Entities.Identity.UserPreferences
+                {
+                    UserId = userId
+                };
+                _dbContext.UserPreferences.Add(preferences);
+            }
+
+            preferences.ProfileVisibility = request.ProfileVisibility;
+            preferences.ActivityVisibility = request.ActivityVisibility;
+            preferences.FollowPolicy = request.FollowPolicy;
+            preferences.EmailNotifications = request.EmailNotifications;
+            preferences.PushNotifications = request.PushNotifications;
 
             await _dbContext.SaveChangesAsync();
         }

@@ -24,6 +24,10 @@ namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
         public bool IsCurrentUser { get; set; }
         public FollowStatus? RelationStatus { get; set; }
         public FollowPolicy? FollowPolicy { get; set; }
+        public ProfileVisibility? ProfileVisibility { get; set; }
+        public ActivityVisibility? ActivityVisibility { get; set; }
+        public bool EmailNotifications { get; set; }
+        public bool PushNotifications { get; set; }
         public bool IsFollowingCurrentUser { get; set; }
         public int FollowersCount { get; set; }
         public int FollowingCount { get; set; }

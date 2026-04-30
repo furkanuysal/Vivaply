@@ -2,6 +2,7 @@ import api from "@/shared/lib/api";
 import type {
   ChangePasswordDto,
   FollowUserDto,
+  UpdatePreferencesDto,
   UpdateProfileDto,
   UserProfileDto,
 } from "@/features/account/types";
@@ -14,6 +15,11 @@ export const accountApi = {
 
   changePassword: async (data: ChangePasswordDto) => {
     const response = await api.put("/Account/password", data);
+    return response.data;
+  },
+
+  updatePreferences: async (data: UpdatePreferencesDto) => {
+    const response = await api.put("/Account/preferences", data);
     return response.data;
   },
 

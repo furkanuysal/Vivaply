@@ -1,39 +1,74 @@
 {
   "title": "Hesap Ayarları",
-  "description": "Profil bilgilerinizi ve hesap güvenliğinizi buradan yönetebilirsiniz.",
+  "description": "Profil bilgilerini, gizlilik tercihlerini ve hesap güvenliğini buradan yönetebilirsin.",
   "tabs": {
     "general": "Genel Bilgiler",
+    "preferences": "Tercihler",
     "security": "Güvenlik"
   },
   "general": {
     "change": "Değiştir",
-    "level": "Level {{level}}",
-    "avatar_hint": "Profil fotoğrafınızı değiştirmek için resmin üzerine tıklayın. JPG, PNG veya GIF formatlarını kullanabilirsiniz.",
+    "level": "Seviye {{level}}",
+    "avatar_hint": "Profil fotoğrafını değiştirmek için görselin üzerine tıkla. JPG, PNG veya GIF kullanabilirsin.",
     "username": "Kullanıcı Adı",
-    "username_placeholder": "Kullanıcı adınızı girin",
+    "username_placeholder": "Kullanıcı adını gir",
     "location": "Konum",
     "about": "Hakkımda",
     "about_placeholder": "Kendinden kısaca bahset...",
-    "about_hint": "Profilinde görüntülenecek kısa bir açıklama.",
+    "about_hint": "Profilinde gösterilecek kısa açıklama.",
     "save_button": "Değişiklikleri Kaydet"
+  },
+  "preferences": {
+    "title": "Gizlilik ve bildirimler",
+    "description": "Profilini kimlerin görebileceğini, takip isteklerinin nasıl işleyeceğini ve bildirim tercihlerini seç.",
+    "profile_visibility": "Profil görünürlüğü",
+    "profile_visibility_hint": "Profilini kimlerin açıp inceleyebileceğini belirler.",
+    "profile_visibility_options": {
+      "public": "Herkese açık",
+      "followers_only": "Sadece takipçiler",
+      "private": "Özel"
+    },
+    "follow_policy": "Takip politikası",
+    "follow_policy_hint": "Yeni takipçilerin otomatik kabul edilip edilmeyeceğini belirler.",
+    "follow_policy_options": {
+      "auto_accept": "Otomatik kabul et",
+      "request_only": "İstek onayı iste",
+      "disabled": "Takibi kapat"
+    },
+    "activity_visibility": "Aktivite görünürlüğü",
+    "activity_visibility_hint": "Akışta görünen aktivitelerinin ne kadar geniş kitleye açık olacağını belirler.",
+    "activity_visibility_options": {
+      "public": "Herkese açık",
+      "followers": "Takipçiler",
+      "only_me": "Sadece ben"
+    },
+    "notifications_title": "Bildirim kanalları",
+    "notifications_description": "Bu seçenekler e-posta ve uygulama içi bildirim akışını yönetmek için hazır durumda tutulur.",
+    "email_notifications": "E-posta bildirimleri",
+    "email_notifications_hint": "Güncellemeleri e-posta kutunda da al.",
+    "push_notifications": "Anlık bildirimler",
+    "push_notifications_hint": "Uygulama deneyimi içinde doğrudan bildirim al.",
+    "save_button": "Tercihleri Kaydet"
   },
   "security": {
     "title": "Şifre Değiştir",
-    "description": "Hesap güvenliğiniz için güçlü bir şifre kullanmanızı öneririz.",
+    "description": "Hesap güvenliğin için güçlü bir şifre kullanmanı öneririz.",
     "current_password": "Mevcut Şifre",
     "new_password": "Yeni Şifre",
     "new_password_placeholder": "En az 6 karakter",
     "update_button": "Şifreyi Güncelle",
-    "hint": "Şifrenizi değiştirdikten sonra tekrar giriş yapmanız gerekecektir."
+    "hint": "Şifreni değiştirdikten sonra tekrar giriş yapman gerekir."
   },
   "toasts": {
     "profile_updated": "Profil başarıyla güncellendi!",
     "update_failed": "Güncelleme başarısız oldu.",
-    "username_cannot_be_taken": "Bu kullanıcı adı alınamaz.",
+    "username_cannot_be_taken": "Bu kullanıcı adı kullanılamıyor.",
+    "preferences_updated": "Tercihler başarıyla güncellendi!",
+    "preferences_error": "Tercihler güncellenemedi.",
     "avatar_updated": "Avatar başarıyla yenilendi!",
-    "avatar_error": "Resim yüklenirken bir hata oluştu.",
-    "password_updated": "Şifre başarıyla değiştirildi! Lütfen tekrar giriş yapın.",
-    "password_error": "Şifre değiştirilemedi. Lütfen bilgilerinizi kontrol edin."
+    "avatar_error": "Görsel yüklenirken bir hata oluştu.",
+    "password_updated": "Şifre başarıyla değiştirildi! Lütfen tekrar giriş yap.",
+    "password_error": "Şifre değiştirilemedi. Lütfen bilgilerini kontrol et."
   },
   "loading": "Yükleniyor..."
 }

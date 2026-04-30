@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Vivaply.API.Infrastructure.Core;
@@ -15,7 +15,7 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
     {
         private readonly IAccountService _accountService = accountService;
 
-        [HttpGet] // URL: /api/Account
+        [HttpGet]
         public async Task<IActionResult> GetMyProfile()
         {
             var profile = await _accountService.GetProfileAsync(CurrentUserId);
@@ -36,7 +36,6 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
             }
         }
 
-        // Update Profile
         [HttpPut("profile")]
         [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
@@ -48,13 +47,18 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                // Service throws "Username already taken" exception
-                // Return 409 Conflict
                 return Conflict(new { message = ex.Message });
             }
         }
 
-        // Upload Avatar
+        [HttpPut("preferences")]
+        [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
+        public async Task<IActionResult> UpdatePreferences([FromBody] UpdatePreferencesDto request)
+        {
+            await _accountService.UpdatePreferencesAsync(CurrentUserId, request);
+            return Ok(new { message = "Preferences updated successfully." });
+        }
+
         [HttpPost("avatar")]
         [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> UploadAvatar([FromForm] UploadAvatarDto request)
@@ -63,7 +67,6 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
             return Ok(new { message = "Avatar uploaded successfully.", avatarUrl });
         }
 
-        // Change Password
         [HttpPut("password")]
         [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
@@ -72,7 +75,6 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
             return Ok(new { message = "Password changed successfully." });
         }
 
-        // Delete Account
         [HttpDelete]
         [EnableRateLimiting(RateLimitPolicies.AccountWrite)]
         public async Task<IActionResult> DeleteAccount()

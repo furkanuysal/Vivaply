@@ -1,14 +1,15 @@
 {
   "title": "Account Settings",
-  "description": "Manage your profile information and account security.",
+  "description": "Manage your profile information, privacy controls and account security.",
   "tabs": {
     "general": "General Info",
+    "preferences": "Preferences",
     "security": "Security"
   },
   "general": {
     "change": "Change",
     "level": "Level {{level}}",
-    "avatar_hint": "Click on the image to change your profile photo. You can use JPG, PNG, or GIF formats.",
+    "avatar_hint": "Click the image to change your profile photo. You can use JPG, PNG, or GIF formats.",
     "username": "Username",
     "username_placeholder": "Enter your username",
     "location": "Location",
@@ -16,6 +17,38 @@
     "about_placeholder": "Briefly describe yourself...",
     "about_hint": "A short description to be displayed on your profile.",
     "save_button": "Save Changes"
+  },
+  "preferences": {
+    "title": "Privacy and notifications",
+    "description": "Choose who can see your profile, how follow requests behave and how we notify you.",
+    "profile_visibility": "Profile visibility",
+    "profile_visibility_hint": "Controls who can open and browse your profile.",
+    "profile_visibility_options": {
+      "public": "Public",
+      "followers_only": "Followers only",
+      "private": "Private"
+    },
+    "follow_policy": "Follow policy",
+    "follow_policy_hint": "Decide whether new followers are accepted automatically.",
+    "follow_policy_options": {
+      "auto_accept": "Auto accept",
+      "request_only": "Request approval",
+      "disabled": "Disabled"
+    },
+    "activity_visibility": "Activity visibility",
+    "activity_visibility_hint": "Controls how widely your activity stream is shown.",
+    "activity_visibility_options": {
+      "public": "Public",
+      "followers": "Followers",
+      "only_me": "Only me"
+    },
+    "notifications_title": "Notification channels",
+    "notifications_description": "These toggles prepare your account for email and push notification delivery.",
+    "email_notifications": "Email notifications",
+    "email_notifications_hint": "Receive updates in your email inbox.",
+    "push_notifications": "Push notifications",
+    "push_notifications_hint": "Receive alerts directly inside the app experience.",
+    "save_button": "Save Preferences"
   },
   "security": {
     "title": "Change Password",
@@ -30,6 +63,8 @@
     "profile_updated": "Profile successfully updated!",
     "update_failed": "Update failed.",
     "username_cannot_be_taken": "This username cannot be taken.",
+    "preferences_updated": "Preferences successfully updated!",
+    "preferences_error": "Preferences could not be updated.",
     "avatar_updated": "Avatar successfully refreshed!",
     "avatar_error": "An error occurred while uploading the image.",
     "password_updated": "Password successfully changed! Please log in again.",

@@ -13,6 +13,10 @@ export interface UserProfileDto {
   isCurrentUser?: boolean;
   relationStatus?: FollowStatus | null;
   followPolicy?: FollowPolicy | null;
+  profileVisibility?: ProfileVisibility | null;
+  activityVisibility?: ActivityVisibility | null;
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
   isFollowingCurrentUser?: boolean;
   followersCount?: number;
   followingCount?: number;
@@ -39,10 +43,32 @@ export const FollowPolicy = {
 } as const;
 export type FollowPolicy = (typeof FollowPolicy)[keyof typeof FollowPolicy];
 
+export const ProfileVisibility = {
+  Public: 0,
+  FollowersOnly: 1,
+  Private: 2,
+} as const;
+export type ProfileVisibility = (typeof ProfileVisibility)[keyof typeof ProfileVisibility];
+
+export const ActivityVisibility = {
+  OnlyMe: 0,
+  Followers: 1,
+  Public: 2,
+} as const;
+export type ActivityVisibility = (typeof ActivityVisibility)[keyof typeof ActivityVisibility];
+
 export interface UpdateProfileDto {
   username: string;
   bio?: string;
   location?: string;
+}
+
+export interface UpdatePreferencesDto {
+  profileVisibility: ProfileVisibility;
+  activityVisibility: ActivityVisibility;
+  followPolicy: FollowPolicy;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
 }
 
 export interface ChangePasswordDto {

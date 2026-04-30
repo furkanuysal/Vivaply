@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Vivaply.API.Modules.Core.Identity.Enums;
 
 namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
 {
-    // Updating user profile information
     public class UpdateProfileDto
     {
         [Required]
@@ -16,7 +16,6 @@ namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
         public string? Location { get; set; }
     }
 
-    // Changing user password
     public class ChangePasswordDto
     {
         [Required]
@@ -27,7 +26,21 @@ namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
         public string NewPassword { get; set; } = string.Empty;
     }
 
-    // Avatar upload DTO (file handling)
+    public class UpdatePreferencesDto
+    {
+        [Required]
+        public ProfileVisibility ProfileVisibility { get; set; }
+
+        [Required]
+        public ActivityVisibility ActivityVisibility { get; set; }
+
+        [Required]
+        public FollowPolicy FollowPolicy { get; set; }
+
+        public bool EmailNotifications { get; set; }
+        public bool PushNotifications { get; set; }
+    }
+
     public class UploadAvatarDto
     {
         [Required]
