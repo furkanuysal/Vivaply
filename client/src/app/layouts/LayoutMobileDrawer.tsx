@@ -143,6 +143,11 @@ export default function LayoutMobileDrawer({
                   >
                     {item.icon}
                     <span className="font-medium">{item.name}</span>
+                    {item.badgeCount && item.badgeCount > 0 ? (
+                      <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-skin-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        {item.badgeCount > 99 ? "99+" : item.badgeCount}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

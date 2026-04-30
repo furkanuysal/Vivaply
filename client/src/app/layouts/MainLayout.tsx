@@ -5,6 +5,7 @@ import { Bars3Icon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/shared/ui";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { notificationsApi } from "@/features/notifications/api/notificationsApi";
 import LayoutDesktopSidebar from "./LayoutDesktopSidebar";
 import LayoutMobileDrawer from "./LayoutMobileDrawer";
 import { getMainNavigation } from "./navigation";
@@ -20,6 +21,7 @@ export default function MainLayout() {
     "knowledge",
   ]);
   const [isMobile, setIsMobile] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   useEffect(() => {
     const handleResize = () => {
@@ -35,6 +37,41 @@ export default function MainLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadUnreadCount = async () => {
+      try {
+        const response = await notificationsApi.getUnreadCount();
+        if (!cancelled) {
+          setUnreadNotificationCount(response.count);
+        }
+      } catch {
+        if (!cancelled) {
+          setUnreadNotificationCount(0);
+        }
+      }
+    };
+
+    void loadUnreadCount();
+    const handleNotificationsChanged = () => {
+      void loadUnreadCount();
+    };
+
+    const handleWindowFocus = () => {
+      void loadUnreadCount();
+    };
+
+    window.addEventListener("notifications:changed", handleNotificationsChanged);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("notifications:changed", handleNotificationsChanged);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, []);
+
   const toggleMenu = (key: string) => {
     if (isCollapsed) {
       setIsCollapsed(false);
@@ -48,7 +85,7 @@ export default function MainLayout() {
     }
   };
 
-  const menuItems = getMainNavigation(user, t);
+  const menuItems = getMainNavigation(user, t, unreadNotificationCount);
 
   const mainVariants = {
     expanded: { marginLeft: 280 },

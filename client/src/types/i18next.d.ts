@@ -8,6 +8,7 @@ import settings from "@public/locales/en/settings.json";
 import feed from "@public/locales/en/feed.json";
 import profile from "@public/locales/en/profile.json";
 import search from "@public/locales/en/search.json";
+import notifications from "@public/locales/en/notifications.json";
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -22,6 +23,7 @@ declare module "i18next" {
       feed: typeof feed;
       profile: typeof profile;
       search: typeof search;
+      notifications: typeof notifications;
     };
   }
 }

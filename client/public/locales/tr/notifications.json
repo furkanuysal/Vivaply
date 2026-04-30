@@ -1,0 +1,35 @@
+{
+  "page": {
+    "eyebrow": "BİLDİRİMLER",
+    "title": "Bildirimler",
+    "subtitle": "Takip, beğeni, yanıt, alıntı ve mention akışını tek yerden takip et."
+  },
+  "tabs": {
+    "all": "Tümü",
+    "unread": "Okunmamış"
+  },
+  "actions": {
+    "mark_all_read": "Tümünü okundu işaretle"
+  },
+  "states": {
+    "empty_title": "Henüz bildirim yok",
+    "empty_subtitle": "İnsanlar seninle etkileşime girdikçe burası dolmaya başlayacak.",
+    "empty_unread_title": "Şimdilik her şey temiz",
+    "empty_unread_subtitle": "Yeni bir şey olduğunda okunmamış bildirimler burada görünecek."
+  },
+  "items": {
+    "follow": "seni takip etmeye başladı.",
+    "like": "gönderini beğendi.",
+    "reply": "gönderine yanıt verdi.",
+    "quote": "gönderini alıntıladı.",
+    "mention": "bir gönderide senden bahsetti."
+  },
+  "content": {
+    "someone": "Birisi"
+  },
+  "errors": {
+    "load": "Bildirimler yüklenemedi.",
+    "mark_read": "Bildirim okundu olarak işaretlenemedi.",
+    "mark_all_read": "Bildirimler güncellenemedi."
+  }
+}

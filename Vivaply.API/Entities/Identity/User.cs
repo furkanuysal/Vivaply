@@ -33,6 +33,8 @@ namespace Vivaply.API.Entities.Identity
         public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
         public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
         public ICollection<PostMention> MentionedInPosts { get; set; } = new List<PostMention>();
+        public ICollection<UserNotification> Notifications { get; set; } = new List<UserNotification>();
+        public ICollection<UserNotification> SentNotifications { get; set; } = new List<UserNotification>();
 
     }
 }

@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Identity.Enums;
+using Vivaply.API.Modules.Core.Notifications.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.DTOs.Commands.Posts;
 using Vivaply.API.Modules.Core.Social.DTOs.Mappers;
 using Vivaply.API.Modules.Core.Social.DTOs.Queries;
@@ -14,7 +15,11 @@ using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class PostService(VivaplyDbContext db, IMemoryCache cache, IPostMediaStorageService postMediaStorageService) : IPostService
+    public class PostService(
+        VivaplyDbContext db,
+        IMemoryCache cache,
+        IPostMediaStorageService postMediaStorageService,
+        INotificationService notificationService) : IPostService
     {
         private const int ViewCooldownHours = 6;
         private static readonly Regex MentionRegex = new(
@@ -23,6 +28,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         private readonly VivaplyDbContext _db = db;
         private readonly IMemoryCache _cache = cache;
         private readonly IPostMediaStorageService _postMediaStorageService = postMediaStorageService;
+        private readonly INotificationService _notificationService = notificationService;
 
         public async Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default)
         {
@@ -99,8 +105,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             });
 
             await _db.SaveChangesAsync(cancellationToken);
-            await SyncMentionsAsync(post, cancellationToken);
+            var mentionUserIds = await SyncMentionsAsync(post, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            await _notificationService.CreateMentionNotificationsAsync(currentUserId, post.Id, mentionUserIds, cancellationToken);
 
             var createdPost = await _db.UserPosts
                 .AsNoTracking()
@@ -149,8 +156,9 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             post.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync(cancellationToken);
-            await SyncMentionsAsync(post, cancellationToken);
+            var mentionUserIds = await SyncMentionsAsync(post, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            await _notificationService.CreateMentionNotificationsAsync(currentUserId, post.Id, mentionUserIds, cancellationToken);
 
             var updatedPost = await _db.UserPosts
                 .AsNoTracking()
@@ -487,8 +495,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
             await _db.SaveChangesAsync(cancellationToken);
-            await SyncMentionsAsync(reply, cancellationToken);
+            var mentionUserIds = await SyncMentionsAsync(reply, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            await _notificationService.CreateReplyNotificationAsync(currentUserId, parentPost.UserId, reply.Id, cancellationToken);
+            await _notificationService.CreateMentionNotificationsAsync(currentUserId, reply.Id, mentionUserIds, cancellationToken);
 
             var createdReply = await _db.UserPosts
                 .AsNoTracking()
@@ -543,8 +553,15 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
 
             await _db.SaveChangesAsync(cancellationToken);
-            await SyncMentionsAsync(quote, cancellationToken);
+            var mentionUserIds = await SyncMentionsAsync(quote, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            var quotedPostOwnerId = await _db.UserPosts
+                .AsNoTracking()
+                .Where(x => x.Id == quotedPostId)
+                .Select(x => x.UserId)
+                .FirstAsync(cancellationToken);
+            await _notificationService.CreateQuoteNotificationAsync(currentUserId, quotedPostOwnerId, quote.Id, cancellationToken);
+            await _notificationService.CreateMentionNotificationsAsync(currentUserId, quote.Id, mentionUserIds, cancellationToken);
 
             var createdQuote = await _db.UserPosts
                 .AsNoTracking()
@@ -674,6 +691,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             if (!exists)
             {
+                var postOwnerId = await _db.UserPosts
+                    .AsNoTracking()
+                    .Where(x => x.Id == postId)
+                    .Select(x => x.UserId)
+                    .FirstAsync(cancellationToken);
+
                 _db.PostLikes.Add(new PostLike
                 {
                     PostId = postId,
@@ -687,6 +710,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(x => x.LikeCount, x => x.LikeCount + 1)
                         .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+
+                await _notificationService.CreateLikeNotificationAsync(currentUserId, postOwnerId, postId, cancellationToken);
             }
 
             return await BuildPostStatsAsync(postId, cancellationToken);
@@ -704,6 +729,12 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             if (like != null)
             {
+                var postOwnerId = await _db.UserPosts
+                    .AsNoTracking()
+                    .Where(x => x.Id == postId)
+                    .Select(x => x.UserId)
+                    .FirstAsync(cancellationToken);
+
                 _db.PostLikes.Remove(like);
                 await _db.SaveChangesAsync(cancellationToken);
                 await EnsurePostStatsAsync(postId, cancellationToken);
@@ -712,6 +743,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(x => x.LikeCount, x => Math.Max(0, x.LikeCount - 1))
                         .SetProperty(x => x.UpdatedAt, DateTime.UtcNow), cancellationToken);
+
+                await _notificationService.RemoveLikeNotificationAsync(currentUserId, postOwnerId, postId, cancellationToken);
             }
 
             return await BuildPostStatsAsync(postId, cancellationToken);
@@ -1280,7 +1313,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
-        private async Task SyncMentionsAsync(UserPost post, CancellationToken cancellationToken)
+        private async Task<List<Guid>> SyncMentionsAsync(UserPost post, CancellationToken cancellationToken)
         {
             var existingMentions = await _db.PostMentions
                 .Where(x => x.PostId == post.Id)
@@ -1294,7 +1327,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             var usernames = ExtractMentionUsernames(post.TextContent);
             if (usernames.Count == 0)
             {
-                return;
+                return [];
             }
 
             var loweredUsernames = usernames
@@ -1309,7 +1342,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             if (matchedUsers.Count == 0)
             {
-                return;
+                return [];
             }
 
             _db.PostMentions.AddRange(matchedUsers.Select(userId => new PostMention
@@ -1318,6 +1351,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 MentionedUserId = userId,
                 CreatedAt = post.UpdatedAt ?? post.PublishedAt
             }));
+
+            return matchedUsers;
         }
 
         private static List<string> ExtractMentionUsernames(string? textContent)

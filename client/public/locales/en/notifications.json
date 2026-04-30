@@ -1,0 +1,35 @@
+{
+  "page": {
+    "eyebrow": "NOTIFICATIONS",
+    "title": "Notifications",
+    "subtitle": "Keep up with follows, likes, replies, quotes and mentions without losing the flow."
+  },
+  "tabs": {
+    "all": "All",
+    "unread": "Unread"
+  },
+  "actions": {
+    "mark_all_read": "Mark all as read"
+  },
+  "states": {
+    "empty_title": "No notifications yet",
+    "empty_subtitle": "When people interact with you, this space will start to feel alive.",
+    "empty_unread_title": "You are all caught up",
+    "empty_unread_subtitle": "Unread notifications will appear here when something new happens."
+  },
+  "items": {
+    "follow": "started following you.",
+    "like": "liked your post.",
+    "reply": "replied to your post.",
+    "quote": "quoted your post.",
+    "mention": "mentioned you in a post."
+  },
+  "content": {
+    "someone": "Someone"
+  },
+  "errors": {
+    "load": "Notifications could not be loaded.",
+    "mark_read": "Notification could not be marked as read.",
+    "mark_all_read": "Notifications could not be updated."
+  }
+}

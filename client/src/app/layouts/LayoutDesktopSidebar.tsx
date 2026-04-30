@@ -191,6 +191,15 @@ export default function LayoutDesktopSidebar({
               }`}
             >
               {item.icon}
+              {item.badgeCount && item.badgeCount > 0 ? (
+                <span
+                  className={`absolute flex min-w-[1.25rem] items-center justify-center rounded-full bg-skin-primary px-1.5 text-[10px] font-semibold text-white ${
+                    isCollapsed ? "right-2 top-2 h-5" : "right-3 top-1/2 h-5 -translate-y-1/2"
+                  }`}
+                >
+                  {item.badgeCount > 99 ? "99+" : item.badgeCount}
+                </span>
+              ) : null}
               <AnimatePresence>
                 {!isCollapsed && (
                   <motion.span

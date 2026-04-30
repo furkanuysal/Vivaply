@@ -2,14 +2,16 @@ using Microsoft.EntityFrameworkCore;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Identity.Enums;
+using Vivaply.API.Modules.Core.Notifications.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.DTOs.Results.Follows;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class FollowService(VivaplyDbContext db) : IFollowService
+    public class FollowService(VivaplyDbContext db, INotificationService notificationService) : IFollowService
     {
         private readonly VivaplyDbContext _db = db;
+        private readonly INotificationService _notificationService = notificationService;
 
         public async Task FollowAsync(Guid currentUserId, Guid targetUserId)
         {
@@ -49,6 +51,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             _db.UserFollows.Add(follow);
             await _db.SaveChangesAsync();
+
+            if (status == FollowStatus.Accepted)
+            {
+                await _notificationService.CreateFollowNotificationAsync(currentUserId, targetUserId);
+            }
         }
 
         public async Task UnfollowAsync(Guid currentUserId, Guid targetUserId)

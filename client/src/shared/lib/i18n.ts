@@ -19,6 +19,7 @@ i18n
       "feed",
       "profile",
       "search",
+      "notifications",
     ],
     defaultNS: "common",
     backend: {

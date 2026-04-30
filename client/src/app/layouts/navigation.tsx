@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   BookOpenIcon,
+  BellIcon,
   BookmarkIcon,
   FilmIcon,
   HomeIcon,
@@ -19,10 +20,15 @@ export interface NavigationItem {
   name: string;
   icon: ReactNode;
   path?: string;
+  badgeCount?: number;
   children?: NavigationChild[];
 }
 
-export function getMainNavigation(user: { username?: string } | null | undefined, t: any): NavigationItem[] {
+export function getMainNavigation(
+  user: { username?: string } | null | undefined,
+  t: any,
+  unreadNotificationCount = 0,
+): NavigationItem[] {
   return [
     {
       key: "dashboard",
@@ -47,6 +53,13 @@ export function getMainNavigation(user: { username?: string } | null | undefined
       name: t("menu.bookmarks"),
       path: "/bookmarks",
       icon: <BookmarkIcon className="h-5 w-5 shrink-0" />,
+    },
+    {
+      key: "notifications",
+      name: t("menu.notifications"),
+      path: "/notifications",
+      icon: <BellIcon className="h-5 w-5 shrink-0" />,
+      badgeCount: unreadNotificationCount,
     },
     {
       key: "search",
