@@ -2,14 +2,18 @@
   "page": {
     "eyebrow": "NOTIFICATIONS",
     "title": "Notifications",
-    "subtitle": "Keep up with follows, likes, replies, quotes and mentions without losing the flow."
+    "subtitle": "Keep up with follows, requests, likes, replies, quotes and mentions without losing the flow."
   },
   "tabs": {
     "all": "All",
     "unread": "Unread"
   },
   "actions": {
-    "mark_all_read": "Mark all as read"
+    "mark_all_read": "Mark all as read",
+    "accept": "Accept",
+    "reject": "Reject",
+    "follow_request_accepted": "Follow request accepted.",
+    "follow_request_rejected": "Follow request rejected."
   },
   "states": {
     "empty_title": "No notifications yet",
@@ -19,10 +23,15 @@
   },
   "items": {
     "follow": "started following you.",
+    "follow_request": "sent you a follow request.",
+    "follow_accepted": "accepted your follow request.",
     "like": "liked your post.",
     "reply": "replied to your post.",
     "quote": "quoted your post.",
     "mention": "mentioned you in a post."
+  },
+  "badges": {
+    "request": "Request"
   },
   "content": {
     "someone": "Someone"
@@ -30,6 +39,7 @@
   "errors": {
     "load": "Notifications could not be loaded.",
     "mark_read": "Notification could not be marked as read.",
-    "mark_all_read": "Notifications could not be updated."
+    "mark_all_read": "Notifications could not be updated.",
+    "follow_request_action": "Follow request action could not be completed."
   }
 }

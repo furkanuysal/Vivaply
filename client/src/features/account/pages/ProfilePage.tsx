@@ -85,6 +85,31 @@ export default function ProfilePage() {
     [activeTab, username],
   );
 
+  useEffect(() => {
+    const handleFollowRequestAccepted = () => {
+      setUser((current) =>
+        current?.isCurrentUser
+          ? {
+              ...current,
+              followersCount: (current.followersCount ?? 0) + 1,
+            }
+          : current,
+      );
+    };
+
+    window.addEventListener(
+      "follow-request:accepted",
+      handleFollowRequestAccepted as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "follow-request:accepted",
+        handleFollowRequestAccepted as EventListener,
+      );
+    };
+  }, []);
+
   const loadPosts = async (
     username: string,
     scope: ProfileTab,
@@ -122,8 +147,11 @@ export default function ProfilePage() {
     if (!user || user.isCurrentUser || followLoading) return;
 
     const previous = user;
-    const isFollowing = user.relationStatus === FollowStatus.Accepted;
-    const nextStatus = isFollowing
+    const hasExistingRelation =
+      user.relationStatus === FollowStatus.Accepted ||
+      user.relationStatus === FollowStatus.Pending;
+
+    const nextStatus = hasExistingRelation
       ? null
       : user.followPolicy === FollowPolicy.RequestOnly
         ? FollowStatus.Pending
@@ -138,14 +166,18 @@ export default function ProfilePage() {
             followersCount: Math.max(
               0,
               (current.followersCount ?? 0) +
-                (isFollowing ? -1 : nextStatus === FollowStatus.Accepted ? 1 : 0),
+                (user.relationStatus === FollowStatus.Accepted
+                  ? -1
+                  : nextStatus === FollowStatus.Accepted
+                    ? 1
+                    : 0),
             ),
           }
         : current,
     );
 
     try {
-      if (isFollowing) {
+      if (hasExistingRelation) {
         await accountApi.unfollowUser(user.id);
       } else {
         await accountApi.followUser(user.id);
@@ -270,10 +302,12 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => void handleFollowToggle()}
                 disabled={followLoading}
-                className={`mt-4 inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                className={`group mt-4 inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
                   user?.relationStatus === FollowStatus.Accepted
                     ? "border border-skin-border bg-skin-surface text-skin-text hover:border-skin-primary/40"
-                    : "bg-skin-primary text-skin-base hover:bg-skin-primary/90"
+                    : user?.relationStatus === FollowStatus.Pending
+                      ? "border border-skin-primary/25 bg-skin-primary/10 text-skin-primary hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-400"
+                      : "bg-skin-primary text-skin-base hover:bg-skin-primary/90"
                 }`}
               >
                 {followLoading
@@ -281,7 +315,16 @@ export default function ProfilePage() {
                   : user?.relationStatus === FollowStatus.Accepted
                     ? t("profile:actions.following")
                     : user?.relationStatus === FollowStatus.Pending
-                      ? t("profile:actions.requested")
+                      ? (
+                        <>
+                          <span className="group-hover:hidden">
+                            {t("profile:actions.requested")}
+                          </span>
+                          <span className="hidden group-hover:inline">
+                            {t("profile:actions.cancel_request")}
+                          </span>
+                        </>
+                      )
                       : t("profile:actions.follow")}
               </button>
             ) : null}

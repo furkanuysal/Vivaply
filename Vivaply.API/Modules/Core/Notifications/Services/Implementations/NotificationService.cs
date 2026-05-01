@@ -83,6 +83,26 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
             return CreateNotificationAsync(actorUserId, recipientUserId, NotificationType.Follow, null, cancellationToken);
         }
 
+        public Task CreateFollowRequestNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default)
+        {
+            return CreateNotificationAsync(actorUserId, recipientUserId, NotificationType.FollowRequest, null, cancellationToken);
+        }
+
+        public Task CreateFollowAcceptedNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default)
+        {
+            return CreateNotificationAsync(actorUserId, recipientUserId, NotificationType.FollowAccepted, null, cancellationToken);
+        }
+
+        public async Task RemoveFollowRequestNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.UserNotifications
+                .Where(x =>
+                    x.ActorUserId == actorUserId &&
+                    x.RecipientUserId == recipientUserId &&
+                    x.Type == NotificationType.FollowRequest)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
         public async Task CreateLikeNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default)
         {
             if (await HasExistingAsync(actorUserId, recipientUserId, NotificationType.Like, postId, cancellationToken))
@@ -265,7 +285,7 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
 
             return value.Length <= maxLength
                 ? value
-                : $"{value[..(maxLength - 1)].TrimEnd()}…";
+                : $"{value[..(maxLength - 3)].TrimEnd()}...";
         }
     }
 }

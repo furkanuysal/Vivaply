@@ -2,14 +2,18 @@
   "page": {
     "eyebrow": "BİLDİRİMLER",
     "title": "Bildirimler",
-    "subtitle": "Takip, beğeni, yanıt, alıntı ve mention akışını tek yerden takip et."
+    "subtitle": "Takip, takip isteği, beğeni, yanıt, alıntı ve mention akışını tek yerden takip et."
   },
   "tabs": {
     "all": "Tümü",
     "unread": "Okunmamış"
   },
   "actions": {
-    "mark_all_read": "Tümünü okundu işaretle"
+    "mark_all_read": "Tümünü okundu işaretle",
+    "accept": "Kabul Et",
+    "reject": "Reddet",
+    "follow_request_accepted": "Takip isteği kabul edildi.",
+    "follow_request_rejected": "Takip isteği reddedildi."
   },
   "states": {
     "empty_title": "Henüz bildirim yok",
@@ -19,10 +23,15 @@
   },
   "items": {
     "follow": "seni takip etmeye başladı.",
+    "follow_request": "sana takip isteği gönderdi.",
+    "follow_accepted": "takip isteğini kabul etti.",
     "like": "gönderini beğendi.",
     "reply": "gönderine yanıt verdi.",
     "quote": "gönderini alıntıladı.",
     "mention": "bir gönderide senden bahsetti."
+  },
+  "badges": {
+    "request": "İstek"
   },
   "content": {
     "someone": "Birisi"
@@ -30,6 +39,7 @@
   "errors": {
     "load": "Bildirimler yüklenemedi.",
     "mark_read": "Bildirim okundu olarak işaretlenemedi.",
-    "mark_all_read": "Bildirimler güncellenemedi."
+    "mark_all_read": "Bildirimler güncellenemedi.",
+    "follow_request_action": "Takip isteği işlemi tamamlanamadı."
   }
 }

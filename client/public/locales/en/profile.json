@@ -25,6 +25,7 @@
     "follow": "Follow",
     "following": "Following",
     "requested": "Requested",
+    "cancel_request": "Cancel request",
     "processing": "Please wait..."
   },
   "social": {

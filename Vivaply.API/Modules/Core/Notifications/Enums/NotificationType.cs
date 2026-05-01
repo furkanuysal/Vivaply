@@ -6,6 +6,8 @@ namespace Vivaply.API.Modules.Core.Notifications.Enums
         Like = 1,
         Reply = 2,
         Quote = 3,
-        Mention = 4
+        Mention = 4,
+        FollowRequest = 5,
+        FollowAccepted = 6
     }
 }

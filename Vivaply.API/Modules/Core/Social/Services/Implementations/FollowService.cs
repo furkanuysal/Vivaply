@@ -56,6 +56,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             {
                 await _notificationService.CreateFollowNotificationAsync(currentUserId, targetUserId);
             }
+            else
+            {
+                await _notificationService.CreateFollowRequestNotificationAsync(currentUserId, targetUserId);
+            }
         }
 
         public async Task UnfollowAsync(Guid currentUserId, Guid targetUserId)
@@ -68,8 +72,14 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             if (existing == null)
                 throw new Exception("Follow relation not found.");
 
+            var previousStatus = existing.Status;
             _db.UserFollows.Remove(existing);
             await _db.SaveChangesAsync();
+
+            if (previousStatus == FollowStatus.Pending)
+            {
+                await _notificationService.RemoveFollowRequestNotificationAsync(currentUserId, targetUserId);
+            }
         }
 
         public async Task AcceptRequestAsync(Guid currentUserId, Guid requesterId)
@@ -87,6 +97,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             follow.RespondedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+            await _notificationService.RemoveFollowRequestNotificationAsync(requesterId, currentUserId);
+            await _notificationService.CreateFollowAcceptedNotificationAsync(currentUserId, requesterId);
         }
 
         public async Task RejectRequestAsync(Guid currentUserId, Guid requesterId)
@@ -102,6 +114,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             _db.UserFollows.Remove(follow);
             await _db.SaveChangesAsync();
+            await _notificationService.RemoveFollowRequestNotificationAsync(requesterId, currentUserId);
         }
 
         public async Task<List<FollowUserDto>> GetFollowersAsync(Guid currentUserId, Guid userId)

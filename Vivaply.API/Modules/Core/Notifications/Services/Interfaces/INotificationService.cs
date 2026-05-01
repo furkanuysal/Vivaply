@@ -10,6 +10,9 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Interfaces
         Task<bool> MarkAsReadAsync(Guid currentUserId, Guid notificationId, CancellationToken cancellationToken = default);
         Task<int> MarkAllAsReadAsync(Guid currentUserId, CancellationToken cancellationToken = default);
         Task CreateFollowNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default);
+        Task CreateFollowRequestNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default);
+        Task CreateFollowAcceptedNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default);
+        Task RemoveFollowRequestNotificationAsync(Guid actorUserId, Guid recipientUserId, CancellationToken cancellationToken = default);
         Task CreateLikeNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default);
         Task RemoveLikeNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default);
         Task CreateReplyNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default);

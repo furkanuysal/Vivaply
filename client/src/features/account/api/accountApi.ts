@@ -41,6 +41,14 @@ export const accountApi = {
     await api.delete(`/users/${targetUserId}/follow`);
   },
 
+  acceptFollowRequest: async (requesterId: string) => {
+    await api.put(`/users/${requesterId}/follow/accept`);
+  },
+
+  rejectFollowRequest: async (requesterId: string) => {
+    await api.put(`/users/${requesterId}/follow/reject`);
+  },
+
   getFollowers: async (userId: string) => {
     const response = await api.get<FollowUserDto[]>(`/users/${userId}/followers`);
     return response.data;
