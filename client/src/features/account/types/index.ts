@@ -11,6 +11,7 @@ export interface UserProfileDto {
   money?: number;
   currentStreak?: number;
   isCurrentUser?: boolean;
+  canViewProfile?: boolean;
   relationStatus?: FollowStatus | null;
   followPolicy?: FollowPolicy | null;
   profileVisibility?: ProfileVisibility | null;

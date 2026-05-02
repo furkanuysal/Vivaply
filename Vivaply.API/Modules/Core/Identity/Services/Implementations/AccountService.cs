@@ -46,6 +46,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 CurrentStreak = user.Profile?.CurrentStreak ?? 0,
                 Money = user.Wallet?.Balance ?? 0,
                 IsCurrentUser = true,
+                CanViewProfile = true,
                 RelationStatus = FollowStatus.Accepted,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
                 ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
@@ -78,21 +79,6 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
 
             var isOwner = user.Id == currentUserId;
 
-            if (!isOwner)
-            {
-                var preferences = await _dbContext.UserPreferences
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.UserId == user.Id);
-
-                var relationStatus = await _dbContext.UserFollows
-                    .Where(x => x.FollowerId == currentUserId && x.FollowingId == user.Id)
-                    .Select(x => (FollowStatus?)x.Status)
-                    .FirstOrDefaultAsync();
-
-                if (!CanViewProfile(preferences?.ProfileVisibility, relationStatus))
-                    throw new UnauthorizedAccessException("You are not allowed to view this profile.");
-            }
-
             var relationStatusForDto = isOwner
                 ? FollowStatus.Accepted
                 : await _dbContext.UserFollows
@@ -100,17 +86,43 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                     .Select(x => (FollowStatus?)x.Status)
                     .FirstOrDefaultAsync();
 
+            var canViewProfile = isOwner || CanViewProfile(
+                user.Preferences?.ProfileVisibility,
+                relationStatusForDto);
+
             var isFollowingCurrentUser = !isOwner && await _dbContext.UserFollows
                 .AnyAsync(x =>
                     x.FollowerId == user.Id &&
                     x.FollowingId == currentUserId &&
                     x.Status == FollowStatus.Accepted);
 
+            if (!canViewProfile)
+            {
+                return new UserProfileDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Email = string.Empty,
+                    AvatarUrl = user.AvatarUrl,
+                    IsCurrentUser = false,
+                    CanViewProfile = false,
+                    RelationStatus = relationStatusForDto,
+                    FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                    ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
+                    ActivityVisibility = user.Preferences?.ActivityVisibility ?? ActivityVisibility.Followers,
+                    EmailNotifications = false,
+                    PushNotifications = false,
+                    IsFollowingCurrentUser = isFollowingCurrentUser,
+                    FollowersCount = followersCount,
+                    FollowingCount = followingCount
+                };
+            }
+
             return new UserProfileDto
             {
                 Id = user.Id,
                 Username = user.Username,
-                Email = user.Email,
+                Email = isOwner ? user.Email : string.Empty,
                 AvatarUrl = user.AvatarUrl,
                 Bio = user.Profile?.Bio,
                 Location = user.Profile?.Location,
@@ -120,6 +132,7 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 CurrentStreak = user.Profile?.CurrentStreak ?? 0,
                 Money = user.Wallet?.Balance ?? 0,
                 IsCurrentUser = isOwner,
+                CanViewProfile = true,
                 RelationStatus = relationStatusForDto,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
                 ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,

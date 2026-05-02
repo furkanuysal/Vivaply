@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowPathIcon,
+  LockClosedIcon,
   MapPinIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -32,6 +33,9 @@ export default function ProfilePage() {
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [posts, setPosts] = useState<FeedItemDto[]>([]);
+  const [profileAccess, setProfileAccess] = useState<"visible" | "hidden">(
+    "visible",
+  );
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -55,10 +59,27 @@ export default function ProfilePage() {
       }
 
       try {
+        setProfileAccess("visible");
         const data = await accountApi.getProfileByUsername(username);
         setUser(data);
-        await loadPosts(username, activeTab);
+
+        if (data.canViewProfile !== false) {
+          await loadPosts(username, activeTab);
+        } else {
+          setPosts([]);
+          setNextCursor(null);
+        }
       } catch (error) {
+        const status = getAxiosStatus(error);
+
+        if (status === 403) {
+          setUser(null);
+          setPosts([]);
+          setNextCursor(null);
+          setProfileAccess("hidden");
+          return;
+        }
+
         toast.error(t("profile:errors.load_profile"));
       } finally {
         setLoading(false);
@@ -227,6 +248,42 @@ export default function ProfilePage() {
     );
   }
 
+  if (!user && profileAccess !== "hidden") {
+    return null;
+  }
+
+  if (profileAccess === "hidden") {
+    return (
+      <div className="animate-fade-in">
+        <section className="rounded-2xl border border-skin-border bg-skin-surface px-8 py-16 text-center shadow-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-skin-primary/20 bg-skin-primary/10 text-skin-primary">
+            <LockClosedIcon className="h-8 w-8" />
+          </div>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
+            {t("profile:hidden.eyebrow")}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-skin-text">
+            {t("profile:hidden.title")}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-skin-muted">
+            {t("profile:hidden.description", { username: username ?? "" })}
+          </p>
+        </section>
+      </div>
+    );
+  }
+
+  const isRestrictedProfile = user?.canViewProfile === false;
+  const restrictionCopy = user
+    ? getRestrictedProfileCopy(t, user)
+    : null;
+  const visibilityLabel = user
+    ? getProfileVisibilityLabel(t, user.profileVisibility)
+    : "";
+  const followPolicyLabel = user
+    ? getFollowPolicyLabel(t, user.followPolicy)
+    : "";
+
   return (
     <div className="animate-fade-in space-y-8">
       <div className="rounded-2xl border border-skin-border bg-skin-surface p-8 shadow-xl">
@@ -253,26 +310,33 @@ export default function ProfilePage() {
 
             {user?.isFollowingCurrentUser ? (
               <span className="mt-2 inline-flex items-center rounded-full border border-skin-secondary/20 bg-skin-secondary/10 px-3 py-1 text-xs font-semibold text-skin-secondary">
-              {t("profile:social.follows_you")}
+                {t("profile:social.follows_you")}
               </span>
             ) : null}
 
-            {user?.location ? (
+            {!isRestrictedProfile && user?.location ? (
               <div className="mt-1 flex items-center gap-1 text-sm text-skin-muted">
                 <MapPinIcon className="h-4 w-4" />
                 <span>{user.location}</span>
               </div>
             ) : null}
 
-            {user?.bio ? (
+            {!isRestrictedProfile && user?.bio ? (
               <p className="mt-2 max-w-xs text-sm italic text-skin-muted">
                 "{user.bio}"
               </p>
             ) : null}
 
-            <div className="mt-3 rounded-full border border-skin-primary/30 bg-skin-primary/20 px-3 py-1 text-xs font-bold text-skin-primary">
-              {t("profile:stats.level", { level: user?.level ?? 0 })}
-            </div>
+            {!isRestrictedProfile ? (
+              <div className="mt-3 rounded-full border border-skin-primary/30 bg-skin-primary/20 px-3 py-1 text-xs font-bold text-skin-primary">
+                {t("profile:stats.level", { level: user?.level ?? 0 })}
+              </div>
+            ) : (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-skin-primary/20 bg-skin-primary/10 px-3 py-1 text-xs font-semibold text-skin-primary">
+                <LockClosedIcon className="h-3.5 w-3.5" />
+                <span>{visibilityLabel}</span>
+              </div>
+            )}
 
             <div className="mt-4 flex items-center gap-4 text-sm text-skin-muted">
               <button
@@ -330,111 +394,166 @@ export default function ProfilePage() {
             ) : null}
           </div>
 
-          <div className="grid w-full flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
-              <div className="mb-1 text-sm text-skin-muted">
-                {t("profile:stats.wallet")}
+          {isRestrictedProfile ? (
+            <div className="w-full flex-1 space-y-4">
+              <div className="rounded-2xl border border-skin-border/60 bg-skin-base/20 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
+                  {t("profile:hidden.eyebrow")}
+                </p>
+                <h3 className="mt-3 text-2xl font-bold tracking-tight text-skin-text">
+                  {restrictionCopy?.title}
+                </h3>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-skin-muted">
+                  {restrictionCopy?.description}
+                </p>
               </div>
-              <div className="text-2xl font-bold text-skin-secondary">
-                {user?.money}{" "}
-                <span className="text-xs text-skin-muted">
-                  {t("profile:stats.coin")}
-                </span>
-              </div>
-            </div>
 
-            <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
-              <div className="mb-1 text-sm text-skin-muted">
-                {t("profile:stats.streak")}
-              </div>
-              <div className="flex items-center gap-2 text-2xl font-bold text-skin-primary">
-                <span>{user?.currentStreak}</span>
-                <span className="text-sm text-skin-muted">
-                  {t("profile:stats.days")}
-                </span>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5">
+                  <div className="mb-1 text-sm text-skin-muted">
+                    {t("profile:hidden.visibility_label")}
+                  </div>
+                  <div className="text-lg font-semibold text-skin-text">
+                    {visibilityLabel}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5">
+                  <div className="mb-1 text-sm text-skin-muted">
+                    {t("profile:hidden.follow_policy_label")}
+                  </div>
+                  <div className="text-lg font-semibold text-skin-text">
+                    {followPolicyLabel}
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="grid w-full flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
+                <div className="mb-1 text-sm text-skin-muted">
+                  {t("profile:stats.wallet")}
+                </div>
+                <div className="text-2xl font-bold text-skin-secondary">
+                  {user?.money}{" "}
+                  <span className="text-xs text-skin-muted">
+                    {t("profile:stats.coin")}
+                  </span>
+                </div>
+              </div>
 
-            <div className="col-span-1 rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70 sm:col-span-2">
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-skin-muted">
-                  {t("profile:stats.xp_progress")}
-                </span>
-                <span className="font-bold text-skin-primary">
-                  {user?.xp} / 100 XP
-                </span>
+              <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70">
+                <div className="mb-1 text-sm text-skin-muted">
+                  {t("profile:stats.streak")}
+                </div>
+                <div className="flex items-center gap-2 text-2xl font-bold text-skin-primary">
+                  <span>{user?.currentStreak}</span>
+                  <span className="text-sm text-skin-muted">
+                    {t("profile:stats.days")}
+                  </span>
+                </div>
               </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-skin-base">
-                <div
-                  className="h-2.5 rounded-full bg-skin-primary transition-all duration-1000 ease-out"
-                  style={{ width: `${Math.min(user?.xp || 0, 100)}%` }}
-                ></div>
+
+              <div className="col-span-1 rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5 transition hover:bg-skin-surface/70 sm:col-span-2">
+                <div className="mb-2 flex justify-between text-sm">
+                  <span className="text-skin-muted">
+                    {t("profile:stats.xp_progress")}
+                  </span>
+                  <span className="font-bold text-skin-primary">
+                    {user?.xp} / 100 XP
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-skin-base">
+                  <div
+                    className="h-2.5 rounded-full bg-skin-primary transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.min(user?.xp || 0, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="mt-2 text-right text-xs text-skin-muted">
+                  {t("profile:stats.total_xp", { totalXp: user?.totalXp ?? 0 })}
+                </p>
               </div>
-              <p className="mt-2 text-right text-xs text-skin-muted">
-                {t("profile:stats.total_xp", { totalXp: user?.totalXp ?? 0 })}
-              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-skin-border bg-skin-surface shadow-xl">
         <div className="space-y-2 px-6 pb-4 pt-6">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
-            {t("profile:eyebrow")}
+            {isRestrictedProfile
+              ? t("profile:hidden.content_eyebrow")
+              : t("profile:eyebrow")}
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-skin-text">
-            {t("profile:title")}
+            {isRestrictedProfile
+              ? t("profile:hidden.content_title")
+              : t("profile:title")}
           </h2>
           <p className="max-w-2xl text-sm leading-6 text-skin-muted">
-            {t("profile:subtitle")}
+            {isRestrictedProfile
+              ? restrictionCopy?.contentDescription
+              : t("profile:subtitle")}
           </p>
         </div>
 
-        <div className="border-b border-skin-border bg-skin-surface/80 px-3 sm:px-6">
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-skin-border/70" />
-            <div
-              className="pointer-events-none absolute bottom-0 h-0.5 bg-skin-primary transition-transform duration-300 ease-out"
-              style={{
-                width: `${100 / profileTabs.length}%`,
-                transform: `translateX(${activeTabIndex * 100}%)`,
-              }}
-            />
-
-            <div className="grid grid-cols-4">
-            {profileTabs.map((tab) => {
-              const isActive = tab.key === activeTab;
-
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => {
-                    setNextCursor(null);
-                    setPosts([]);
-                    setSearchParams((current) => {
-                      const next = new URLSearchParams(current);
-                    next.set("tab", tab.key);
-                    return next;
-                  });
+        {!isRestrictedProfile ? (
+          <div className="border-b border-skin-border bg-skin-surface/80 px-3 sm:px-6">
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-skin-border/70" />
+              <div
+                className="pointer-events-none absolute bottom-0 h-0.5 bg-skin-primary transition-transform duration-300 ease-out"
+                style={{
+                  width: `${100 / profileTabs.length}%`,
+                  transform: `translateX(${activeTabIndex * 100}%)`,
                 }}
-                  className={`relative z-10 whitespace-nowrap px-3 py-5 text-center text-sm font-medium transition-colors duration-300 sm:px-6 ${
-                    isActive
-                      ? "text-skin-primary"
-                      : "text-skin-muted hover:text-skin-text"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
+              />
+
+              <div className="grid grid-cols-4">
+                {profileTabs.map((tab) => {
+                  const isActive = tab.key === activeTab;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => {
+                        setNextCursor(null);
+                        setPosts([]);
+                        setSearchParams((current) => {
+                          const next = new URLSearchParams(current);
+                          next.set("tab", tab.key);
+                          return next;
+                        });
+                      }}
+                      className={`relative z-10 whitespace-nowrap px-3 py-5 text-center text-sm font-medium transition-colors duration-300 sm:px-6 ${
+                        isActive
+                          ? "text-skin-primary"
+                          : "text-skin-muted hover:text-skin-text"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="bg-skin-base/20 px-4 py-5 sm:px-6 sm:py-6">
-          {postsLoading ? (
+          {isRestrictedProfile ? (
+            <div className="rounded-3xl border border-dashed border-skin-border/60 bg-skin-surface px-8 py-14 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-skin-primary/20 bg-skin-primary/10 text-skin-primary">
+                <LockClosedIcon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-5 text-xl font-semibold text-skin-text">
+                {t("profile:hidden.content_locked_title")}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-skin-muted">
+                {restrictionCopy?.contentDescription}
+              </p>
+            </div>
+          ) : postsLoading ? (
             <div className="flex h-40 items-center justify-center text-skin-text">
               <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
             </div>
@@ -455,7 +574,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {nextCursor && user ? (
+          {nextCursor && user && !isRestrictedProfile ? (
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
@@ -578,3 +697,107 @@ function matchesProfileTab(item: FeedItemDto, tab: ProfileTab): boolean {
       return !item.parentPostId && !item.activity;
   }
 }
+
+function getAxiosStatus(error: unknown): number | null {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { status?: number } }).response;
+    return response?.status ?? null;
+  }
+
+  return null;
+}
+
+function getRestrictedProfileCopy(
+  t: Translator,
+  user: UserProfileDto,
+) {
+  const visibility = user.profileVisibility;
+  const relationStatus = user.relationStatus;
+  const followPolicy = user.followPolicy;
+
+  if (visibility === 1) {
+    if (relationStatus === FollowStatus.Pending) {
+      return {
+        title: t("profile:hidden.followers_only_pending_title"),
+        description: t("profile:hidden.followers_only_pending_description"),
+        contentDescription: t("profile:hidden.followers_only_pending_content"),
+      };
+    }
+
+    if (followPolicy === FollowPolicy.RequestOnly) {
+      return {
+        title: t("profile:hidden.followers_only_request_title"),
+        description: t("profile:hidden.followers_only_request_description"),
+        contentDescription: t("profile:hidden.followers_only_request_content"),
+      };
+    }
+
+    if (followPolicy === FollowPolicy.Disabled) {
+      return {
+        title: t("profile:hidden.followers_only_disabled_title"),
+        description: t("profile:hidden.followers_only_disabled_description"),
+        contentDescription: t("profile:hidden.followers_only_disabled_content"),
+      };
+    }
+
+    return {
+      title: t("profile:hidden.followers_only_title"),
+      description: t("profile:hidden.followers_only_description"),
+      contentDescription: t("profile:hidden.followers_only_content"),
+    };
+  }
+
+  if (followPolicy === FollowPolicy.RequestOnly) {
+    return {
+      title: t("profile:hidden.private_request_title"),
+      description: t("profile:hidden.private_request_description"),
+      contentDescription: t("profile:hidden.private_request_content"),
+    };
+  }
+
+  if (followPolicy === FollowPolicy.Disabled) {
+    return {
+      title: t("profile:hidden.private_disabled_title"),
+      description: t("profile:hidden.private_disabled_description"),
+      contentDescription: t("profile:hidden.private_disabled_content"),
+    };
+  }
+
+  return {
+    title: t("profile:hidden.title"),
+    description: t("profile:hidden.description", { username: user.username }),
+    contentDescription: t("profile:hidden.private_content"),
+  };
+}
+
+function getProfileVisibilityLabel(
+  t: Translator,
+  visibility?: number | null,
+) {
+  if (visibility === 1) {
+    return t("profile:hidden.visibility_followers");
+  }
+
+  if (visibility === 2) {
+    return t("profile:hidden.visibility_private");
+  }
+
+  return t("profile:hidden.visibility_public");
+}
+
+function getFollowPolicyLabel(
+  t: Translator,
+  followPolicy?: number | null,
+) {
+  if (followPolicy === FollowPolicy.RequestOnly) {
+    return t("profile:hidden.follow_policy_request");
+  }
+
+  if (followPolicy === FollowPolicy.Disabled) {
+    return t("profile:hidden.follow_policy_disabled");
+  }
+
+  return t("profile:hidden.follow_policy_auto");
+}
+
+type Translator = (...args: any[]) => string;
