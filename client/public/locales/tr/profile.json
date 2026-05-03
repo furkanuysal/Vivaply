@@ -10,6 +10,11 @@
   },
   "empty_title": "Henüz aktivite yok",
   "empty_subtitle": "Yeni aktiviteler oluştuğunda burada görünecek.",
+  "not_found": {
+    "eyebrow": "Kullanıcı Bulunamadı",
+    "title": "Böyle bir hesap bulunamadı",
+    "description": "{{username}} kullanıcı adına sahip bir hesap bulamadık. Kullanıcı adını kontrol edip tekrar deneyebilirsin."
+  },
   "hidden": {
     "eyebrow": "Gizli Profil",
     "title": "Bu profil gizli",

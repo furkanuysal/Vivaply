@@ -10,6 +10,11 @@
   },
   "empty_title": "No activity yet",
   "empty_subtitle": "When new activity appears, it will show up here.",
+  "not_found": {
+    "eyebrow": "User Not Found",
+    "title": "This account does not exist",
+    "description": "We could not find a user named {{username}}. Double-check the username or try a different profile."
+  },
   "hidden": {
     "eyebrow": "Private Profile",
     "title": "This profile is private",

@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [posts, setPosts] = useState<FeedItemDto[]>([]);
-  const [profileAccess, setProfileAccess] = useState<"visible" | "hidden">(
+  const [profileAccess, setProfileAccess] = useState<"visible" | "hidden" | "notFound">(
     "visible",
   );
   const [loading, setLoading] = useState(true);
@@ -79,6 +79,14 @@ export default function ProfilePage() {
           setPosts([]);
           setNextCursor(null);
           setProfileAccess("hidden");
+          return;
+        }
+
+        if (status === 404) {
+          setUser(null);
+          setPosts([]);
+          setNextCursor(null);
+          setProfileAccess("notFound");
           return;
         }
 
@@ -326,8 +334,29 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user && profileAccess !== "hidden") {
+  if (!user && profileAccess === "visible") {
     return null;
+  }
+
+  if (profileAccess === "notFound") {
+    return (
+      <div className="animate-fade-in">
+        <section className="rounded-2xl border border-skin-border bg-skin-surface px-8 py-16 text-center shadow-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-skin-primary/20 bg-skin-primary/10 text-skin-primary">
+            <XMarkIcon className="h-8 w-8" />
+          </div>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
+            {t("profile:not_found.eyebrow")}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-skin-text">
+            {t("profile:not_found.title")}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-skin-muted">
+            {t("profile:not_found.description", { username: username ?? "" })}
+          </p>
+        </section>
+      </div>
+    );
   }
 
   if (profileAccess === "hidden") {

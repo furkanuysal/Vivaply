@@ -25,8 +25,15 @@ namespace Vivaply.API.Modules.Core.Identity.Controllers
         [HttpGet("/api/users/{username}")]
         public async Task<IActionResult> GetProfileByUsername(string username)
         {
-            var profile = await _accountService.GetProfileByUsernameAsync(CurrentUserId, username);
-            return Ok(profile);
+            try
+            {
+                var profile = await _accountService.GetProfileByUsernameAsync(CurrentUserId, username);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpPut("profile")]
