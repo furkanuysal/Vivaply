@@ -10,6 +10,7 @@ namespace Vivaply.API.Modules.Core.Social.Extensions
         public static IServiceCollection AddSocialServices(this IServiceCollection services)
         {
             services.AddScoped<IFollowService, FollowService>();
+            services.AddScoped<IUserModerationService, UserModerationService>();
             services.AddScoped<IActivityService, ActivityService>();
             services.AddScoped<IActivityCleanupService, ActivityCleanupService>();
             services.AddScoped<IPostCleanupService, PostCleanupService>();

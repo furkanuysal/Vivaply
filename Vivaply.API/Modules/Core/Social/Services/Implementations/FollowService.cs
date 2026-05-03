@@ -8,15 +8,22 @@ using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 {
-    public class FollowService(VivaplyDbContext db, INotificationService notificationService) : IFollowService
+    public class FollowService(
+        VivaplyDbContext db,
+        INotificationService notificationService,
+        IUserModerationService userModerationService) : IFollowService
     {
         private readonly VivaplyDbContext _db = db;
         private readonly INotificationService _notificationService = notificationService;
+        private readonly IUserModerationService _userModerationService = userModerationService;
 
         public async Task FollowAsync(Guid currentUserId, Guid targetUserId)
         {
             if (currentUserId == targetUserId)
                 throw new Exception("You cannot follow yourself.");
+
+            if (await _userModerationService.IsBlockedEitherWayAsync(currentUserId, targetUserId))
+                throw new Exception("This user is not available.");
 
             var existing = await _db.UserFollows
                 .FirstOrDefaultAsync(x =>
@@ -119,8 +126,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
         public async Task<List<FollowUserDto>> GetFollowersAsync(Guid currentUserId, Guid userId)
         {
+            if (await _userModerationService.IsBlockedEitherWayAsync(currentUserId, userId))
+                return [];
+
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId);
             var followerIds = await _db.UserFollows
                 .Where(x => x.FollowingId == userId && x.Status == FollowStatus.Accepted)
+                .Where(x => !blockedIds.Contains(x.FollowerId))
                 .Select(x => x.FollowerId)
                 .ToListAsync();
 
@@ -136,6 +148,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             return await _db.UserFollows
                 .Where(x => x.FollowingId == userId && x.Status == FollowStatus.Accepted)
+                .Where(x => !blockedIds.Contains(x.FollowerId))
                 .Select(x => new FollowUserDto
                 {
                     Id = x.Follower.Id,
@@ -150,8 +163,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
         public async Task<List<FollowUserDto>> GetFollowingAsync(Guid currentUserId, Guid userId)
         {
+            if (await _userModerationService.IsBlockedEitherWayAsync(currentUserId, userId))
+                return [];
+
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId);
             var followingIds = await _db.UserFollows
                 .Where(x => x.FollowerId == userId && x.Status == FollowStatus.Accepted)
+                .Where(x => !blockedIds.Contains(x.FollowingId))
                 .Select(x => x.FollowingId)
                 .ToListAsync();
 
@@ -167,6 +185,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             return await _db.UserFollows
                 .Where(x => x.FollowerId == userId && x.Status == FollowStatus.Accepted)
+                .Where(x => !blockedIds.Contains(x.FollowingId))
                 .Select(x => new FollowUserDto
                 {
                     Id = x.Following.Id,
@@ -181,8 +200,10 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
         public async Task<List<Guid>> GetPendingRequestsAsync(Guid userId)
         {
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(userId);
             return await _db.UserFollows
                 .Where(x => x.FollowingId == userId && x.Status == FollowStatus.Pending)
+                .Where(x => !blockedIds.Contains(x.FollowerId))
                 .Select(x => x.FollowerId)
                 .ToListAsync();
         }

@@ -21,6 +21,8 @@ namespace Vivaply.API.Data
         public DbSet<Wallet> Wallets { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public DbSet<UserFollow> UserFollows { get; set; }
+        public DbSet<UserBlock> UserBlocks { get; set; }
+        public DbSet<UserMute> UserMutes { get; set; }
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<UserPost> UserPosts { get; set; }
         public DbSet<PostMention> PostMentions { get; set; }

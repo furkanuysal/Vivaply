@@ -18,5 +18,6 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Interfaces
         Task CreateReplyNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default);
         Task CreateQuoteNotificationAsync(Guid actorUserId, Guid recipientUserId, Guid postId, CancellationToken cancellationToken = default);
         Task CreateMentionNotificationsAsync(Guid actorUserId, Guid postId, IReadOnlyCollection<Guid> recipientUserIds, CancellationToken cancellationToken = default);
+        Task RemoveRelationshipNotificationsAsync(Guid currentUserId, Guid targetUserId, CancellationToken cancellationToken = default);
     }
 }

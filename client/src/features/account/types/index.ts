@@ -12,6 +12,9 @@ export interface UserProfileDto {
   currentStreak?: number;
   isCurrentUser?: boolean;
   canViewProfile?: boolean;
+  isBlockedByCurrentUser?: boolean;
+  hasBlockedCurrentUser?: boolean;
+  isMutedByCurrentUser?: boolean;
   relationStatus?: FollowStatus | null;
   followPolicy?: FollowPolicy | null;
   profileVisibility?: ProfileVisibility | null;

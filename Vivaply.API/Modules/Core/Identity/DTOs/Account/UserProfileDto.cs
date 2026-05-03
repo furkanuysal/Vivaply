@@ -23,6 +23,9 @@ namespace Vivaply.API.Modules.Core.Identity.DTOs.Account
         // Social
         public bool IsCurrentUser { get; set; }
         public bool CanViewProfile { get; set; }
+        public bool IsBlockedByCurrentUser { get; set; }
+        public bool HasBlockedCurrentUser { get; set; }
+        public bool IsMutedByCurrentUser { get; set; }
         public FollowStatus? RelationStatus { get; set; }
         public FollowPolicy? FollowPolicy { get; set; }
         public ProfileVisibility? ProfileVisibility { get; set; }

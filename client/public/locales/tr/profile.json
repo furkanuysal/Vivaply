@@ -61,7 +61,13 @@
     "following": "Takip ediliyor",
     "requested": "İstek gönderildi",
     "cancel_request": "İsteği geri çek",
-    "processing": "Bekleyin..."
+    "processing": "Bekleyin...",
+    "block": "Engelle",
+    "unblock": "Engeli kaldır",
+    "mute": "Sessize al",
+    "unmute": "Sessizi kaldır",
+    "blocked": "Engellendi",
+    "muted": "Sessize alındı"
   },
   "social": {
     "followers_title": "Takipçiler",
@@ -73,6 +79,14 @@
   "errors": {
     "load_profile": "Profil yüklenemedi.",
     "follow_action": "Takip işlemi tamamlanamadı.",
-    "load_social_list": "Kullanıcı listesi yüklenemedi."
+    "load_social_list": "Kullanıcı listesi yüklenemedi.",
+    "block_action": "Engelleme işlemi tamamlanamadı.",
+    "mute_action": "Sessize alma işlemi tamamlanamadı."
+  },
+  "moderation": {
+    "blocked_by_you_title": "Bu kullanıcıyı engelledin",
+    "blocked_by_you_description": "Bu profil, kullanıcıyı engellediğin için gizleniyor. İstersen istediğin zaman engeli kaldırabilirsin.",
+    "blocked_you_title": "Bu profile erişemezsin",
+    "blocked_you_description": "Bu kullanıcı seni engellediği için profilini ve aktivitelerini göremezsin."
   }
 }

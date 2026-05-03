@@ -49,6 +49,22 @@ export const accountApi = {
     await api.put(`/users/${requesterId}/follow/reject`);
   },
 
+  blockUser: async (targetUserId: string) => {
+    await api.post(`/users/${targetUserId}/block`);
+  },
+
+  unblockUser: async (targetUserId: string) => {
+    await api.delete(`/users/${targetUserId}/block`);
+  },
+
+  muteUser: async (targetUserId: string) => {
+    await api.post(`/users/${targetUserId}/mute`);
+  },
+
+  unmuteUser: async (targetUserId: string) => {
+    await api.delete(`/users/${targetUserId}/mute`);
+  },
+
   getFollowers: async (userId: string) => {
     const response = await api.get<FollowUserDto[]>(`/users/${userId}/followers`);
     return response.data;

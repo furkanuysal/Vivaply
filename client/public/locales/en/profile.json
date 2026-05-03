@@ -61,7 +61,13 @@
     "following": "Following",
     "requested": "Requested",
     "cancel_request": "Cancel request",
-    "processing": "Please wait..."
+    "processing": "Please wait...",
+    "block": "Block",
+    "unblock": "Unblock",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "blocked": "Blocked",
+    "muted": "Muted"
   },
   "social": {
     "followers_title": "Followers",
@@ -73,6 +79,14 @@
   "errors": {
     "load_profile": "The profile could not be loaded.",
     "follow_action": "The follow action could not be completed.",
-    "load_social_list": "The user list could not be loaded."
+    "load_social_list": "The user list could not be loaded.",
+    "block_action": "The block action could not be completed.",
+    "mute_action": "The mute action could not be completed."
+  },
+  "moderation": {
+    "blocked_by_you_title": "You blocked this user",
+    "blocked_by_you_description": "This profile is hidden because you blocked this user. You can unblock them anytime.",
+    "blocked_you_title": "You cannot access this profile",
+    "blocked_you_description": "This user has blocked you, so their profile and activity are unavailable."
   }
 }

@@ -41,6 +41,8 @@ export default function ProfilePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [followLoading, setFollowLoading] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(false);
+  const [muteLoading, setMuteLoading] = useState(false);
   const [socialListOpen, setSocialListOpen] = useState(false);
   const [socialListLoading, setSocialListLoading] = useState(false);
   const [socialListMode, setSocialListMode] = useState<"followers" | "following">(
@@ -211,6 +213,76 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBlockToggle = async () => {
+    if (!user || user.isCurrentUser || blockLoading) return;
+
+    const wasBlocked = user.isBlockedByCurrentUser === true;
+    setBlockLoading(true);
+
+    try {
+      if (wasBlocked) {
+        await accountApi.unblockUser(user.id);
+        if (username) {
+          const refreshed = await accountApi.getProfileByUsername(username);
+          setUser(refreshed);
+          if (refreshed.canViewProfile !== false) {
+            await loadPosts(username, activeTab);
+          } else {
+            setPosts([]);
+            setNextCursor(null);
+          }
+        }
+      } else {
+        await accountApi.blockUser(user.id);
+        setUser((current) =>
+          current
+            ? {
+                ...current,
+                isBlockedByCurrentUser: true,
+                isMutedByCurrentUser: false,
+                canViewProfile: false,
+                relationStatus: null,
+              }
+            : current,
+        );
+        setPosts([]);
+        setNextCursor(null);
+      }
+    } catch (error) {
+      toast.error(t("profile:errors.block_action"));
+    } finally {
+      setBlockLoading(false);
+    }
+  };
+
+  const handleMuteToggle = async () => {
+    if (!user || user.isCurrentUser || muteLoading || user.isBlockedByCurrentUser) return;
+
+    const wasMuted = user.isMutedByCurrentUser === true;
+    setMuteLoading(true);
+
+    try {
+      if (wasMuted) {
+        await accountApi.unmuteUser(user.id);
+      } else {
+        await accountApi.muteUser(user.id);
+      }
+
+      setUser((current) =>
+        current
+          ? {
+              ...current,
+              isMutedByCurrentUser: !wasMuted,
+            }
+          : current,
+      );
+    } catch (error) {
+      toast.error(t("profile:errors.mute_action"));
+    } finally {
+      setMuteLoading(false);
+    }
+  };
+
   const profileTabs: Array<{ key: ProfileTab; label: string }> = [
     { key: "posts", label: t("profile:tabs.posts") },
     { key: "content", label: t("profile:tabs.content") },
@@ -220,7 +292,13 @@ export default function ProfilePage() {
   const activeTabIndex = profileTabs.findIndex((tab) => tab.key === activeTab);
 
   const openSocialList = async (mode: "followers" | "following") => {
-    if (!user) return;
+    if (
+      !user ||
+      user.isBlockedByCurrentUser ||
+      user.hasBlockedCurrentUser
+    ) {
+      return;
+    }
 
     setSocialListMode(mode);
     setSocialListOpen(true);
@@ -342,7 +420,8 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => void openSocialList("followers")}
-                className="transition hover:text-skin-text"
+                disabled={user?.isBlockedByCurrentUser || user?.hasBlockedCurrentUser}
+                className="transition hover:text-skin-text disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="font-semibold text-skin-text">
                   {user?.followersCount ?? 0}
@@ -352,7 +431,8 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => void openSocialList("following")}
-                className="transition hover:text-skin-text"
+                disabled={user?.isBlockedByCurrentUser || user?.hasBlockedCurrentUser}
+                className="transition hover:text-skin-text disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="font-semibold text-skin-text">
                   {user?.followingCount ?? 0}
@@ -361,36 +441,78 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {!user?.isCurrentUser && user?.followPolicy !== FollowPolicy.Disabled ? (
-              <button
-                type="button"
-                onClick={() => void handleFollowToggle()}
-                disabled={followLoading}
-                className={`group mt-4 inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
-                  user?.relationStatus === FollowStatus.Accepted
-                    ? "border border-skin-border bg-skin-surface text-skin-text hover:border-skin-primary/40"
-                    : user?.relationStatus === FollowStatus.Pending
-                      ? "border border-skin-primary/25 bg-skin-primary/10 text-skin-primary hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-400"
-                      : "bg-skin-primary text-skin-base hover:bg-skin-primary/90"
-                }`}
-              >
-                {followLoading
-                  ? t("profile:actions.processing")
-                  : user?.relationStatus === FollowStatus.Accepted
-                    ? t("profile:actions.following")
-                    : user?.relationStatus === FollowStatus.Pending
-                      ? (
-                        <>
-                          <span className="group-hover:hidden">
-                            {t("profile:actions.requested")}
-                          </span>
-                          <span className="hidden group-hover:inline">
-                            {t("profile:actions.cancel_request")}
-                          </span>
-                        </>
-                      )
-                      : t("profile:actions.follow")}
-              </button>
+            {!user?.isCurrentUser ? (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {!user?.isBlockedByCurrentUser &&
+                !user?.hasBlockedCurrentUser &&
+                user?.followPolicy !== FollowPolicy.Disabled ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleFollowToggle()}
+                    disabled={followLoading}
+                    className={`group inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                      user?.relationStatus === FollowStatus.Accepted
+                        ? "border border-skin-border bg-skin-surface text-skin-text hover:border-skin-primary/40"
+                        : user?.relationStatus === FollowStatus.Pending
+                          ? "border border-skin-primary/25 bg-skin-primary/10 text-skin-primary hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-400"
+                          : "bg-skin-primary text-skin-base hover:bg-skin-primary/90"
+                    }`}
+                  >
+                    {followLoading
+                      ? t("profile:actions.processing")
+                      : user?.relationStatus === FollowStatus.Accepted
+                        ? t("profile:actions.following")
+                        : user?.relationStatus === FollowStatus.Pending
+                          ? (
+                            <>
+                              <span className="group-hover:hidden">
+                                {t("profile:actions.requested")}
+                              </span>
+                              <span className="hidden group-hover:inline">
+                                {t("profile:actions.cancel_request")}
+                              </span>
+                            </>
+                          )
+                          : t("profile:actions.follow")}
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => void handleBlockToggle()}
+                  disabled={blockLoading || user?.hasBlockedCurrentUser}
+                  className={`inline-flex min-w-[132px] items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    user?.isBlockedByCurrentUser
+                      ? "border-red-400/30 bg-red-500/10 text-red-500 hover:bg-red-500/15"
+                      : "border-skin-border bg-skin-surface text-skin-text hover:border-red-400/30 hover:text-red-500"
+                  }`}
+                >
+                  {blockLoading
+                    ? t("profile:actions.processing")
+                    : user?.isBlockedByCurrentUser
+                      ? t("profile:actions.unblock")
+                      : t("profile:actions.block")}
+                </button>
+
+                {!user?.isBlockedByCurrentUser && !user?.hasBlockedCurrentUser ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleMuteToggle()}
+                    disabled={muteLoading}
+                    className={`inline-flex min-w-[132px] items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      user?.isMutedByCurrentUser
+                        ? "border-skin-secondary/30 bg-skin-secondary/10 text-skin-secondary hover:bg-skin-secondary/15"
+                        : "border-skin-border bg-skin-surface text-skin-text hover:border-skin-secondary/30 hover:text-skin-secondary"
+                    }`}
+                  >
+                    {muteLoading
+                      ? t("profile:actions.processing")
+                      : user?.isMutedByCurrentUser
+                        ? t("profile:actions.unmute")
+                        : t("profile:actions.mute")}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </div>
 
@@ -711,6 +833,22 @@ function getRestrictedProfileCopy(
   t: Translator,
   user: UserProfileDto,
 ) {
+  if (user.isBlockedByCurrentUser) {
+    return {
+      title: t("profile:moderation.blocked_by_you_title"),
+      description: t("profile:moderation.blocked_by_you_description"),
+      contentDescription: t("profile:moderation.blocked_by_you_description"),
+    };
+  }
+
+  if (user.hasBlockedCurrentUser) {
+    return {
+      title: t("profile:moderation.blocked_you_title"),
+      description: t("profile:moderation.blocked_you_description"),
+      contentDescription: t("profile:moderation.blocked_you_description"),
+    };
+  }
+
   const visibility = user.profileVisibility;
   const relationStatus = user.relationStatus;
   const followPolicy = user.followPolicy;

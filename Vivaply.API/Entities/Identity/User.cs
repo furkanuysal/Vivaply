@@ -32,6 +32,10 @@ namespace Vivaply.API.Entities.Identity
 
         public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
         public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
+        public ICollection<UserBlock> BlockedUsers { get; set; } = new List<UserBlock>();
+        public ICollection<UserBlock> BlockedByUsers { get; set; } = new List<UserBlock>();
+        public ICollection<UserMute> MutedUsers { get; set; } = new List<UserMute>();
+        public ICollection<UserMute> MutedByUsers { get; set; } = new List<UserMute>();
         public ICollection<PostMention> MentionedInPosts { get; set; } = new List<PostMention>();
         public ICollection<UserNotification> Notifications { get; set; } = new List<UserNotification>();
         public ICollection<UserNotification> SentNotifications { get; set; } = new List<UserNotification>();

@@ -8,14 +8,18 @@ using Vivaply.API.Modules.Core.Search.Services.Interfaces;
 using Vivaply.API.Modules.Core.Social.DTOs.Mappers;
 using Vivaply.API.Modules.Core.Social.DTOs.Results.Posts;
 using Vivaply.API.Modules.Core.Social.Enums;
+using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Search.Services.Implementations
 {
-    public class SearchService(VivaplyDbContext dbContext) : ISearchService
+    public class SearchService(
+        VivaplyDbContext dbContext,
+        IUserModerationService userModerationService) : ISearchService
     {
         private const int MinQueryLength = 2;
         private const int MaxTake = 20;
         private readonly VivaplyDbContext _dbContext = dbContext;
+        private readonly IUserModerationService _userModerationService = userModerationService;
 
         public async Task<GlobalSearchResponseDto> SearchAsync(
             Guid currentUserId,
@@ -91,10 +95,12 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
             var startsWithPattern = $"{normalizedQuery}%";
             var lowerQuery = normalizedQuery.ToLowerInvariant();
             var followingIds = await GetAcceptedFollowingIdsAsync(currentUserId, cancellationToken);
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId, cancellationToken);
 
             return await _dbContext.Users
                 .AsNoTracking()
                 .Where(user =>
+                    !blockedIds.Contains(user.Id) &&
                     (EF.Functions.ILike(user.Username, pattern) ||
                      EF.Functions.TrigramsAreSimilar(user.Username.ToLower(), lowerQuery)) &&
                     (user.Id == currentUserId ||
@@ -145,6 +151,7 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
             CancellationToken cancellationToken)
         {
             var followingIds = await GetAcceptedFollowingIdsAsync(currentUserId, cancellationToken);
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId, cancellationToken);
             var lowerQuery = normalizedQuery.ToLowerInvariant();
             var containsPattern = $"%{lowerQuery}%";
             var startsWithPattern = $"{lowerQuery}%";
@@ -165,6 +172,7 @@ namespace Vivaply.API.Modules.Core.Search.Services.Implementations
                 .Include(x => x.Stats)
                 .Where(post =>
                     !post.IsDeleted &&
+                    !blockedIds.Contains(post.UserId) &&
                     post.Type != PostType.Activity &&
                     !string.IsNullOrWhiteSpace(post.TextContent) &&
                     (EF.Functions.ToTsVector("simple", post.TextContent!)

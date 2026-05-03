@@ -47,6 +47,9 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 Money = user.Wallet?.Balance ?? 0,
                 IsCurrentUser = true,
                 CanViewProfile = true,
+                IsBlockedByCurrentUser = false,
+                HasBlockedCurrentUser = false,
+                IsMutedByCurrentUser = false,
                 RelationStatus = FollowStatus.Accepted,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
                 ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
@@ -78,6 +81,15 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 .CountAsync(x => x.FollowerId == user.Id && x.Status == FollowStatus.Accepted);
 
             var isOwner = user.Id == currentUserId;
+            var isBlockedByCurrentUser = !isOwner && await _dbContext.UserBlocks
+                .AsNoTracking()
+                .AnyAsync(x => x.BlockerId == currentUserId && x.BlockedId == user.Id);
+            var hasBlockedCurrentUser = !isOwner && await _dbContext.UserBlocks
+                .AsNoTracking()
+                .AnyAsync(x => x.BlockerId == user.Id && x.BlockedId == currentUserId);
+            var isMutedByCurrentUser = !isOwner && await _dbContext.UserMutes
+                .AsNoTracking()
+                .AnyAsync(x => x.MuterId == currentUserId && x.MutedId == user.Id);
 
             var relationStatusForDto = isOwner
                 ? FollowStatus.Accepted
@@ -86,9 +98,12 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                     .Select(x => (FollowStatus?)x.Status)
                     .FirstOrDefaultAsync();
 
-            var canViewProfile = isOwner || CanViewProfile(
+            var canViewProfile = isOwner || (
+                !isBlockedByCurrentUser &&
+                !hasBlockedCurrentUser &&
+                CanViewProfile(
                 user.Preferences?.ProfileVisibility,
-                relationStatusForDto);
+                relationStatusForDto));
 
             var isFollowingCurrentUser = !isOwner && await _dbContext.UserFollows
                 .AnyAsync(x =>
@@ -106,6 +121,9 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                     AvatarUrl = user.AvatarUrl,
                     IsCurrentUser = false,
                     CanViewProfile = false,
+                    IsBlockedByCurrentUser = isBlockedByCurrentUser,
+                    HasBlockedCurrentUser = hasBlockedCurrentUser,
+                    IsMutedByCurrentUser = isMutedByCurrentUser,
                     RelationStatus = relationStatusForDto,
                     FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
                     ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
@@ -133,6 +151,9 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
                 Money = user.Wallet?.Balance ?? 0,
                 IsCurrentUser = isOwner,
                 CanViewProfile = true,
+                IsBlockedByCurrentUser = isBlockedByCurrentUser,
+                HasBlockedCurrentUser = hasBlockedCurrentUser,
+                IsMutedByCurrentUser = isMutedByCurrentUser,
                 RelationStatus = relationStatusForDto,
                 FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
                 ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,

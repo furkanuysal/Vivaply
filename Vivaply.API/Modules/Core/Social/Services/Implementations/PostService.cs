@@ -19,7 +19,8 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         VivaplyDbContext db,
         IMemoryCache cache,
         IPostMediaStorageService postMediaStorageService,
-        INotificationService notificationService) : IPostService
+        INotificationService notificationService,
+        IUserModerationService userModerationService) : IPostService
     {
         private const int ViewCooldownHours = 6;
         private static readonly Regex MentionRegex = new(
@@ -29,6 +30,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
         private readonly IMemoryCache _cache = cache;
         private readonly IPostMediaStorageService _postMediaStorageService = postMediaStorageService;
         private readonly INotificationService _notificationService = notificationService;
+        private readonly IUserModerationService _userModerationService = userModerationService;
 
         public async Task SyncActivityPostAsync(UserActivity activity, CancellationToken cancellationToken = default)
         {
@@ -199,6 +201,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Where(x => x.FollowerId == currentUserId && x.Status == FollowStatus.Accepted)
                 .Select(x => x.FollowingId)
                 .ToListAsync(cancellationToken);
+            var hiddenUserIds = await GetFeedHiddenUserIdsAsync(currentUserId, cancellationToken);
 
             IQueryable<UserPost> posts = _db.UserPosts
                 .AsNoTracking()
@@ -224,6 +227,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Where(x =>
                     !x.IsDeleted &&
                     x.ParentPostId == null &&
+                    !hiddenUserIds.Contains(x.UserId) &&
                     (x.UserId == currentUserId || followingIds.Contains(x.UserId)));
 
             posts = ApplyCursor(posts, cursor);
@@ -247,6 +251,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                 .Where(x => x.FollowerId == currentUserId && x.Status == FollowStatus.Accepted)
                 .Select(x => x.FollowingId)
                 .ToListAsync(cancellationToken);
+            var blockedUserIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId, cancellationToken);
 
             IQueryable<PostBookmark> bookmarks = _db.PostBookmarks
                 .AsNoTracking()
@@ -274,6 +279,7 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     x.Post != null &&
                     !x.Post.IsDeleted &&
                     x.Post.ParentPostId == null &&
+                    !blockedUserIds.Contains(x.Post.UserId) &&
                     (
                         x.Post.UserId == currentUserId ||
                         (!_db.UserPreferences.Any(p =>
@@ -321,6 +327,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .Where(x => x.FollowerId == currentUserId && x.FollowingId == targetUser.Id)
                     .Select(x => (FollowStatus?)x.Status)
                     .FirstOrDefaultAsync(cancellationToken);
+
+            if (!isOwner && await _userModerationService.IsBlockedEitherWayAsync(currentUserId, targetUser.Id, cancellationToken))
+            {
+                return new PostFeedDto();
+            }
 
             if (!CanViewProfile(isOwner, preferences?.ProfileVisibility, relationStatus))
             {
@@ -402,6 +413,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             var isOwner = post.UserId == currentUserId;
+            if (!isOwner && await _userModerationService.IsBlockedEitherWayAsync(currentUserId, post.UserId, cancellationToken))
+            {
+                return null;
+            }
+
             var preferences = await _db.UserPreferences
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.UserId == post.UserId, cancellationToken);
@@ -447,6 +463,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             var isOwner = parentPost.UserId == currentUserId;
+            if (!isOwner && await _userModerationService.IsBlockedEitherWayAsync(currentUserId, parentPost.UserId, cancellationToken))
+            {
+                return null;
+            }
+
             var preferences = await _db.UserPreferences
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.UserId == parentPost.UserId, cancellationToken);
@@ -1184,6 +1205,11 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
             }
 
             var isOwner = post.UserId == currentUserId;
+            if (!isOwner && await _userModerationService.IsBlockedEitherWayAsync(currentUserId, post.UserId, cancellationToken))
+            {
+                return false;
+            }
+
             var preferences = await _db.UserPreferences
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.UserId == post.UserId, cancellationToken);
@@ -1196,6 +1222,13 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
                     .FirstOrDefaultAsync(cancellationToken);
 
             return CanViewProfile(isOwner, preferences?.ProfileVisibility, relationStatus);
+        }
+
+        private async Task<HashSet<Guid>> GetFeedHiddenUserIdsAsync(Guid currentUserId, CancellationToken cancellationToken)
+        {
+            var blockedUserIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId, cancellationToken);
+            var mutedUserIds = await _userModerationService.GetMutedUserIdsAsync(currentUserId, cancellationToken);
+            return blockedUserIds.Concat(mutedUserIds).ToHashSet();
         }
 
         private async Task<PostStatsDto> BuildPostStatsAsync(Guid postId, CancellationToken cancellationToken)

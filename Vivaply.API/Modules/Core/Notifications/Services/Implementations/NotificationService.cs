@@ -6,24 +6,30 @@ using Vivaply.API.Modules.Core.Notifications.DTOs.Queries;
 using Vivaply.API.Modules.Core.Notifications.DTOs.Results;
 using Vivaply.API.Modules.Core.Notifications.Enums;
 using Vivaply.API.Modules.Core.Notifications.Services.Interfaces;
+using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
 {
-    public class NotificationService(VivaplyDbContext dbContext) : INotificationService
+    public class NotificationService(
+        VivaplyDbContext dbContext,
+        IUserModerationService userModerationService) : INotificationService
     {
         private readonly VivaplyDbContext _dbContext = dbContext;
+        private readonly IUserModerationService _userModerationService = userModerationService;
 
         public async Task<NotificationListDto> GetAsync(Guid currentUserId, NotificationQuery query, CancellationToken cancellationToken = default)
         {
             query ??= new NotificationQuery();
             var take = Math.Clamp(query.Take, 1, 50);
+            var hiddenActorIds = await GetHiddenActorIdsAsync(currentUserId, cancellationToken);
 
             var baseQuery = _dbContext.UserNotifications
                 .AsNoTracking()
                 .Include(x => x.ActorUser)
                 .Include(x => x.Post)
                     .ThenInclude(x => x!.Activity)
-                .Where(x => x.RecipientUserId == currentUserId);
+                .Where(x => x.RecipientUserId == currentUserId)
+                .Where(x => x.ActorUserId == null || !hiddenActorIds.Contains(x.ActorUserId.Value));
 
             var unreadCount = await baseQuery
                 .CountAsync(x => !x.IsRead, cancellationToken);
@@ -48,9 +54,12 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
 
         public async Task<NotificationUnreadCountDto> GetUnreadCountAsync(Guid currentUserId, CancellationToken cancellationToken = default)
         {
+            var hiddenActorIds = await GetHiddenActorIdsAsync(currentUserId, cancellationToken);
             var count = await _dbContext.UserNotifications
                 .AsNoTracking()
-                .CountAsync(x => x.RecipientUserId == currentUserId && !x.IsRead, cancellationToken);
+                .Where(x => x.RecipientUserId == currentUserId && !x.IsRead)
+                .Where(x => x.ActorUserId == null || !hiddenActorIds.Contains(x.ActorUserId.Value))
+                .CountAsync(cancellationToken);
 
             return new NotificationUnreadCountDto
             {
@@ -157,10 +166,22 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
                 .ToListAsync(cancellationToken);
 
             var existingSet = existingRecipients.ToHashSet();
-            var notifications = distinctRecipients
-                .Where(x => !existingSet.Contains(x))
-                .Select(x => CreateNotification(actorUserId, x, NotificationType.Mention, postId))
-                .ToList();
+            var notifications = new List<UserNotification>();
+
+            foreach (var recipientUserId in distinctRecipients)
+            {
+                if (existingSet.Contains(recipientUserId))
+                {
+                    continue;
+                }
+
+                if (await _userModerationService.IsBlockedEitherWayAsync(actorUserId, recipientUserId, cancellationToken))
+                {
+                    continue;
+                }
+
+                notifications.Add(CreateNotification(actorUserId, recipientUserId, NotificationType.Mention, postId));
+            }
 
             if (notifications.Count == 0)
             {
@@ -171,6 +192,18 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task RemoveRelationshipNotificationsAsync(Guid currentUserId, Guid targetUserId, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.UserNotifications
+                .Where(x =>
+                    x.Category == NotificationCategory.Social &&
+                    (
+                        (x.ActorUserId == currentUserId && x.RecipientUserId == targetUserId) ||
+                        (x.ActorUserId == targetUserId && x.RecipientUserId == currentUserId)
+                    ))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
         private async Task CreateNotificationAsync(
             Guid actorUserId,
             Guid recipientUserId,
@@ -179,6 +212,11 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
             CancellationToken cancellationToken)
         {
             if (actorUserId == recipientUserId)
+            {
+                return;
+            }
+
+            if (await _userModerationService.IsBlockedEitherWayAsync(actorUserId, recipientUserId, cancellationToken))
             {
                 return;
             }
@@ -286,6 +324,13 @@ namespace Vivaply.API.Modules.Core.Notifications.Services.Implementations
             return value.Length <= maxLength
                 ? value
                 : $"{value[..(maxLength - 3)].TrimEnd()}...";
+        }
+
+        private async Task<HashSet<Guid>> GetHiddenActorIdsAsync(Guid currentUserId, CancellationToken cancellationToken)
+        {
+            var blockedIds = await _userModerationService.GetBlockedOrBlockingUserIdsAsync(currentUserId, cancellationToken);
+            var mutedIds = await _userModerationService.GetMutedUserIdsAsync(currentUserId, cancellationToken);
+            return blockedIds.Concat(mutedIds).ToHashSet();
         }
     }
 }
