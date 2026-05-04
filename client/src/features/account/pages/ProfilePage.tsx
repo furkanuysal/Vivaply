@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowPathIcon,
+  EllipsisHorizontalIcon,
   LockClosedIcon,
   MapPinIcon,
+  NoSymbolIcon,
+  SpeakerXMarkIcon,
+  SparklesIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
@@ -43,6 +47,7 @@ export default function ProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
   const [muteLoading, setMuteLoading] = useState(false);
+  const [isModerationMenuOpen, setIsModerationMenuOpen] = useState(false);
   const [socialListOpen, setSocialListOpen] = useState(false);
   const [socialListLoading, setSocialListLoading] = useState(false);
   const [socialListMode, setSocialListMode] = useState<"followers" | "following">(
@@ -50,6 +55,7 @@ export default function ProfilePage() {
   );
   const [socialUsers, setSocialUsers] = useState<FollowUserDto[]>([]);
   const activeTab = getValidProfileTab(searchParams.get("tab"));
+  const moderationMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -141,6 +147,26 @@ export default function ProfilePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isModerationMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        moderationMenuRef.current &&
+        !moderationMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsModerationMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isModerationMenuOpen]);
+
   const loadPosts = async (
     username: string,
     scope: ProfileTab,
@@ -230,6 +256,7 @@ export default function ProfilePage() {
     try {
       if (wasBlocked) {
         await accountApi.unblockUser(user.id);
+        setIsModerationMenuOpen(false);
         if (username) {
           const refreshed = await accountApi.getProfileByUsername(username);
           setUser(refreshed);
@@ -242,6 +269,7 @@ export default function ProfilePage() {
         }
       } else {
         await accountApi.blockUser(user.id);
+        setIsModerationMenuOpen(false);
         setUser((current) =>
           current
             ? {
@@ -275,6 +303,8 @@ export default function ProfilePage() {
       } else {
         await accountApi.muteUser(user.id);
       }
+
+      setIsModerationMenuOpen(false);
 
       setUser((current) =>
         current
@@ -381,19 +411,111 @@ export default function ProfilePage() {
   }
 
   const isRestrictedProfile = user?.canViewProfile === false;
+  const isBlockedByTarget = user?.hasBlockedCurrentUser === true;
   const restrictionCopy = user
     ? getRestrictedProfileCopy(t, user)
     : null;
-  const visibilityLabel = user
-    ? getProfileVisibilityLabel(t, user.profileVisibility)
-    : "";
-  const followPolicyLabel = user
-    ? getFollowPolicyLabel(t, user.followPolicy)
-    : "";
+
+  if (isBlockedByTarget && user) {
+    return (
+      <div className="animate-fade-in">
+        <section className="rounded-2xl border border-skin-border bg-skin-surface px-8 py-20 shadow-xl">
+          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+            <p className="text-2xl font-bold tracking-tight text-skin-text">
+              @{user.username}
+            </p>
+            <span className="mt-5 inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-4 py-1.5 text-xs font-semibold text-red-400">
+              <LockClosedIcon className="h-3.5 w-3.5" />
+              <span>{t("profile:moderation.blocked_you_title")}</span>
+            </span>
+            <div className="mt-10 flex h-20 w-20 items-center justify-center rounded-full border border-skin-primary/20 bg-skin-primary/10 text-skin-primary">
+              <LockClosedIcon className="h-9 w-9" />
+            </div>
+            <p className="mt-10 text-xs font-semibold uppercase tracking-[0.3em] text-skin-primary/80">
+              {t("profile:hidden.eyebrow")}
+            </p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-skin-text">
+              {t("profile:moderation.blocked_you_title")}
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-skin-muted">
+              {t("profile:moderation.blocked_you_description")}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in space-y-8">
       <div className="rounded-2xl border border-skin-border bg-skin-surface p-8 shadow-xl">
+        {!user?.isCurrentUser ? (
+          <div className="mb-4 flex justify-end">
+            <div className="relative" ref={moderationMenuRef}>
+              <button
+                type="button"
+                onClick={() =>
+                  setIsModerationMenuOpen((current) => !current)
+                }
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-skin-border bg-skin-surface text-skin-muted transition hover:border-skin-primary/30 hover:text-skin-text"
+                aria-label={t("profile:moderation.menu_label")}
+              >
+                <EllipsisHorizontalIcon className="h-5 w-5" />
+              </button>
+
+              {isModerationMenuOpen ? (
+                <div className="absolute right-0 top-[calc(100%+0.75rem)] z-20 min-w-[210px] overflow-hidden rounded-2xl border border-skin-border bg-skin-surface p-2 shadow-2xl">
+                  <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-skin-muted">
+                    {t("profile:moderation.actions_label")}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleBlockToggle()}
+                    disabled={blockLoading || user?.hasBlockedCurrentUser}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      user?.isBlockedByCurrentUser
+                        ? "text-red-500 hover:bg-red-500/10"
+                        : "text-skin-text hover:bg-skin-base"
+                    }`}
+                  >
+                    <NoSymbolIcon className="h-4 w-4 shrink-0" />
+                    <span>
+                      {blockLoading
+                        ? t("profile:actions.processing")
+                        : user?.isBlockedByCurrentUser
+                          ? t("profile:actions.unblock")
+                          : t("profile:actions.block")}
+                    </span>
+                  </button>
+
+                  {!user?.isBlockedByCurrentUser && !user?.hasBlockedCurrentUser ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleMuteToggle()}
+                      disabled={muteLoading}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        user?.isMutedByCurrentUser
+                          ? "text-skin-secondary hover:bg-skin-secondary/10"
+                          : "text-skin-text hover:bg-skin-base"
+                      }`}
+                    >
+                      <SpeakerXMarkIcon className="h-4 w-4 shrink-0" />
+                      <span>
+                        {muteLoading
+                          ? t("profile:actions.processing")
+                          : user?.isMutedByCurrentUser
+                            ? t("profile:actions.unmute")
+                            : t("profile:actions.mute")}
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         <div className="flex flex-col items-center gap-8 md:flex-row">
           <div className="flex flex-col items-center text-center">
             <div className="mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-gradient-to-tr from-skin-primary to-skin-secondary p-1 text-4xl font-bold text-white shadow-lg">
@@ -441,7 +563,7 @@ export default function ProfilePage() {
             ) : (
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-skin-primary/20 bg-skin-primary/10 px-3 py-1 text-xs font-semibold text-skin-primary">
                 <LockClosedIcon className="h-3.5 w-3.5" />
-                <span>{visibilityLabel}</span>
+                <span>{t("profile:hidden.eyebrow")}</span>
               </div>
             )}
 
@@ -471,7 +593,7 @@ export default function ProfilePage() {
             </div>
 
             {!user?.isCurrentUser ? (
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <div className="mt-5 flex w-full max-w-sm items-center justify-center">
                 {!user?.isBlockedByCurrentUser &&
                 !user?.hasBlockedCurrentUser &&
                 user?.followPolicy !== FollowPolicy.Disabled ? (
@@ -479,7 +601,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => void handleFollowToggle()}
                     disabled={followLoading}
-                    className={`group inline-flex min-w-[132px] items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                    className={`group inline-flex min-w-[180px] items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-70 ${
                       user?.relationStatus === FollowStatus.Accepted
                         ? "border border-skin-border bg-skin-surface text-skin-text hover:border-skin-primary/40"
                         : user?.relationStatus === FollowStatus.Pending
@@ -502,43 +624,9 @@ export default function ProfilePage() {
                               </span>
                             </>
                           )
-                          : t("profile:actions.follow")}
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() => void handleBlockToggle()}
-                  disabled={blockLoading || user?.hasBlockedCurrentUser}
-                  className={`inline-flex min-w-[132px] items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                    user?.isBlockedByCurrentUser
-                      ? "border-red-400/30 bg-red-500/10 text-red-500 hover:bg-red-500/15"
-                      : "border-skin-border bg-skin-surface text-skin-text hover:border-red-400/30 hover:text-red-500"
-                  }`}
-                >
-                  {blockLoading
-                    ? t("profile:actions.processing")
-                    : user?.isBlockedByCurrentUser
-                      ? t("profile:actions.unblock")
-                      : t("profile:actions.block")}
-                </button>
-
-                {!user?.isBlockedByCurrentUser && !user?.hasBlockedCurrentUser ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleMuteToggle()}
-                    disabled={muteLoading}
-                    className={`inline-flex min-w-[132px] items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      user?.isMutedByCurrentUser
-                        ? "border-skin-secondary/30 bg-skin-secondary/10 text-skin-secondary hover:bg-skin-secondary/15"
-                        : "border-skin-border bg-skin-surface text-skin-text hover:border-skin-secondary/30 hover:text-skin-secondary"
-                    }`}
-                  >
-                    {muteLoading
-                      ? t("profile:actions.processing")
-                      : user?.isMutedByCurrentUser
-                        ? t("profile:actions.unmute")
-                        : t("profile:actions.mute")}
+                          : user?.followPolicy === FollowPolicy.RequestOnly
+                            ? t("profile:actions.follow_request")
+                            : t("profile:actions.follow")}
                   </button>
                 ) : null}
               </div>
@@ -557,25 +645,6 @@ export default function ProfilePage() {
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-skin-muted">
                   {restrictionCopy?.description}
                 </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5">
-                  <div className="mb-1 text-sm text-skin-muted">
-                    {t("profile:hidden.visibility_label")}
-                  </div>
-                  <div className="text-lg font-semibold text-skin-text">
-                    {visibilityLabel}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-skin-border/50 bg-skin-surface/50 p-5">
-                  <div className="mb-1 text-sm text-skin-muted">
-                    {t("profile:hidden.follow_policy_label")}
-                  </div>
-                  <div className="text-lg font-semibold text-skin-text">
-                    {followPolicyLabel}
-                  </div>
-                </div>
               </div>
             </div>
           ) : (
@@ -710,11 +779,19 @@ export default function ProfilePage() {
             </div>
           ) : posts.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-skin-border/60 bg-skin-surface px-8 py-14 text-center">
-              <h3 className="text-xl font-semibold text-skin-text">
-                {t("profile:empty_title")}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-skin-primary/20 bg-skin-primary/10 text-skin-primary">
+                <SparklesIcon className="h-7 w-7" />
+              </div>
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.26em] text-skin-primary/80">
+                {t(`profile:empty_states.${activeTab}.eyebrow`)}
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold text-skin-text">
+                {t(`profile:empty_states.${activeTab}.title`)}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-skin-muted">
-                {t("profile:empty_subtitle")}
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-skin-muted">
+                {t(`profile:empty_states.${activeTab}.description`, {
+                  username: user?.username ?? "",
+                })}
               </p>
             </div>
           ) : (
@@ -935,36 +1012,6 @@ function getRestrictedProfileCopy(
     description: t("profile:hidden.description", { username: user.username }),
     contentDescription: t("profile:hidden.private_content"),
   };
-}
-
-function getProfileVisibilityLabel(
-  t: Translator,
-  visibility?: number | null,
-) {
-  if (visibility === 1) {
-    return t("profile:hidden.visibility_followers");
-  }
-
-  if (visibility === 2) {
-    return t("profile:hidden.visibility_private");
-  }
-
-  return t("profile:hidden.visibility_public");
-}
-
-function getFollowPolicyLabel(
-  t: Translator,
-  followPolicy?: number | null,
-) {
-  if (followPolicy === FollowPolicy.RequestOnly) {
-    return t("profile:hidden.follow_policy_request");
-  }
-
-  if (followPolicy === FollowPolicy.Disabled) {
-    return t("profile:hidden.follow_policy_disabled");
-  }
-
-  return t("profile:hidden.follow_policy_auto");
 }
 
 type Translator = (...args: any[]) => string;

@@ -10,6 +10,28 @@
   },
   "empty_title": "No activity yet",
   "empty_subtitle": "When new activity appears, it will show up here.",
+  "empty_states": {
+    "posts": {
+      "eyebrow": "Profile Feed",
+      "title": "No posts yet",
+      "description": "@{{username}} has not shared anything here yet."
+    },
+    "content": {
+      "eyebrow": "Content Activity",
+      "title": "No content activity yet",
+      "description": "Ratings, reviews, and completion updates from @{{username}} will appear here."
+    },
+    "replies": {
+      "eyebrow": "Replies",
+      "title": "No replies yet",
+      "description": "When @{{username}} joins conversations, their replies will show up here."
+    },
+    "media": {
+      "eyebrow": "Media Posts",
+      "title": "No media posts yet",
+      "description": "Photos, visuals, and media-based posts from @{{username}} will appear here."
+    }
+  },
   "not_found": {
     "eyebrow": "User Not Found",
     "title": "This account does not exist",
@@ -19,14 +41,6 @@
     "eyebrow": "Private Profile",
     "title": "This profile is private",
     "description": "{{username}}'s profile is not publicly visible. You do not currently have permission to view it.",
-    "visibility_label": "Profile visibility",
-    "follow_policy_label": "Follow access",
-    "visibility_public": "Public",
-    "visibility_followers": "Followers only",
-    "visibility_private": "Private",
-    "follow_policy_auto": "Open to everyone",
-    "follow_policy_request": "Request required",
-    "follow_policy_disabled": "New followers disabled",
     "content_eyebrow": "Profile Content",
     "content_title": "Profile content is locked",
     "content_locked_title": "This profile's activity is hidden",
@@ -63,6 +77,7 @@
   },
   "actions": {
     "follow": "Follow",
+    "follow_request": "Send follow request",
     "following": "Following",
     "requested": "Requested",
     "cancel_request": "Cancel request",
@@ -89,6 +104,8 @@
     "mute_action": "The mute action could not be completed."
   },
   "moderation": {
+    "menu_label": "Open moderation actions",
+    "actions_label": "Moderation",
     "blocked_by_you_title": "You blocked this user",
     "blocked_by_you_description": "This profile is hidden because you blocked this user. You can unblock them anytime.",
     "blocked_you_title": "You cannot access this profile",

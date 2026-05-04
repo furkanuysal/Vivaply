@@ -113,26 +113,28 @@ namespace Vivaply.API.Modules.Core.Identity.Services.Implementations
 
             if (!canViewProfile)
             {
+                var blockedByTargetOnly = hasBlockedCurrentUser && !isBlockedByCurrentUser;
+
                 return new UserProfileDto
                 {
                     Id = user.Id,
                     Username = user.Username,
                     Email = string.Empty,
-                    AvatarUrl = user.AvatarUrl,
+                    AvatarUrl = blockedByTargetOnly ? null : user.AvatarUrl,
                     IsCurrentUser = false,
                     CanViewProfile = false,
                     IsBlockedByCurrentUser = isBlockedByCurrentUser,
                     HasBlockedCurrentUser = hasBlockedCurrentUser,
                     IsMutedByCurrentUser = isMutedByCurrentUser,
-                    RelationStatus = relationStatusForDto,
-                    FollowPolicy = user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
-                    ProfileVisibility = user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
-                    ActivityVisibility = user.Preferences?.ActivityVisibility ?? ActivityVisibility.Followers,
+                    RelationStatus = blockedByTargetOnly ? null : relationStatusForDto,
+                    FollowPolicy = blockedByTargetOnly ? null : user.Preferences?.FollowPolicy ?? FollowPolicy.AutoAccept,
+                    ProfileVisibility = blockedByTargetOnly ? null : user.Preferences?.ProfileVisibility ?? ProfileVisibility.Public,
+                    ActivityVisibility = blockedByTargetOnly ? null : user.Preferences?.ActivityVisibility ?? ActivityVisibility.Followers,
                     EmailNotifications = false,
                     PushNotifications = false,
-                    IsFollowingCurrentUser = isFollowingCurrentUser,
-                    FollowersCount = followersCount,
-                    FollowingCount = followingCount
+                    IsFollowingCurrentUser = blockedByTargetOnly ? false : isFollowingCurrentUser,
+                    FollowersCount = blockedByTargetOnly ? 0 : followersCount,
+                    FollowingCount = blockedByTargetOnly ? 0 : followingCount
                 };
             }
 

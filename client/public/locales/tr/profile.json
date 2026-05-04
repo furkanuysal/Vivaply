@@ -10,6 +10,28 @@
   },
   "empty_title": "Henüz aktivite yok",
   "empty_subtitle": "Yeni aktiviteler oluştuğunda burada görünecek.",
+  "empty_states": {
+    "posts": {
+      "eyebrow": "Profil Akışı",
+      "title": "Henüz gönderi yok",
+      "description": "@{{username}} burada henüz bir şey paylaşmadı."
+    },
+    "content": {
+      "eyebrow": "İçerik Aktiviteleri",
+      "title": "Henüz içerik aktivitesi yok",
+      "description": "@{{username}} tarafından yapılan puanlama, inceleme ve tamamlama paylaşımları burada görünecek."
+    },
+    "replies": {
+      "eyebrow": "Yanıtlar",
+      "title": "Henüz yanıt yok",
+      "description": "@{{username}} konuşmalara katıldığında yanıtları burada görünecek."
+    },
+    "media": {
+      "eyebrow": "Medya Gönderileri",
+      "title": "Henüz medya gönderisi yok",
+      "description": "@{{username}} tarafından paylaşılan görseller ve medya tabanlı gönderiler burada görünecek."
+    }
+  },
   "not_found": {
     "eyebrow": "Kullanıcı Bulunamadı",
     "title": "Böyle bir hesap bulunamadı",
@@ -19,14 +41,6 @@
     "eyebrow": "Gizli Profil",
     "title": "Bu profil gizli",
     "description": "{{username}} adlı kullanıcının profili herkese açık değil. Bu profili görüntülemek için gerekli izne sahip değilsin.",
-    "visibility_label": "Profil görünürlüğü",
-    "follow_policy_label": "Takip erişimi",
-    "visibility_public": "Herkese açık",
-    "visibility_followers": "Sadece takipçiler",
-    "visibility_private": "Gizli",
-    "follow_policy_auto": "Herkes takip edebilir",
-    "follow_policy_request": "İstek gerekiyor",
-    "follow_policy_disabled": "Yeni takip kapalı",
     "content_eyebrow": "Profil İçeriği",
     "content_title": "Profil içeriği kilitli",
     "content_locked_title": "Bu profilin aktiviteleri gizli",
@@ -63,6 +77,7 @@
   },
   "actions": {
     "follow": "Takip et",
+    "follow_request": "Takip isteği gönder",
     "following": "Takip ediliyor",
     "requested": "İstek gönderildi",
     "cancel_request": "İsteği geri çek",
@@ -89,6 +104,8 @@
     "mute_action": "Sessize alma işlemi tamamlanamadı."
   },
   "moderation": {
+    "menu_label": "Moderasyon menüsünü aç",
+    "actions_label": "Moderasyon",
     "blocked_by_you_title": "Bu kullanıcıyı engelledin",
     "blocked_by_you_description": "Bu profil, kullanıcıyı engellediğin için gizleniyor. İstersen istediğin zaman engeli kaldırabilirsin.",
     "blocked_you_title": "Bu profile erişemezsin",
