@@ -4,6 +4,7 @@
   "tabs": {
     "general": "General Info",
     "preferences": "Preferences",
+    "moderation": "Moderation",
     "security": "Security"
   },
   "general": {
@@ -59,6 +60,22 @@
     "update_button": "Update Password",
     "hint": "You will need to log in again after changing your password."
   },
+  "moderation": {
+    "title": "Blocked and muted users",
+    "description": "Manage the people you have blocked or muted without needing to revisit their profiles.",
+    "blocked": {
+      "title": "Blocked users",
+      "description": "Blocked users cannot view your content or interact with you.",
+      "empty": "You have not blocked anyone yet.",
+      "action": "Unblock"
+    },
+    "muted": {
+      "title": "Muted users",
+      "description": "Muted users stay in the system, but their activity is hidden from your feed and notifications.",
+      "empty": "You have not muted anyone yet.",
+      "action": "Unmute"
+    }
+  },
   "toasts": {
     "profile_updated": "Profile successfully updated!",
     "update_failed": "Update failed.",
@@ -68,7 +85,10 @@
     "avatar_updated": "Avatar successfully refreshed!",
     "avatar_error": "An error occurred while uploading the image.",
     "password_updated": "Password successfully changed! Please log in again.",
-    "password_error": "Password could not be changed. Please check your information."
+    "password_error": "Password could not be changed. Please check your information.",
+    "moderation_error": "Moderation settings could not be updated.",
+    "unblocked": "User unblocked successfully.",
+    "unmuted": "User unmuted successfully."
   },
   "loading": "Loading..."
 }

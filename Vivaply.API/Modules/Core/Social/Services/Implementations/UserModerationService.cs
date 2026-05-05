@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Vivaply.API.Data;
 using Vivaply.API.Entities.Identity;
 using Vivaply.API.Modules.Core.Notifications.Enums;
+using Vivaply.API.Modules.Core.Social.DTOs.Results.Follows;
 using Vivaply.API.Modules.Core.Social.Services.Interfaces;
 
 namespace Vivaply.API.Modules.Core.Social.Services.Implementations
@@ -111,6 +112,36 @@ namespace Vivaply.API.Modules.Core.Social.Services.Implementations
 
             _db.UserMutes.Remove(mute);
             await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task<List<FollowUserDto>> GetBlockedUsersAsync(Guid currentUserId, CancellationToken cancellationToken = default)
+        {
+            return await _db.UserBlocks
+                .AsNoTracking()
+                .Where(x => x.BlockerId == currentUserId)
+                .Select(x => new FollowUserDto
+                {
+                    Id = x.Blocked!.Id,
+                    Username = x.Blocked.Username,
+                    AvatarUrl = x.Blocked.AvatarUrl,
+                    IsFollowingCurrentUser = false
+                })
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<FollowUserDto>> GetMutedUsersAsync(Guid currentUserId, CancellationToken cancellationToken = default)
+        {
+            return await _db.UserMutes
+                .AsNoTracking()
+                .Where(x => x.MuterId == currentUserId)
+                .Select(x => new FollowUserDto
+                {
+                    Id = x.Muted!.Id,
+                    Username = x.Muted.Username,
+                    AvatarUrl = x.Muted.AvatarUrl,
+                    IsFollowingCurrentUser = false
+                })
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<bool> IsBlockedEitherWayAsync(Guid currentUserId, Guid otherUserId, CancellationToken cancellationToken = default)

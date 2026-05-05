@@ -75,6 +75,16 @@ export const accountApi = {
     return response.data;
   },
 
+  getBlockedUsers: async () => {
+    const response = await api.get<FollowUserDto[]>("/users/blocks");
+    return response.data;
+  },
+
+  getMutedUsers: async () => {
+    const response = await api.get<FollowUserDto[]>("/users/mutes");
+    return response.data;
+  },
+
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);

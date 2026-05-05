@@ -12,6 +12,20 @@ namespace Vivaply.API.Modules.Core.Social.Controllers
     {
         private readonly IUserModerationService _userModerationService = userModerationService;
 
+        [HttpGet("blocks")]
+        public async Task<IActionResult> GetBlockedUsers(CancellationToken cancellationToken)
+        {
+            var users = await _userModerationService.GetBlockedUsersAsync(CurrentUserId, cancellationToken);
+            return Ok(users);
+        }
+
+        [HttpGet("mutes")]
+        public async Task<IActionResult> GetMutedUsers(CancellationToken cancellationToken)
+        {
+            var users = await _userModerationService.GetMutedUsersAsync(CurrentUserId, cancellationToken);
+            return Ok(users);
+        }
+
         [HttpPost("{targetUserId}/block")]
         [EnableRateLimiting(RateLimitPolicies.SocialAction)]
         public async Task<IActionResult> Block(Guid targetUserId, CancellationToken cancellationToken)

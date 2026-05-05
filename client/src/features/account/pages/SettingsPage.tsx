@@ -5,6 +5,7 @@ import {
   ActivityVisibility,
   FollowPolicy,
   ProfileVisibility,
+  type FollowUserDto,
   type UpdatePreferencesDto,
   type UserProfileDto,
 } from "@/features/account/types";
@@ -12,6 +13,8 @@ import { authApi } from "@/features/auth/api/authApi";
 import {
   BellAlertIcon,
   CameraIcon,
+  NoSymbolIcon,
+  SpeakerXMarkIcon,
   ShieldCheckIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/solid";
@@ -31,8 +34,11 @@ const DEFAULT_PREFERENCES: UpdatePreferencesDto = {
 export default function SettingsPage() {
   const { t } = useTranslation("settings");
   const [user, setUser] = useState<UserProfileDto | null>(null);
+  const [blockedUsers, setBlockedUsers] = useState<FollowUserDto[]>([]);
+  const [mutedUsers, setMutedUsers] = useState<FollowUserDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "preferences" | "security">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "preferences" | "moderation" | "security">("general");
+  const [moderationLoading, setModerationLoading] = useState(false);
 
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -151,13 +157,6 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
-      </div>
-    );
-
   const tabs = [
     {
       id: "general",
@@ -168,6 +167,11 @@ export default function SettingsPage() {
       id: "preferences",
       label: t("tabs.preferences"),
       icon: <BellAlertIcon className="h-5 w-5" />,
+    },
+    {
+      id: "moderation",
+      label: t("tabs.moderation"),
+      icon: <NoSymbolIcon className="h-5 w-5" />,
     },
     {
       id: "security",
@@ -193,6 +197,55 @@ export default function SettingsPage() {
     { value: FollowPolicy.RequestOnly, label: t("preferences.follow_policy_options.request_only") },
     { value: FollowPolicy.Disabled, label: t("preferences.follow_policy_options.disabled") },
   ];
+
+  const loadModerationLists = async () => {
+    setModerationLoading(true);
+    try {
+      const [blocked, muted] = await Promise.all([
+        accountApi.getBlockedUsers(),
+        accountApi.getMutedUsers(),
+      ]);
+      setBlockedUsers(blocked);
+      setMutedUsers(muted);
+    } catch {
+      toast.error(t("toasts.moderation_error"));
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "moderation") {
+      void loadModerationLists();
+    }
+  }, [activeTab]);
+
+  const handleUnblock = async (targetUserId: string) => {
+    try {
+      await accountApi.unblockUser(targetUserId);
+      setBlockedUsers((current) => current.filter((user) => user.id !== targetUserId));
+      toast.success(t("toasts.unblocked"));
+    } catch {
+      toast.error(t("toasts.moderation_error"));
+    }
+  };
+
+  const handleUnmute = async (targetUserId: string) => {
+    try {
+      await accountApi.unmuteUser(targetUserId);
+      setMutedUsers((current) => current.filter((user) => user.id !== targetUserId));
+      toast.success(t("toasts.unmuted"));
+    } catch {
+      toast.error(t("toasts.moderation_error"));
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-20">
@@ -475,6 +528,104 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          ) : activeTab === "moderation" ? (
+            <motion.div
+              key="moderation"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <div className="space-y-1 border-b border-skin-border/20 pb-4">
+                <h3 className="text-lg font-bold text-skin-text">{t("moderation.title")}</h3>
+                <p className="text-sm text-skin-muted">{t("moderation.description")}</p>
+              </div>
+
+              {moderationLoading ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-skin-primary"></div>
+                </div>
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <section className="rounded-2xl border border-skin-border/40 bg-skin-base/30 p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="rounded-full border border-red-500/20 bg-red-500/10 p-2 text-red-500">
+                        <NoSymbolIcon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-skin-text">{t("moderation.blocked.title")}</h4>
+                        <p className="text-sm text-skin-muted">{t("moderation.blocked.description")}</p>
+                      </div>
+                    </div>
+
+                    {blockedUsers.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-skin-border/50 bg-skin-surface/50 px-4 py-8 text-center text-sm text-skin-muted">
+                        {t("moderation.blocked.empty")}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {blockedUsers.map((blockedUser) => (
+                          <div
+                            key={blockedUser.id}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-skin-border/40 bg-skin-surface/70 px-4 py-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-skin-text">@{blockedUser.username}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void handleUnblock(blockedUser.id)}
+                              className="rounded-full border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500/15"
+                            >
+                              {t("moderation.blocked.action")}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="rounded-2xl border border-skin-border/40 bg-skin-base/30 p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="rounded-full border border-skin-secondary/20 bg-skin-secondary/10 p-2 text-skin-secondary">
+                        <SpeakerXMarkIcon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-skin-text">{t("moderation.muted.title")}</h4>
+                        <p className="text-sm text-skin-muted">{t("moderation.muted.description")}</p>
+                      </div>
+                    </div>
+
+                    {mutedUsers.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-skin-border/50 bg-skin-surface/50 px-4 py-8 text-center text-sm text-skin-muted">
+                        {t("moderation.muted.empty")}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {mutedUsers.map((mutedUser) => (
+                          <div
+                            key={mutedUser.id}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-skin-border/40 bg-skin-surface/70 px-4 py-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-skin-text">@{mutedUser.username}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void handleUnmute(mutedUser.id)}
+                              className="rounded-full border border-skin-secondary/20 bg-skin-secondary/10 px-4 py-2 text-sm font-semibold text-skin-secondary transition hover:bg-skin-secondary/15"
+                            >
+                              {t("moderation.muted.action")}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div

@@ -4,6 +4,7 @@
   "tabs": {
     "general": "Genel Bilgiler",
     "preferences": "Tercihler",
+    "moderation": "Moderasyon",
     "security": "Güvenlik"
   },
   "general": {
@@ -59,6 +60,22 @@
     "update_button": "Şifreyi Güncelle",
     "hint": "Şifreni değiştirdikten sonra tekrar giriş yapman gerekir."
   },
+  "moderation": {
+    "title": "Engellenen ve sessize alınan kullanıcılar",
+    "description": "Profillerine tekrar gitmeden engellediğin veya sessize aldığın kişileri buradan yönetebilirsin.",
+    "blocked": {
+      "title": "Engellenen kullanıcılar",
+      "description": "Engellenen kullanıcılar içeriklerini göremez ve seninle etkileşime giremez.",
+      "empty": "Henüz kimseyi engellemedin.",
+      "action": "Engeli kaldır"
+    },
+    "muted": {
+      "title": "Sessize alınan kullanıcılar",
+      "description": "Sessize alınan kullanıcılar sistemde kalır ama aktiviteleri feed ve bildirimlerinden gizlenir.",
+      "empty": "Henüz kimseyi sessize almadın.",
+      "action": "Sessizi kaldır"
+    }
+  },
   "toasts": {
     "profile_updated": "Profil başarıyla güncellendi!",
     "update_failed": "Güncelleme başarısız oldu.",
@@ -68,7 +85,10 @@
     "avatar_updated": "Avatar başarıyla yenilendi!",
     "avatar_error": "Görsel yüklenirken bir hata oluştu.",
     "password_updated": "Şifre başarıyla değiştirildi! Lütfen tekrar giriş yap.",
-    "password_error": "Şifre değiştirilemedi. Lütfen bilgilerini kontrol et."
+    "password_error": "Şifre değiştirilemedi. Lütfen bilgilerini kontrol et.",
+    "moderation_error": "Moderasyon ayarları güncellenemedi.",
+    "unblocked": "Kullanıcının engeli kaldırıldı.",
+    "unmuted": "Kullanıcının sessizi kaldırıldı."
   },
   "loading": "Yükleniyor..."
 }
